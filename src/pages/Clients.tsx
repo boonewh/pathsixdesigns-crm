@@ -356,7 +356,7 @@ export default function Clients() {
     }
   };
 
-  const handleSave = async () => {
+  const handleSave = async (data: any) => {
     try {
       const method = creating ? "POST" : "PUT";
       const url = creating ? "/clients/" : `/clients/${editingId}`;
@@ -364,7 +364,7 @@ export default function Clients() {
       const res = await apiFetch(url, {
         method,
         headers: { Authorization: `Bearer ${token}` },
-        body: JSON.stringify(form),
+        body: JSON.stringify(data),
       });
 
       if (!res.ok) throw new Error(`Failed to save ${USE_ACCOUNT_LABELS ? 'account' : 'client'}`);
@@ -612,7 +612,7 @@ export default function Clients() {
               <EntityCard
                 title={USE_ACCOUNT_LABELS ? "New Account" : "New Client"}
                 editing
-                onSave={handleSave}
+                onSave={() => {}} // EntityCard doesn't need this since CompanyForm handles submission
                 onCancel={handleCancel}
                 editForm={
                   <CompanyForm
@@ -620,6 +620,7 @@ export default function Clients() {
                     setForm={setForm}
                     onSave={handleSave}
                     onCancel={handleCancel}
+                    isEditing={false}
                   />
                 }
               />
@@ -642,7 +643,7 @@ export default function Clients() {
                   typeLabel={client.type || "None"}
                   editing={editingId === client.id}
                   onEdit={() => handleTableEdit(client)}
-                  onSave={handleSave}
+                  onSave={() => {}} // EntityCard doesn't need this since CompanyForm handles submission
                   onCancel={handleCancel}
                   onDelete={() => handleDelete(client.id)}
                   editForm={
@@ -651,6 +652,7 @@ export default function Clients() {
                       setForm={setForm}
                       onSave={handleSave}
                       onCancel={handleCancel}
+                      isEditing={true}
                     />
                   }
                   details={
@@ -878,14 +880,15 @@ export default function Clients() {
               <CompanyForm
                 form={form}
                 setForm={setForm}
-                onSave={async () => {
-                  await handleSave();
+                onSave={async (data) => {
+                  await handleSave(data);
                   setShowEditModal(false);
                 }}
                 onCancel={() => {
                   setShowEditModal(false);
                   handleCancel();
                 }}
+                isEditing={!!editingId}
               />
               
             </div>

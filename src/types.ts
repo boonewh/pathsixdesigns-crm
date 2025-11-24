@@ -111,3 +111,19 @@ export interface Project {
     email: string;
   } | null;
 }
+
+export interface Contact {
+  id: number;
+  first_name: string;
+  last_name?: string;
+  title?: string;
+  email?: string;
+  phone?: string;
+  phone_label?: "work" | "mobile" | "home" | "fax" | "other";
+  secondary_phone?: string;
+  secondary_phone_label?: "work" | "mobile" | "home" | "fax" | "other";
+  notes?: string;
+  client_id?: number;
+  lead_id?: number;
+  created_at?: string;
+}

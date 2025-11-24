@@ -1,22 +1,14 @@
+import React from "react";
 import { useEffect, useState } from "react";
 import { UserPlus, MoreVertical } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { apiFetch } from "@/lib/api";
 import { formatPhoneNumber } from "@/lib/phoneUtils";
-
-type Contact = {
-  id: number;
-  first_name: string;
-  last_name: string;
-  title?: string;
-  email?: string;
-  phone?: string;
-  phone_label?: string;
-  secondary_phone?: string;
-  secondary_phone_label?: string;
-  notes?: string;
-};
+import { useForm, useFieldArray } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { contactCreateSchema, contactUpdateSchema, type ContactCreateInput, type ContactUpdateInput } from "@/schemas/contactSchemas";
+import { Contact } from "@/types";
 
 type Props = {
   token: string;
@@ -30,6 +22,43 @@ export default function CompanyContacts({ token, entityType, entityId }: Props) 
   const [form, setForm] = useState<Partial<Contact>>({});
   const [editingId, setEditingId] = useState<number | null>(null);
   const [openMenuId, setOpenMenuId] = useState<number | null>(null);
+
+  // Determine which schema to use based on editing mode
+  const schema = editingId ? contactUpdateSchema : contactCreateSchema;
+
+  // Set up React Hook Form with Zod validation
+  const {
+    register,
+    handleSubmit,
+    setValue,
+    watch,
+    formState: { errors, isSubmitting },
+    reset,
+    control,
+  } = useForm<ContactCreateInput | ContactUpdateInput>({
+    resolver: zodResolver(schema),
+    defaultValues: {
+      first_name: "",
+      last_name: "",
+      title: "",
+      email: "",
+      phones: [],
+      notes: "",
+    },
+  });
+
+  const { fields: phonesFields, append: appendPhones, remove: removePhones } = useFieldArray({
+    control,
+    name: "phones",
+  });
+
+  // Watch all form values to sync with parent component state
+  const watchedValues = watch();
+
+  // Sync form state with parent component
+  React.useEffect(() => {
+    setForm(watchedValues as Partial<Contact>);
+  }, [watchedValues]);
 
   const loadContacts = async () => {
     const res = await apiFetch(`/contacts/?${entityType}_id=${entityId}`, {
@@ -55,12 +84,12 @@ export default function CompanyContacts({ token, entityType, entityId }: Props) 
   }, []);
 
   const resetForm = () => {
-    setForm({});
+    reset();
     setEditingId(null);
     setShowForm(false);
   };
 
-  const handleSave = async () => {
+  const handleSave = async (data: ContactCreateInput | ContactUpdateInput) => {
     const url = editingId ? `/contacts/${editingId}` : "/contacts/";
     const method = editingId ? "PUT" : "POST";
 
@@ -70,7 +99,7 @@ export default function CompanyContacts({ token, entityType, entityId }: Props) 
         "Content-Type": "application/json",
         Authorization: `Bearer ${token}`,
       },
-      body: JSON.stringify({ ...form, [`${entityType}_id`]: entityId }),
+      body: JSON.stringify({ ...data, [`${entityType}_id`]: entityId }),
     });
 
     if (res.ok) {
@@ -102,88 +131,114 @@ export default function CompanyContacts({ token, entityType, entityId }: Props) 
 
       <div className="p-4 space-y-4">
         {showForm && (
-          <div className="space-y-2">
+          <form onSubmit={handleSubmit(handleSave)} className="space-y-2">
             <div className="grid grid-cols-2 gap-2">
-              <Input
-                placeholder="First Name"
-                value={form.first_name || ""}
-                onChange={(e) => setForm({ ...form, first_name: e.target.value })}
-              />
-              <Input
-                placeholder="Last Name"
-                value={form.last_name || ""}
-                onChange={(e) => setForm({ ...form, last_name: e.target.value })}
-              />
+              <div>
+                <Input
+                  placeholder="First Name"
+                  {...register("first_name")}
+                  className={errors.first_name ? "border-red-500" : ""}
+                />
+                {errors.first_name && (
+                  <p className="text-sm text-red-500 mt-1">{errors.first_name.message}</p>
+                )}
+              </div>
+              <div>
+                <Input
+                  placeholder="Last Name"
+                  {...register("last_name")}
+                  className={errors.last_name ? "border-red-500" : ""}
+                />
+                {errors.last_name && (
+                  <p className="text-sm text-red-500 mt-1">{errors.last_name.message}</p>
+                )}
+              </div>
             </div>
-            <Input
-              placeholder="Title"
-              value={form.title || ""}
-              onChange={(e) => setForm({ ...form, title: e.target.value })}
-            />
-            <Input
-              placeholder="Email"
-              type="email"
-              value={form.email || ""}
-              onChange={(e) => setForm({ ...form, email: e.target.value })}
-            />
-
-            <div className="grid grid-cols-3 gap-2">
+            <div>
               <Input
-                placeholder="Phone"
-                value={form.phone || ""}
-                onChange={(e) => setForm({ ...form, phone: e.target.value })}
-                className="col-span-2"
+                placeholder="Title"
+                {...register("title")}
+                className={errors.title ? "border-red-500" : ""}
               />
-              <select
-                value={form.phone_label || "work"}
-                onChange={(e) => setForm({ ...form, phone_label: e.target.value })}
-                className="border border-input bg-background text-sm rounded-md px-2 py-1"
-              >
-                <option value="work">Work</option>
-                <option value="mobile">Mobile</option>
-                <option value="home">Home</option>
-              </select>
+              {errors.title && (
+                <p className="text-sm text-red-500 mt-1">{errors.title.message}</p>
+              )}
             </div>
-
-            <div className="grid grid-cols-3 gap-2">
+            <div>
               <Input
-                placeholder="Secondary Phone"
-                value={form.secondary_phone || ""}
-                onChange={(e) => setForm({ ...form, secondary_phone: e.target.value })}
-                className="col-span-2"
+                placeholder="Email"
+                type="email"
+                {...register("email")}
+                className={errors.email ? "border-red-500" : ""}
               />
-              <select
-                value={form.secondary_phone_label || "mobile"}
-                onChange={(e) => setForm({ ...form, secondary_phone_label: e.target.value })}
-                className="border border-input bg-background text-sm rounded-md px-2 py-1"
-              >
-                <option value="mobile">Mobile</option>
-                <option value="work">Work</option>
-                <option value="home">Home</option>
-              </select>
+              {errors.email && (
+                <p className="text-sm text-red-500 mt-1">{errors.email.message}</p>
+              )}
             </div>
 
-            <Textarea
-              placeholder="Notes"
-              value={form.notes || ""}
-              onChange={(e) => setForm({ ...form, notes: e.target.value })}
-            />
-
-            <div className="flex gap-2">
+            <div className="space-y-2">
+              <h5 className="text-sm font-medium">Phone Numbers</h5>
+              {phonesFields.map((field, index) => (
+                <div key={field.id} className="flex gap-2">
+                  <select
+                    {...register(`phones.${index}.label`)}
+                    className="border rounded px-2 py-1 w-24"
+                  >
+                    <option value="mobile">Mobile</option>
+                    <option value="work">Work</option>
+                    <option value="home">Home</option>
+                    <option value="fax">Fax</option>
+                  </select>
+                  <Input
+                    placeholder="Phone Number"
+                    {...register(`phones.${index}.phone`)}
+                    className={`flex-1 ${errors.phones?.[index]?.phone ? "border-red-500" : ""}`}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => removePhones(index)}
+                    className="px-2 py-1 bg-red-500 text-white rounded text-sm"
+                  >
+                    Remove
+                  </button>
+                </div>
+              ))}
               <button
-                onClick={handleSave}
-                className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                type="button"
+                onClick={() => appendPhones({ label: "mobile", phone: "" })}
+                className="px-3 py-1 bg-blue-500 text-white rounded text-sm"
+              >
+                Add Phone
+              </button>
+            </div>
+
+            <div>
+              <Textarea
+                placeholder="Notes"
+                {...register("notes")}
+                className={errors.notes ? "border-red-500" : ""}
+              />
+              {errors.notes && (
+                <p className="text-sm text-red-500 mt-1">{errors.notes.message}</p>
+              )}
+            </div>
+
+            <div className="flex gap-2 mt-3">
+              <button
+                type="submit"
+                className="px-3 py-1 bg-green-500 text-white rounded text-sm"
               >
                 Save
               </button>
               <button
+                type="button"
                 onClick={resetForm}
-                className="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400"
+                className="px-3 py-1 bg-gray-500 text-white rounded text-sm"
               >
                 Cancel
               </button>
             </div>
-          </div>
+          </form>
         )}
 
         {!showForm && (
@@ -246,7 +301,14 @@ export default function CompanyContacts({ token, entityType, entityId }: Props) 
                     <button
                       className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
                       onClick={() => {
-                        setForm(c);
+                        reset({
+                          first_name: c.first_name || "",
+                          last_name: c.last_name || "",
+                          title: c.title || "",
+                          email: c.email || "",
+                          phones: c.phones || [],
+                          notes: c.notes || "",
+                        });
                         setEditingId(c.id);
                         setShowForm(true);
                         setOpenMenuId(null);

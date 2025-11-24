@@ -164,19 +164,19 @@ export default function Projects() {
     setEditingId(null);
   };
 
-  const handleSave = async () => {
+  const handleSave = async (data: any) => {
     try {
       const method = creating ? "POST" : "PUT";
       const url = creating ? "/projects/" : `/projects/${editingId}`;
 
-      if (!form.project_worth) {
-        form.project_worth = 0;
+      if (!data.project_worth) {
+        data.project_worth = 0;
       }
       
       const res = await apiFetch(url, {
         method,
         headers: { Authorization: `Bearer ${token}` },
-        body: JSON.stringify(form),
+        body: JSON.stringify(data),
       });
 
       if (!res.ok) throw new Error("Failed to save project");
@@ -416,7 +416,7 @@ export default function Projects() {
               <EntityCard
                 title="New Project"
                 editing
-                onSave={handleSave}
+                onSave={() => {}} // EntityCard doesn't need this since ProjectForm handles submission
                 onCancel={resetForm}
                 editForm={
                   <ProjectForm
@@ -426,6 +426,7 @@ export default function Projects() {
                     leads={leads}
                     onSave={handleSave}
                     onCancel={resetForm}
+                    isEditing={false}
                   />
                 }
               />

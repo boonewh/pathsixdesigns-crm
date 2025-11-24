@@ -327,7 +327,7 @@ export default function AdminProjectsPage() {
                 setForm={setForm}
                 clients={clients}
                 leads={leads}
-                onSave={async () => {
+                onSave={async (data) => {
                   try {
                     const res = await apiFetch(`/projects/${editingProjectId}`, {
                       method: "PUT",
@@ -335,7 +335,7 @@ export default function AdminProjectsPage() {
                         "Content-Type": "application/json",
                         Authorization: `Bearer ${token}`,
                       },
-                      body: JSON.stringify(form),
+                      body: JSON.stringify(data),
                     });
 
                     if (res.ok) {
@@ -362,6 +362,7 @@ export default function AdminProjectsPage() {
                   setEditingProjectId(null);
                   setForm({});
                 }}
+                isEditing={true}
               />
             </div>
           </div>

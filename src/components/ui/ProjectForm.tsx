@@ -1,3 +1,4 @@
+import React from "react";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
@@ -5,6 +6,9 @@ import { Project } from "@/types";
 import PhoneInput from "@/components/ui/PhoneInput";
 import { useEffect, useState } from "react";
 import { apiFetch } from "@/lib/api";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { projectCreateSchema, projectUpdateSchema, type ProjectCreateInput, type ProjectUpdateInput } from "@/schemas/projectSchemas";
 
 // TEMP: All Seasons Foam prefers "Accounts" instead of "Clients"
 const USE_ACCOUNT_LABELS = true;
@@ -14,8 +18,9 @@ interface ProjectFormProps {
   setForm: React.Dispatch<React.SetStateAction<Partial<Project>>>;
   clients: { id: number; name: string }[];
   leads: { id: number; name: string }[];
-  onSave: () => void;
+  onSave: (data: ProjectCreateInput | ProjectUpdateInput) => void;
   onCancel: () => void;
+  isEditing?: boolean;
 }
 
 type ContactOption = {
@@ -27,54 +32,125 @@ type ContactOption = {
   phone_label?: "work" | "mobile" | "home";
 };
 
-export default function ProjectForm({ form, setForm, clients, leads, onSave, onCancel }: ProjectFormProps) {
+// Project type options - matches backend constants
+const TYPE_OPTIONS = [
+  "None", "Commercial", "Residential", "Industrial", "Government", 
+  "Infrastructure", "Technology", "Consulting", "Other"
+];
+
+// Project status options - matches backend constants
+const STATUS_OPTIONS = [
+  "planning", "active", "on_hold", "completed", "cancelled"
+];
+
+export default function ProjectForm({ form, setForm, clients, leads, onSave, onCancel, isEditing = false }: ProjectFormProps) {
   const [contactOptions, setContactOptions] = useState<ContactOption[]>([]);
+  
+  // Determine which schema to use based on editing mode
+  const schema = isEditing ? projectUpdateSchema : projectCreateSchema;
+
+  // Set up React Hook Form with Zod validation
+  const {
+    register,
+    handleSubmit,
+    setValue,
+    watch,
+    formState: { errors, isSubmitting },
+    reset,
+  } = useForm<ProjectCreateInput | ProjectUpdateInput>({
+    resolver: zodResolver(schema),
+    defaultValues: {
+      project_name: form.project_name || "",
+      type: form.type || "None",
+      project_description: form.project_description || "",
+      project_status: form.project_status || "planning",
+      project_start: form.project_start || "",
+      project_end: form.project_end || "",
+      project_worth: form.project_worth || undefined,
+      client_id: form.client_id || undefined,
+      lead_id: form.lead_id || undefined,
+      notes: form.notes || "",
+      primary_contact_name: form.primary_contact_name || "",
+      primary_contact_title: form.primary_contact_title || "",
+      primary_contact_email: form.primary_contact_email || "",
+      primary_contact_phone: form.primary_contact_phone || "",
+      primary_contact_phone_label: form.primary_contact_phone_label || "work",
+    },
+  });
+
+  // Watch all form values to sync with parent component state
+  const watchedValues = watch();
+
+  // Sync form state with parent component
+  React.useEffect(() => {
+    setForm(watchedValues as Partial<Project>);
+  }, [watchedValues, setForm]);
+
+  // Handle form submission with validation
+  const onSubmit = (data: ProjectCreateInput | ProjectUpdateInput) => {
+    onSave(data);
+  };
+
+  // Handle form reset
+  const handleCancel = () => {
+    reset();
+    onCancel();
+  };
+
   return (
-    <div className="relative">
+    <form onSubmit={handleSubmit(onSubmit)} className="relative">
       <div className="space-y-4 pb-28">
         {/* Basic Project Information */}
         <div className="grid gap-2">
           <Label htmlFor="project_name">Project Name *</Label>
           <Input
             id="project_name"
-            value={form.project_name || ""}
-            onChange={(e) => setForm({ ...form, project_name: e.target.value })}
-            required
+            {...register("project_name")}
+            className={errors.project_name ? "border-red-500" : ""}
           />
+          {errors.project_name && (
+            <p className="text-sm text-red-500">{errors.project_name.message}</p>
+          )}
         </div>
 
         <div className="grid gap-2">
           <Label htmlFor="type">Type</Label>
           <select
             id="type"
-            value={form.type || "None"}
-            onChange={(e) => setForm({ ...form, type: e.target.value })}
-            className="border border-input bg-background text-sm rounded-md px-2 py-1"
+            {...register("type")}
+            className={`border border-input bg-background text-sm rounded-md px-2 py-1 ${
+              errors.type ? "border-red-500" : ""
+            }`}
           >
-            <option value="None">None</option>
-            <option value="Oil & Gas">Oil & Gas</option>
-            <option value="Secondary Containment">Secondary Containment</option>
-            <option value="Tanks">Tanks</option>
-            <option value="Pipe">Pipe</option>
-            <option value="Rental">Rental</option>
-            <option value="Food and Beverage">Food and Beverage</option>
-            <option value="Bridge">Bridge</option>
-            <option value="Culvert">Culvert</option>
+            {TYPE_OPTIONS.map((type) => (
+              <option key={type} value={type}>
+                {type}
+              </option>
+            ))}
           </select>
+          {errors.type && (
+            <p className="text-sm text-red-500">{errors.type.message}</p>
+          )}
         </div>
 
         <div className="grid gap-2">
           <Label htmlFor="project_status">Status</Label>
           <select
             id="project_status"
-            value={form.project_status || "pending"}
-            onChange={(e) => setForm({ ...form, project_status: e.target.value })}
-            className="border border-input bg-background text-sm rounded-md px-2 py-1"
+            {...register("project_status")}
+            className={`border border-input bg-background text-sm rounded-md px-2 py-1 ${
+              errors.project_status ? "border-red-500" : ""
+            }`}
           >
-            <option value="pending">Pending</option>
-            <option value="won">Won</option>
-            <option value="lost">Lost</option>
+            {STATUS_OPTIONS.map((status) => (
+              <option key={status} value={status}>
+                {status.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+              </option>
+            ))}
           </select>
+          {errors.project_status && (
+            <p className="text-sm text-red-500">{errors.project_status.message}</p>
+          )}
         </div>
 
         {/* Entity Assignment */}
@@ -238,20 +314,26 @@ export default function ProjectForm({ form, setForm, clients, leads, onSave, onC
             <Label htmlFor="primary_contact_name">Contact Name</Label>
             <Input
               id="primary_contact_name"
-              value={form.primary_contact_name || ""}
-              onChange={(e) => setForm({ ...form, primary_contact_name: e.target.value })}
+              {...register("primary_contact_name")}
               placeholder="John Doe"
+              className={errors.primary_contact_name ? "border-red-500" : ""}
             />
+            {errors.primary_contact_name && (
+              <p className="text-sm text-red-500">{errors.primary_contact_name.message}</p>
+            )}
           </div>
 
           <div className="grid gap-2 mb-4">
             <Label htmlFor="primary_contact_title">Contact Title</Label>
             <Input
               id="primary_contact_title"
-              value={form.primary_contact_title || ""}
-              onChange={(e) => setForm({ ...form, primary_contact_title: e.target.value })}
+              {...register("primary_contact_title")}
               placeholder="Project Manager"
+              className={errors.primary_contact_title ? "border-red-500" : ""}
             />
+            {errors.primary_contact_title && (
+              <p className="text-sm text-red-500">{errors.primary_contact_title.message}</p>
+            )}
           </div>
 
           <div className="grid gap-2 mb-4">
@@ -259,32 +341,40 @@ export default function ProjectForm({ form, setForm, clients, leads, onSave, onC
             <Input
               id="primary_contact_email"
               type="email"
-              value={form.primary_contact_email || ""}
-              onChange={(e) => setForm({ ...form, primary_contact_email: e.target.value })}
+              {...register("primary_contact_email")}
               placeholder="john.doe@company.com"
+              className={errors.primary_contact_email ? "border-red-500" : ""}
             />
+            {errors.primary_contact_email && (
+              <p className="text-sm text-red-500">{errors.primary_contact_email.message}</p>
+            )}
           </div>
 
           <div className="grid gap-2 mb-4">
             <Label htmlFor="primary_contact_phone">Contact Phone</Label>
             <div className="flex gap-2">
               <PhoneInput
-                value={form.primary_contact_phone || ""}
-                onChange={(cleanedPhone) => setForm({ ...form, primary_contact_phone: cleanedPhone })}
+                value={watch("primary_contact_phone") || ""}
+                onChange={(cleanedPhone) => setValue("primary_contact_phone", cleanedPhone)}
                 placeholder="(123) 456-7890"
-                className="flex-1"
+                className={`flex-1 ${errors.primary_contact_phone ? "border-red-500" : ""}`}
               />
               <select
-                value={form.primary_contact_phone_label || "work"}
-                onChange={(e) => setForm({ ...form, primary_contact_phone_label: e.target.value as "work" | "mobile" | "home" })}
-                className="border border-input bg-background text-sm rounded-md px-2 py-1 w-20"
+                {...register("primary_contact_phone_label")}
+                className={`border border-input bg-background text-sm rounded-md px-2 py-1 w-20 ${
+                  errors.primary_contact_phone_label ? "border-red-500" : ""
+                }`}
               >
                 <option value="work">Work</option>
                 <option value="mobile">Mobile</option>
                 <option value="home">Home</option>
               </select>
-
             </div>
+            {(errors.primary_contact_phone || errors.primary_contact_phone_label) && (
+              <p className="text-sm text-red-500">
+                {errors.primary_contact_phone?.message || errors.primary_contact_phone_label?.message}
+              </p>
+            )}
           </div>
         </div>
 
@@ -293,10 +383,13 @@ export default function ProjectForm({ form, setForm, clients, leads, onSave, onC
           <Label htmlFor="project_description">Description</Label>
           <Textarea
             id="project_description"
-            value={form.project_description || ""}
-            onChange={(e) => setForm({ ...form, project_description: e.target.value })}
+            {...register("project_description")}
             placeholder="Project description..."
+            className={errors.project_description ? "border-red-500" : ""}
           />
+          {errors.project_description && (
+            <p className="text-sm text-red-500">{errors.project_description.message}</p>
+          )}
         </div>
 
         <div className="grid gap-2 mb-4">
@@ -306,9 +399,12 @@ export default function ProjectForm({ form, setForm, clients, leads, onSave, onC
             type="number"
             min="0"
             step="0.01"
-            value={form.project_worth || ""}
-            onChange={(e) => setForm({ ...form, project_worth: parseFloat(e.target.value) || 0 })}
+            {...register("project_worth", { valueAsNumber: true })}
+            className={errors.project_worth ? "border-red-500" : ""}
           />
+          {errors.project_worth && (
+            <p className="text-sm text-red-500">{errors.project_worth.message}</p>
+          )}
         </div>
 
         {/* Timeline */}
@@ -318,9 +414,12 @@ export default function ProjectForm({ form, setForm, clients, leads, onSave, onC
             <Input
               id="project_start"
               type="date"
-              value={form.project_start ? form.project_start.split("T")[0] : ""}
-              onChange={(e) => setForm({ ...form, project_start: e.target.value })}
+              {...register("project_start")}
+              className={errors.project_start ? "border-red-500" : ""}
             />
+            {errors.project_start && (
+              <p className="text-sm text-red-500">{errors.project_start.message}</p>
+            )}
           </div>
 
           <div className="grid gap-2">
@@ -328,9 +427,12 @@ export default function ProjectForm({ form, setForm, clients, leads, onSave, onC
             <Input
               id="project_end"
               type="date"
-              value={form.project_end ? form.project_end.split("T")[0] : ""}
-              onChange={(e) => setForm({ ...form, project_end: e.target.value })}
+              {...register("project_end")}
+              className={errors.project_end ? "border-red-500" : ""}
             />
+            {errors.project_end && (
+              <p className="text-sm text-red-500">{errors.project_end.message}</p>
+            )}
           </div>
         </div>
 
@@ -338,10 +440,13 @@ export default function ProjectForm({ form, setForm, clients, leads, onSave, onC
           <Label htmlFor="notes">Notes</Label>
           <Textarea
             id="notes"
-            value={form.notes || ""}
-            onChange={(e) => setForm({ ...form, notes: e.target.value })}
+            {...register("notes")}
             placeholder="Additional notes..."
+            className={errors.notes ? "border-red-500" : ""}
           />
+          {errors.notes && (
+            <p className="text-sm text-red-500">{errors.notes.message}</p>
+          )}
         </div>
 
         {!form.client_id && !form.lead_id && (
@@ -360,18 +465,20 @@ export default function ProjectForm({ form, setForm, clients, leads, onSave, onC
       {/* Sticky Save/Cancel Footer */}
       <div className="sticky bottom-0 bg-white pt-4 border-t flex justify-end gap-2 z-10 px-4 pb-4">
         <button
-          onClick={onCancel}
+          type="button"
+          onClick={handleCancel}
           className="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400"
         >
           Cancel
         </button>
         <button
-          onClick={onSave}
-          className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+          type="submit"
+          disabled={isSubmitting}
+          className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          Save
+          {isSubmitting ? "Saving..." : "Save"}
         </button>
       </div>
-    </div>
+    </form>
   );
 }

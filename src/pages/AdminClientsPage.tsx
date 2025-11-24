@@ -263,7 +263,7 @@ export default function AdminClientsPage() {
               <CompanyForm
                 form={form}
                 setForm={setForm}
-                onSave={async () => {
+                onSave={async (data) => {
                   try {
                     const res = await apiFetch(`/clients/${editingClientId}`, {
                       method: "PUT",
@@ -271,7 +271,7 @@ export default function AdminClientsPage() {
                         "Content-Type": "application/json",
                         Authorization: `Bearer ${token}`,
                       },
-                      body: JSON.stringify(form),
+                      body: JSON.stringify(data),
                     });
 
                     if (res.ok) {
@@ -300,6 +300,7 @@ export default function AdminClientsPage() {
                   setEditingClientId(null);
                   setForm({});
                 }}
+                isEditing={true}
               />
             </div>
           </div>

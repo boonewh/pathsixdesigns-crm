@@ -6,7 +6,7 @@ interface ProjectEditModalProps {
   setForm: React.Dispatch<React.SetStateAction<Partial<Project>>>;
   clients: { id: number; name: string }[];
   leads: { id: number; name: string }[];
-  onSave: () => void;
+  onSave: (data: any) => void;
   onCancel: () => void;
   onClose: () => void; // ✅ Add this line
 }
@@ -31,6 +31,7 @@ export default function ProjectEditModal({
           leads={leads}
           onSave={onSave}
           onCancel={onCancel}
+          isEditing={true}
         />
       </div>
     </div>
