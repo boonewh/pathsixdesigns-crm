@@ -16,7 +16,7 @@ export const interactionCreateSchema = z.object({
   notes: z.string().optional(),
   follow_up: z.string().datetime().optional(),
   contact_person: z.string().max(100).optional(),
-  email: z.string().email("Invalid email format").optional(),
+  email: z.string().email("Invalid email format").max(255).optional(),
   phone: z.string().max(20).optional(),
 });
 
@@ -31,7 +31,7 @@ export const interactionUpdateSchema = z.object({
   notes: z.string().optional(),
   follow_up: z.string().datetime().optional(),
   contact_person: z.string().max(100).optional(),
-  email: z.string().email().optional(),
+  email: z.string().email().max(255).optional(),
   phone: z.string().max(20).optional(),
 });
 

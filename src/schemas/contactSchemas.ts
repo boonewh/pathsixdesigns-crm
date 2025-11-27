@@ -15,7 +15,7 @@ export const contactCreateSchema = z.object({
   // Optional fields
   last_name: z.string().max(100).optional(),
   title: z.string().max(100).optional(),
-  email: z.string().email('Invalid email format').optional(),
+  email: z.string().email('Invalid email format').max(255).optional(),
   phone: z.string().max(20).optional(),
   phone_label: z.enum(PHONE_LABELS).default('work'),
   secondary_phone: z.string().max(20).optional(),
@@ -30,7 +30,7 @@ export const contactUpdateSchema = z.object({
   lead_id: z.number().positive().optional(),
   last_name: z.string().max(100).optional(),
   title: z.string().max(100).optional(),
-  email: z.string().email().optional(),
+  email: z.string().email().max(255).optional(),
   phone: z.string().max(20).optional(),
   phone_label: z.enum(PHONE_LABELS).optional(),
   secondary_phone: z.string().max(20).optional(),
