@@ -7,6 +7,7 @@ import InteractionModal from "@/components/ui/InteractionModal";
 import PaginationControls from "@/components/ui/PaginationControls";
 import { usePagination } from "@/hooks/usePreferences";
 import { generateGoogleCalendarUrl, generateOutlookComUrl } from "@/lib/calendarUtils";
+import { type InteractionCreateInput, type InteractionUpdateInput } from "@/schemas/interactionSchemas";
 
 const USE_ACCOUNT_LABELS = true;
 
@@ -30,15 +31,9 @@ export default function EntityInteractions({
   const [loading, setLoading] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
+  const [editingInteraction, setEditingInteraction] = useState<Interaction | null>(null);
   const [openMenuId, setOpenMenuId] = useState<number | null>(null);
   const [selectedInteraction, setSelectedInteraction] = useState<Interaction | null>(null);
-  const [form, setForm] = useState<InteractionFormData>({
-    contact_date: "",
-    summary: "",
-    outcome: "",
-    notes: "",
-    follow_up: null,
-  });
 
   // Use pagination hook with entity-specific key
   const {
@@ -81,7 +76,7 @@ export default function EntityInteractions({
     }
   };
 
-  const handleSubmit = async () => {
+  const handleSubmit = async (data: InteractionCreateInput | InteractionUpdateInput) => {
     const method = editingId ? "PUT" : "POST";
     const url = editingId ? `/interactions/${editingId}` : "/interactions/";
 
@@ -92,7 +87,7 @@ export default function EntityInteractions({
         Authorization: `Bearer ${token}`,
       },
       body: JSON.stringify({
-        ...form,
+        ...data,
         [`${entityType}_id`]: entityId, // Dynamically set the entity ID field
       }),
     });

@@ -1,5 +1,15 @@
-import type { InteractionFormProps } from "./InteractionForm.types";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { interactionCreateSchema, interactionUpdateSchema, type InteractionCreateInput, type InteractionUpdateInput } from "@/schemas/interactionSchemas";
 import { useState } from "react";
+
+type InteractionFormProps = {
+  onSubmit: (data: InteractionCreateInput | InteractionUpdateInput) => Promise<void>;
+  onCancel: () => void;
+  isEditing: boolean;
+  editingId?: number | null;
+  defaultValues?: Partial<InteractionCreateInput>;
+};
 
 function splitDateTime(datetime?: string): { date: string; time: string } {
   if (!datetime) return { date: "", time: "" };
@@ -12,61 +22,85 @@ function combineDateTime(date: string, time: string): string {
 }
 
 export default function InteractionForm(props: InteractionFormProps) {
-  const { form, updateForm, onSubmit, onCancel, isEditing } = props;
+  const { onSubmit, onCancel, isEditing, defaultValues } = props;
+  
+  const schema = isEditing ? interactionUpdateSchema : interactionCreateSchema;
+  
+  const {
+    register,
+    handleSubmit,
+    watch,
+    formState: { errors, isSubmitting },
+    reset,
+    setValue,
+  } = useForm<InteractionCreateInput | InteractionUpdateInput>({
+    resolver: zodResolver(schema),
+    defaultValues: {
+      contact_date: "",
+      summary: "",
+      outcome: "",
+      notes: "",
+      follow_up: "",
+      contact_person: "",
+      email: "",
+      phone: "",
+      ...defaultValues,
+    },
+  });
 
-  const { date: contactDate, time: contactTime } = splitDateTime(form.contact_date);
-  const { date: followDate, time: followTime } = splitDateTime(form.follow_up ?? "");
+  const watchedContactDate = watch("contact_date");
+  const watchedFollowUp = watch("follow_up");
 
-  const [showDateError, setShowDateError] = useState(false);
+  const { date: contactDate, time: contactTime } = splitDateTime(watchedContactDate);
+  const { date: followDate, time: followTime } = splitDateTime(watchedFollowUp);
 
   return (
-    <div className="space-y-2 mb-4">
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-2 mb-4">
       <label className="block text-sm font-medium text-gray-700">Contact Date</label>
       <div className="flex gap-2">
         <input
           type="date"
           value={contactDate}
           onChange={(e) =>
-            updateForm({
-              ...form,
-              contact_date: combineDateTime(e.target.value, contactTime),
-            })
+            setValue("contact_date", combineDateTime(e.target.value, contactTime))
           }
-          className={`w-full border rounded px-2 py-1 text-sm ${showDateError ? "border-red-500" : ""}`}
+          className={`w-full border rounded px-2 py-1 text-sm ${errors.contact_date ? "border-red-500" : ""}`}
         />
         <input
           type="time"
           value={contactTime}
           onChange={(e) =>
-            updateForm({
-              ...form,
-              contact_date: combineDateTime(contactDate, e.target.value),
-            })
+            setValue("contact_date", combineDateTime(contactDate, e.target.value))
           }
-          className={`w-full border rounded px-2 py-1 text-sm ${showDateError ? "border-red-500" : ""}`}
+          className={`w-full border rounded px-2 py-1 text-sm ${errors.contact_date ? "border-red-500" : ""}`}
         />
       </div>
-
-      {showDateError && (
-        <p className="text-sm text-red-600 mt-1">
-          Please enter a valid contact date.
-        </p>
+      {errors.contact_date && (
+        <p className="text-sm text-red-600 mt-1">{errors.contact_date.message}</p>
       )}
 
-      <input
-        placeholder="Summary"
-        value={form.summary}
-        onChange={(e) => updateForm({ ...form, summary: e.target.value })}
-        className="w-full border rounded px-2 py-1 text-sm"
-      />
+      <div>
+        <input
+          placeholder="Summary"
+          {...register("summary")}
+          className={`w-full border rounded px-2 py-1 text-sm ${errors.summary ? "border-red-500" : ""}`}
+        />
+        {errors.summary && (
+          <p className="text-sm text-red-600 mt-1">{errors.summary.message}</p>
+        )}
+      </div>
 
-      <textarea
-        placeholder="Notes"
-        value={form.notes}
-        onChange={(e) => updateForm({ ...form, notes: e.target.value })}
-        className="w-full border rounded px-2 py-1 text-sm"
-        rows={3}
-      />
+      <div>
+        <textarea
+          placeholder="Notes"
+          {...register("notes")}
+          className={`w-full border rounded px-2 py-1 text-sm ${errors.notes ? "border-red-500" : ""}`}
+          rows={3}
+        />
+        {errors.notes && (
+          <p className="text-sm text-red-600 mt-1">{errors.notes.message}</p>
+        )}
+      </div>
 
       <label className="block text-sm font-medium text-gray-700">Next Follow-up (optional)</label>
       <div className="flex gap-2">
@@ -74,54 +108,84 @@ export default function InteractionForm(props: InteractionFormProps) {
           type="date"
           value={followDate}
           onChange={(e) =>
-            updateForm({
-              ...form,
-              follow_up: combineDateTime(e.target.value, followTime),
-            })
+            setValue("follow_up", combineDateTime(e.target.value, followTime))
           }
-          className="w-full border rounded px-2 py-1 text-sm"
+          className={`w-full border rounded px-2 py-1 text-sm ${errors.follow_up ? "border-red-500" : ""}`}
         />
         <input
           type="time"
           value={followTime}
           onChange={(e) =>
-            updateForm({
-              ...form,
-              follow_up: combineDateTime(followDate, e.target.value),
-            })
+            setValue("follow_up", combineDateTime(followDate, e.target.value))
           }
-          className="w-full border rounded px-2 py-1 text-sm"
+          className={`w-full border rounded px-2 py-1 text-sm ${errors.follow_up ? "border-red-500" : ""}`}
         />
       </div>
+      {errors.follow_up && (
+        <p className="text-sm text-red-600 mt-1">{errors.follow_up.message}</p>
+      )}
 
-      <input
-        placeholder="Next Step"
-        value={form.outcome}
-        onChange={(e) => updateForm({ ...form, outcome: e.target.value })}
-        className="w-full border rounded px-2 py-1 text-sm"
-      />
+      <div>
+        <input
+          placeholder="Next Step"
+          {...register("outcome")}
+          className={`w-full border rounded px-2 py-1 text-sm ${errors.outcome ? "border-red-500" : ""}`}
+        />
+        {errors.outcome && (
+          <p className="text-sm text-red-600 mt-1">{errors.outcome.message}</p>
+        )}
+      </div>
+
+      <div>
+        <input
+          placeholder="Contact Person"
+          {...register("contact_person")}
+          className={`w-full border rounded px-2 py-1 text-sm ${errors.contact_person ? "border-red-500" : ""}`}
+        />
+        {errors.contact_person && (
+          <p className="text-sm text-red-600 mt-1">{errors.contact_person.message}</p>
+        )}
+      </div>
+
+      <div>
+        <input
+          placeholder="Email"
+          type="email"
+          {...register("email")}
+          className={`w-full border rounded px-2 py-1 text-sm ${errors.email ? "border-red-500" : ""}`}
+        />
+        {errors.email && (
+          <p className="text-sm text-red-600 mt-1">{errors.email.message}</p>
+        )}
+      </div>
+
+      <div>
+        <input
+          placeholder="Phone"
+          {...register("phone")}
+          className={`w-full border rounded px-2 py-1 text-sm ${errors.phone ? "border-red-500" : ""}`}
+        />
+        {errors.phone && (
+          <p className="text-sm text-red-600 mt-1">{errors.phone.message}</p>
+        )}
+      </div>
 
       <div className="flex gap-2">
         <button
-          onClick={() => {
-            if (!form.contact_date || form.contact_date.startsWith("T")) {
-              setShowDateError(true);
-              return;
-            }
-            setShowDateError(false);
-            onSubmit();
-          }}
-          className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+          type="submit"
+          disabled={isSubmitting}
+          className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 disabled:bg-green-400"
         >
-          {isEditing ? "Update" : "Save"} Interaction
+          {isSubmitting ? "Saving..." : isEditing ? "Update" : "Save"} Interaction
         </button>
         <button
+          type="button"
           onClick={onCancel}
           className="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400"
         >
           Cancel
         </button>
       </div>
-    </div>
+    </form>
   );
 }
