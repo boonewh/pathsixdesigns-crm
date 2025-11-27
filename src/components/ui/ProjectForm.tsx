@@ -8,7 +8,7 @@ import { useEffect, useState } from "react";
 import { apiFetch } from "@/lib/api";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { projectCreateSchema, projectUpdateSchema, type ProjectCreateInput, type ProjectUpdateInput } from "@/schemas/projectSchemas";
+import { PROJECT_STATUSES, PROJECT_TYPES, projectCreateSchema, projectUpdateSchema, type ProjectCreateInput, type ProjectUpdateInput } from "@/schemas/projectSchemas";
 
 // TEMP: All Seasons Foam prefers "Accounts" instead of "Clients"
 const USE_ACCOUNT_LABELS = true;
@@ -33,15 +33,10 @@ type ContactOption = {
 };
 
 // Project type options - matches backend constants
-const TYPE_OPTIONS = [
-  "None", "Commercial", "Residential", "Industrial", "Government", 
-  "Infrastructure", "Technology", "Consulting", "Other"
-];
+const TYPE_OPTIONS = PROJECT_TYPES;
 
 // Project status options - matches backend constants
-const STATUS_OPTIONS = [
-  "planning", "active", "on_hold", "completed", "cancelled"
-];
+const STATUS_OPTIONS = PROJECT_STATUSES;
 
 export default function ProjectForm({ form, setForm, clients, leads, onSave, onCancel, isEditing = false }: ProjectFormProps) {
   const [contactOptions, setContactOptions] = useState<ContactOption[]>([]);
@@ -63,7 +58,7 @@ export default function ProjectForm({ form, setForm, clients, leads, onSave, onC
       project_name: form.project_name || "",
       type: form.type || "None",
       project_description: form.project_description || "",
-      project_status: form.project_status || "planning",
+      project_status: form.project_status || "active",
       project_start: form.project_start || "",
       project_end: form.project_end || "",
       project_worth: form.project_worth || undefined,

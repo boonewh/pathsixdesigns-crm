@@ -6,7 +6,7 @@ import { Lead } from "@/types";
 import PhoneInput from "@/components/ui/PhoneInput";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { leadCreateSchema, leadUpdateSchema, type LeadCreateInput, type LeadUpdateInput } from "@/schemas/leadSchemas";
+import { leadCreateSchema, leadUpdateSchema, leadStatuses, typeOptions, type LeadCreateInput, type LeadUpdateInput } from "@/schemas/leadSchemas";
 
 interface LeadFormProps {
   form: Partial<Lead>;
@@ -17,25 +17,10 @@ interface LeadFormProps {
 }
 
 // Lead status options - matches backend constants
-const LEAD_STATUS_OPTIONS = [
-  { value: 'open', label: 'Open' },
-  { value: 'qualified', label: 'Qualified' },
-  { value: 'proposal', label: 'Proposal' },
-  { value: 'closed', label: 'Closed' }
-];
-
-// Business type options - matches backend constants
-const TYPE_OPTIONS = [
-  "None",
-  "Oil & Gas",
-  "Secondary Containment",
-  "Tanks",
-  "Pipe",
-  "Rental",
-  "Food and Beverage",
-  "Bridge",
-  "Culvert",
-];
+const LEAD_STATUS_OPTIONS = leadStatuses.map((status) => ({
+  value: status,
+  label: status.replace('_', ' ').replace(/\b\w/g, (char) => char.toUpperCase()),
+}));
 
 export default function LeadForm({ form, setForm, onSave, onCancel, isEditing = false }: LeadFormProps) {
   const SHOW_LEAD_SOURCE = false;
@@ -68,7 +53,7 @@ export default function LeadForm({ form, setForm, onSave, onCancel, isEditing = 
       city: form.city || "",
       state: form.state || "",
       zip: form.zip || "",
-      lead_status: form.lead_status || "open",
+      lead_status: form.lead_status || "new",
       notes: form.notes || "",
       type: form.type || "None",
     },
@@ -140,7 +125,7 @@ export default function LeadForm({ form, setForm, onSave, onCancel, isEditing = 
               errors.type ? "border-red-500" : ""
             }`}
           >
-            {TYPE_OPTIONS.map((type) => (
+            {typeOptions.map((type) => (
               <option key={type} value={type}>
                 {type}
               </option>

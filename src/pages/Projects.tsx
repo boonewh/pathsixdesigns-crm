@@ -12,25 +12,34 @@ import { useStatusFilter } from "@/hooks/useStatusFilter";
 import { useSorting, legacySortToUnified, unifiedToLegacySort } from "@/hooks/useSorting";
 import ProjectsTable from "@/components/ui/ProjectsTable";
 import { LayoutGrid, List, Plus, Filter, ChevronDown, ChevronUp } from "lucide-react";
+import { PROJECT_STATUSES } from "@/schemas/projectSchemas";
 
 // TEMP: All Seasons Foam prefers "Accounts" instead of "Clients"
 const USE_ACCOUNT_LABELS = true;
 
-// Project status options for filtering
-const PROJECT_STATUS_OPTIONS = ['pending', 'won', 'lost'] as const;
+// Project status options for filtering (align with backend/Pydantic)
+const PROJECT_STATUS_OPTIONS = PROJECT_STATUSES;
 
 // Project status configuration
 const PROJECT_STATUS_CONFIG = {
   statuses: PROJECT_STATUS_OPTIONS,
   colors: {
+    active: 'bg-blue-100 text-blue-800',
     pending: 'bg-yellow-100 text-yellow-800',
-    won: 'bg-green-100 text-green-800',
-    lost: 'bg-red-100 text-red-800'
+    completed: 'bg-green-100 text-green-800',
+    cancelled: 'bg-red-100 text-red-800'
   },
   icons: {
+    active: '🔵',
     pending: '🟡',
-    won: '🟢',
-    lost: '🔴'
+    completed: '🟢',
+    cancelled: '🔴'
+  },
+  labels: {
+    active: 'Active',
+    pending: 'Pending',
+    completed: 'Completed',
+    cancelled: 'Cancelled'
   }
 };
 
@@ -472,8 +481,10 @@ export default function Projects() {
                             PROJECT_STATUS_CONFIG.colors[project.project_status as keyof typeof PROJECT_STATUS_CONFIG.colors] || 
                             'bg-gray-100 text-gray-800'
                           }`}>
-                            {PROJECT_STATUS_CONFIG.icons[project.project_status as keyof typeof PROJECT_STATUS_CONFIG.icons]} 
-                            {project.project_status?.toUpperCase() || 'PENDING'}
+                            {PROJECT_STATUS_CONFIG.icons[project.project_status as keyof typeof PROJECT_STATUS_CONFIG.icons]}
+                            {PROJECT_STATUS_CONFIG.labels[project.project_status as keyof typeof PROJECT_STATUS_CONFIG.labels] ||
+                              project.project_status?.toUpperCase() ||
+                              'Pending'}
                           </span>
                         </li>
                         {project.project_description && <li>{project.project_description}</li>}

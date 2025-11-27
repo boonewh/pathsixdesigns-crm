@@ -80,7 +80,7 @@ export interface Lead {
   assigned_to?: number;
   assigned_to_name?: string;
   created_by_name?: string;
-  lead_status: "open" | "converted" | "closed" | "lost";
+  lead_status: "new" | "contacted" | "qualified" | "lost" | "converted";
   converted_on?: string;
   type?: string;
 }

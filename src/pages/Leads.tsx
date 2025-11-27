@@ -14,22 +14,24 @@ import PaginationControls from "@/components/ui/PaginationControls";
 import { formatPhoneNumber } from "@/lib/phoneUtils";
 
 // Lead status options for filtering
-const LEAD_STATUS_OPTIONS = ['open', 'qualified', 'proposal', 'closed'] as const;
+const LEAD_STATUS_OPTIONS = ['new', 'contacted', 'qualified', 'lost', 'converted'] as const;
 
 // Lead status configuration
 const LEAD_STATUS_CONFIG = {
   statuses: LEAD_STATUS_OPTIONS,
   colors: {
-    open: 'bg-yellow-100 text-yellow-800',
-    qualified: 'bg-orange-100 text-orange-800', 
-    proposal: 'bg-blue-100 text-blue-800',
-    closed: 'bg-red-100 text-red-800'
+    new: 'bg-yellow-100 text-yellow-800',
+    contacted: 'bg-blue-100 text-blue-800',
+    qualified: 'bg-orange-100 text-orange-800',
+    lost: 'bg-red-100 text-red-800',
+    converted: 'bg-green-100 text-green-800'
   },
   icons: {
-    open: '🟡',
+    new: '🟡',
+    contacted: '📞',
     qualified: '🟠',
-    proposal: '🔵', 
-    closed: '🔴'
+    lost: '🔴',
+    converted: '🟢'
   }
 };
 
@@ -99,7 +101,7 @@ export default function Leads() {
     city: "",
     state: "",
     zip: "",
-    lead_status: "open",
+    lead_status: "new",
     notes: "",
     type: "None",
   });
@@ -235,7 +237,7 @@ export default function Leads() {
       city: "",
       state: "",
       zip: "",
-      lead_status: "open",
+      lead_status: "new",
       notes: "",
       type: "None",
     });
@@ -290,7 +292,7 @@ export default function Leads() {
                 city: "",
                 state: "",
                 zip: "",
-                lead_status: "open",
+                lead_status: "new",
                 notes: "",
                 type: "None",
               });
