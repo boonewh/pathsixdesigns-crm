@@ -16,9 +16,26 @@ import { apiFetch } from "@/lib/api";
 import CompanyNotes from "@/components/ui/CompanyNotes";
 import CompanyInteractions from "@/components/ui/CompanyInteractions";
 import { toast } from "react-hot-toast";
+import { PROJECT_STATUSES } from "@/schemas/projectSchemas";
 
 // TEMP: All Seasons Foam prefers "Accounts" instead of "Clients"
 const USE_ACCOUNT_LABELS = true;
+
+const PROJECT_STATUS_CONFIG = {
+  statuses: PROJECT_STATUSES,
+  colors: {
+    active: "bg-blue-100 text-blue-800",
+    pending: "bg-yellow-100 text-yellow-800",
+    completed: "bg-green-100 text-green-800",
+    cancelled: "bg-red-100 text-red-800",
+  },
+  labels: {
+    active: "Active",
+    pending: "Pending",
+    completed: "Completed",
+    cancelled: "Cancelled",
+  },
+};
 
 export default function ProjectDetailPage() {
   const { id } = useParams();
@@ -241,13 +258,19 @@ export default function ProjectDetailPage() {
         <div className="flex items-center gap-2">
           <Building size={14} className="text-gray-500" />
           <span className="text-gray-500 font-medium">Status:</span>{" "}
-          <span className={`px-2 py-1 text-xs rounded ${
-            project.project_status === 'won' ? 'bg-green-100 text-green-800' :
-            project.project_status === 'lost' ? 'bg-red-100 text-red-800' :
-            'bg-yellow-100 text-yellow-800'
-          }`}>
-            {project.project_status || 'pending'}
-          </span>
+          {project.project_status ? (
+            <span
+              className={`px-2 py-1 text-xs rounded ${
+                PROJECT_STATUS_CONFIG.colors[project.project_status as keyof typeof PROJECT_STATUS_CONFIG.colors] ||
+                'bg-gray-100 text-gray-800'
+              }`}
+            >
+              {PROJECT_STATUS_CONFIG.labels[project.project_status as keyof typeof PROJECT_STATUS_CONFIG.labels] ||
+                project.project_status}
+            </span>
+          ) : (
+            <span className="px-2 py-1 text-xs rounded bg-gray-100 text-gray-800">Pending</span>
+          )}
         </div>
         
         {project.project_worth && (

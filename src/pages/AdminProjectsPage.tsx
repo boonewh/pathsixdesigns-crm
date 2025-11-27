@@ -6,6 +6,7 @@ import ProjectForm from "@/components/ui/ProjectForm";
 import PaginationControls from "@/components/ui/PaginationControls";
 import { usePagination } from "@/hooks/usePreferences";
 import { Wrench } from "lucide-react";
+import { PROJECT_STATUSES } from "@/schemas/projectSchemas";
 
 
 interface AdminProject {
@@ -30,6 +31,22 @@ interface User {
   email: string;
   is_active: boolean;
 }
+
+const PROJECT_STATUS_CONFIG = {
+  statuses: PROJECT_STATUSES,
+  colors: {
+    active: 'bg-blue-100 text-blue-800',
+    pending: 'bg-yellow-100 text-yellow-800',
+    completed: 'bg-green-100 text-green-800',
+    cancelled: 'bg-red-100 text-red-800'
+  },
+  labels: {
+    active: 'Active',
+    pending: 'Pending',
+    completed: 'Completed',
+    cancelled: 'Cancelled'
+  }
+};
 
 export default function AdminProjectsPage() {
   const { token } = useAuth();
@@ -199,14 +216,19 @@ export default function AdminProjectsPage() {
                         )}
                       </td>
                       <td className="px-4 py-2">
-                        <span className={`inline-block px-2 py-1 text-xs rounded ${
-                          project.project_status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                          project.project_status === 'won' ? 'bg-green-100 text-green-800' :
-                          project.project_status === 'lost' ? 'bg-red-100 text-red-800' :
-                          'bg-gray-100 text-gray-800'
-                        }`}>
-                          {project.project_status ?? "—"}
-                        </span>
+                        {project.project_status ? (
+                          <span
+                            className={`inline-block px-2 py-1 text-xs rounded ${
+                              PROJECT_STATUS_CONFIG.colors[project.project_status as keyof typeof PROJECT_STATUS_CONFIG.colors] ||
+                              'bg-gray-100 text-gray-800'
+                            }`}
+                          >
+                            {PROJECT_STATUS_CONFIG.labels[project.project_status as keyof typeof PROJECT_STATUS_CONFIG.labels] ||
+                              project.project_status}
+                          </span>
+                        ) : (
+                          <span className="inline-block px-2 py-1 text-xs rounded bg-gray-100 text-gray-800">—</span>
+                        )}
                       </td>
                       <td className="px-4 py-2">{project.type ?? "—"}</td>
                       <td className="px-4 py-2">
