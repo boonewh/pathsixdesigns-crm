@@ -3,7 +3,7 @@ import { z } from 'zod'
 // Match the backend TYPE_OPTIONS and PHONE_LABELS
 const CLIENT_TYPES = ['None', 'Retail', 'Services', 'Manufacturing', 'Technology', 'Healthcare', 'Education', 'Government', 'Non-Profit', 'Other'] as const
 const PHONE_LABELS = ['work', 'mobile', 'home', 'fax', 'other'] as const
-const CLIENT_STATUSES = ['new', 'active', 'inactive', 'potential', 'archived'] as const
+const CLIENT_STATUSES = ['prospect', 'active', 'inactive', 'cancelled'] as const
 
 // Client Create Schema (POST /api/clients)
 export const clientCreateSchema = z.object({
@@ -24,7 +24,7 @@ export const clientCreateSchema = z.object({
   zip: z.string().max(20).optional(),
   notes: z.string().optional(),
   type: z.enum(CLIENT_TYPES).default('None'),
-  status: z.enum(CLIENT_STATUSES).default('new')
+  status: z.enum(CLIENT_STATUSES).default('prospect')
 })
 
 // Client Update Schema (PUT /api/clients/{id})

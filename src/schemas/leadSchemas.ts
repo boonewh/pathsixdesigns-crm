@@ -3,8 +3,8 @@ import { z } from 'zod'
 // Phone label options (must match backend PHONE_LABELS)
 export const phoneLabels = ['work', 'mobile', 'home', 'fax', 'other'] as const
 
-// Lead status options (must match backend LEAD_STATUS_OPTIONS)  
-export const leadStatuses = ['open', 'qualified', 'proposal', 'closed'] as const
+// Lead status options (must match backend LEAD_STATUS_OPTIONS)
+export const leadStatuses = ['new', 'contacted', 'qualified', 'lost', 'converted'] as const
 
 // Type options (must match backend TYPE_OPTIONS)
 export const typeOptions = [
@@ -33,7 +33,7 @@ export const leadCreateSchema = z.object({
   zip: z.string().max(20).optional().nullable(),
   notes: z.string().optional().nullable(),
   type: z.enum(typeOptions).default('None'),
-  lead_status: z.enum(leadStatuses).default('open')
+  lead_status: z.enum(leadStatuses).default('new')
 })
 
 // Lead Update Schema (PUT /api/leads/{id})

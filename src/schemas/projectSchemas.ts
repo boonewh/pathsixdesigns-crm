@@ -1,8 +1,8 @@
 import { z } from 'zod'
 
 // Match backend constants for Projects
-const PROJECT_TYPES = ['None', 'Commercial', 'Residential', 'Industrial', 'Government', 'Infrastructure', 'Technology', 'Consulting', 'Other'] as const
-const PROJECT_STATUSES = ['planning', 'active', 'on_hold', 'completed', 'cancelled'] as const
+export const PROJECT_TYPES = ['None', 'Commercial', 'Residential', 'Industrial', 'Government', 'Infrastructure', 'Technology', 'Consulting', 'Other'] as const
+export const PROJECT_STATUSES = ['active', 'pending', 'completed', 'cancelled'] as const
 const PHONE_LABELS = ['work', 'mobile', 'home', 'fax', 'other'] as const
 
 // Project Create Schema (POST /api/projects)
@@ -13,7 +13,7 @@ export const projectCreateSchema = z.object({
   // Optional fields
   type: z.enum(PROJECT_TYPES).default('None'),
   project_description: z.string().optional(),
-  project_status: z.enum(PROJECT_STATUSES).default('planning'),
+  project_status: z.enum(PROJECT_STATUSES).default('active'),
   project_start: z.string().optional(), // ISO date string
   project_end: z.string().optional(), // ISO date string
   project_worth: z.number().optional(),
