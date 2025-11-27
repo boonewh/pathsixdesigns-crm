@@ -24,7 +24,7 @@ export const projectCreateSchema = z.object({
   // Standalone project contact fields
   primary_contact_name: z.string().max(100).optional(),
   primary_contact_title: z.string().max(100).optional(),
-  primary_contact_email: z.string().email('Invalid email format').optional(),
+  primary_contact_email: z.string().email('Invalid email format').max(255).optional(),
   primary_contact_phone: z.string().max(20).optional(),
   primary_contact_phone_label: z.enum(PHONE_LABELS).optional(),
 })
@@ -45,7 +45,7 @@ export const projectUpdateSchema = z.object({
   // Standalone project contact fields
   primary_contact_name: z.string().max(100).optional(),
   primary_contact_title: z.string().max(100).optional(),
-  primary_contact_email: z.string().email().optional(),
+  primary_contact_email: z.string().email().max(255).optional(),
   primary_contact_phone: z.string().max(20).optional(),
   primary_contact_phone_label: z.enum(PHONE_LABELS).optional(),
 })

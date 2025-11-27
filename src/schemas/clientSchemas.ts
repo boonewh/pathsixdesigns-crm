@@ -13,7 +13,7 @@ export const clientCreateSchema = z.object({
   // Optional fields
   contact_person: z.string().max(100).optional(),
   contact_title: z.string().max(100).optional(), 
-  email: z.string().email('Invalid email format').optional(),
+  email: z.string().email('Invalid email format').max(255).optional(),
   phone: z.string().max(20).optional(),
   phone_label: z.enum(PHONE_LABELS).default('work'),
   secondary_phone: z.string().max(20).optional(),
@@ -32,7 +32,7 @@ export const clientUpdateSchema = z.object({
   name: z.string().min(1).max(100).optional(),
   contact_person: z.string().max(100).optional(),
   contact_title: z.string().max(100).optional(),
-  email: z.string().email().optional(),
+  email: z.string().email().max(255).optional(),
   phone: z.string().max(20).optional(),
   phone_label: z.enum(PHONE_LABELS).optional(),
   secondary_phone: z.string().max(20).optional(),
