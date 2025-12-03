@@ -62,3 +62,7 @@ uploads/
 temp/
 *.backup
 *.bak
+backend/
+
+# Vercel
+.vercel
