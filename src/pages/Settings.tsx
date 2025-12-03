@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { useAuth } from "@/authContext";
+import * as Sentry from "@sentry/react";
 
 export default function Settings() {
   const { user } = useAuth();
@@ -25,6 +26,34 @@ export default function Settings() {
           Change Password
         </Link>
       </div>
+
+      {/* Sentry Test Section - Only visible in development */}
+      {import.meta.env.DEV && (
+        <div className="bg-yellow-50 border border-yellow-300 rounded-lg shadow p-6">
+          <h2 className="text-lg font-semibold mb-4 text-yellow-800">Sentry Error Testing</h2>
+          <p className="text-sm text-yellow-700 mb-4">
+            These buttons are only visible in development mode. Use them to test Sentry error tracking.
+          </p>
+          <div className="flex gap-3">
+            <button
+              onClick={() => {
+                throw new Error('This is a test error from Settings page!');
+              }}
+              className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+            >
+              Throw Test Error
+            </button>
+            <button
+              onClick={() => {
+                Sentry.captureMessage('This is a test message from Settings page', 'info');
+              }}
+              className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+            >
+              Send Test Message
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

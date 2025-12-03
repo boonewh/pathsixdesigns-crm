@@ -1,115 +1,86 @@
-import { useEffect, useState } from "react";
-import { useAuth } from "@/authContext";
-import { apiFetch } from "@/lib/api";
+import { useState } from "react";
+import { BarChart3, TrendingUp, Target, Activity, DollarSign, Users, Bell } from "lucide-react";
+import { PipelineReport } from "@/components/reports/PipelineReport";
+import { LeadSourceReport } from "@/components/reports/LeadSourceReport";
+import { ConversionRateReport } from "@/components/reports/ConversionRateReport";
+import { RevenueReports } from "@/components/reports/RevenueReports";
+import { ActivityReports } from "@/components/reports/ActivityReports";
+import { DateRangePicker } from "@/components/ui/DateRangePicker";
+
+type ReportTab = "overview" | "pipeline" | "sources" | "conversion" | "revenue" | "activity";
 
 export default function Reports() {
-  const { token } = useAuth();
+  const [activeTab, setActiveTab] = useState<ReportTab>("overview");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
-  const [reportData, setReportData] = useState<any>(null);
-  const [loading, setLoading] = useState(false);
 
-const fetchReports = async () => {
-  setLoading(true);
-  setReportData(null);
-
-  try {
-    const res = await apiFetch("/reports/summary", {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-      },
-      method: "POST",
-      body: JSON.stringify({
-        start_date: startDate || null,
-        end_date: endDate || null,
-      }),
-    });
-
-    if (!res.ok) {
-      throw new Error("Failed to fetch reports");
-    }
-
-    const data = await res.json();
-    setReportData(data);
-  } catch (err) {
-    console.error("Report fetch failed:", err);
-    setReportData(null);
-  } finally {
-    setLoading(false);
-  }
-};
-
-
-useEffect(() => {
-  if (token) {
-    fetchReports();
-  }
-}, [token]);
+  const tabs = [
+    { id: "overview" as ReportTab, label: "Overview", icon: BarChart3 },
+    { id: "pipeline" as ReportTab, label: "Pipeline", icon: TrendingUp },
+    { id: "sources" as ReportTab, label: "Lead Sources", icon: Target },
+    { id: "conversion" as ReportTab, label: "Conversion", icon: Activity },
+    { id: "revenue" as ReportTab, label: "Revenue", icon: DollarSign },
+    { id: "activity" as ReportTab, label: "Activity", icon: Users },
+  ];
 
   return (
-    <div className="p-6">
-      <h1 className="text-2xl font-bold mb-4">Reports</h1>
-
-      <div className="flex flex-wrap items-end gap-4 mb-6">
-        <div>
-          <label className="block text-sm text-gray-600 mb-1">Start Date</label>
-          <input
-            type="date"
-            className="border rounded px-3 py-1"
-            value={startDate}
-            onChange={(e) => setStartDate(e.target.value)}
-          />
-        </div>
-        <div>
-          <label className="block text-sm text-gray-600 mb-1">End Date</label>
-          <input
-            type="date"
-            className="border rounded px-3 py-1"
-            value={endDate}
-            onChange={(e) => setEndDate(e.target.value)}
-          />
-        </div>
-        <button
-          onClick={fetchReports}
-          className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-4 py-2 rounded"
-        >
-          Filter
-        </button>
+    <div className="p-6 space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <h1 className="text-2xl font-bold">Reports & Analytics</h1>
       </div>
 
-      {loading ? (
-        <p>Loading...</p>
-      ) : reportData ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          <div className="bg-white rounded shadow p-4">
-            <h2 className="text-lg font-bold">Total Leads</h2>
-            <p className="text-2xl">{reportData.lead_count}</p>
+      <DateRangePicker
+        startDate={startDate}
+        endDate={endDate}
+        onStartDateChange={setStartDate}
+        onEndDateChange={setEndDate}
+        onApply={() => {
+          // Date filter will be applied when backend supports it
+          console.log("Date range:", startDate, endDate);
+        }}
+      />
+
+      {/* Tabs */}
+      <div className="border-b border-gray-200">
+        <nav className="-mb-px flex space-x-8 overflow-x-auto">
+          {tabs.map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`
+                flex items-center gap-2 py-4 px-1 border-b-2 font-medium text-sm whitespace-nowrap
+                ${
+                  activeTab === tab.id
+                    ? "border-blue-500 text-blue-600"
+                    : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                }
+              `}
+            >
+              <tab.icon className="h-5 w-5" />
+              {tab.label}
+            </button>
+          ))}
+        </nav>
+      </div>
+
+      {/* Report Content */}
+      <div>
+        {activeTab === "overview" && (
+          <div className="space-y-6">
+            <PipelineReport />
+            <div className="grid md:grid-cols-2 gap-6">
+              <LeadSourceReport />
+              <ConversionRateReport />
+            </div>
           </div>
-          <div className="bg-white rounded shadow p-4">
-            <h2 className="text-lg font-bold">Converted Leads</h2>
-            <p className="text-2xl">{reportData.converted_leads}</p>
-          </div>
-          <div className="bg-white rounded shadow p-4">
-            <h2 className="text-lg font-bold">Total Projects</h2>
-            <p className="text-2xl">{reportData.project_count}</p>
-          </div>
-          <div className="bg-white rounded shadow p-4">
-            <h2 className="text-lg font-bold">Won Projects</h2>
-            <p className="text-2xl">{reportData.won_projects}</p>
-          </div>
-          <div className="bg-white rounded shadow p-4">
-            <h2 className="text-lg font-bold">Lost Projects</h2>
-            <p className="text-2xl">{reportData.lost_projects}</p>
-          </div>
-          <div className="bg-white rounded shadow p-4">
-            <h2 className="text-lg font-bold">Total Won Value</h2>
-            <p className="text-2xl">${reportData.total_won_value?.toFixed(2)}</p>
-          </div>
-        </div>
-      ) : (
-        <p>No data available.</p>
-      )}
+        )}
+
+        {activeTab === "pipeline" && <PipelineReport />}
+        {activeTab === "sources" && <LeadSourceReport />}
+        {activeTab === "conversion" && <ConversionRateReport />}
+        {activeTab === "revenue" && <RevenueReports />}
+        {activeTab === "activity" && <ActivityReports />}
+      </div>
     </div>
   );
 }

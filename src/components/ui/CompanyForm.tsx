@@ -6,7 +6,7 @@ import { Client } from "@/types";
 import PhoneInput from "@/components/ui/PhoneInput";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { clientCreateSchema, clientUpdateSchema, type ClientCreateInput, type ClientUpdateInput } from "@/schemas/clientSchemas";
+import { CLIENT_TYPES, clientCreateSchema, clientUpdateSchema, type ClientCreateInput, type ClientUpdateInput } from "@/schemas/clientSchemas";
 
 interface ClientFormProps {
   form: Partial<Client>
@@ -16,11 +16,8 @@ interface ClientFormProps {
   isEditing?: boolean;
 }
 
-// Business type options - matches backend constants
-const TYPE_OPTIONS = [
-  "None", "Retail", "Services", "Manufacturing", "Technology", 
-  "Healthcare", "Education", "Government", "Non-Profit", "Other"
-];
+// Business type options - imported from schema to match backend
+const TYPE_OPTIONS = CLIENT_TYPES;
 
 export default function ClientForm({ form, setForm, onSave, onCancel, isEditing = false }: ClientFormProps) {
   // Determine which schema to use based on editing mode

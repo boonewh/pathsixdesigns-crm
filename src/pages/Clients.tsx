@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import EntityCard from "@/components/ui/EntityCard";
 import { useAuth, userHasRole } from "@/authContext";
-import { Mail, Phone, MapPin, User, StickyNote, Wrench, LayoutGrid, List, Plus, Filter, ChevronDown, ChevronUp, Edit, Trash2 } from "lucide-react";
+import { Mail, Phone, MapPin, User, StickyNote, LayoutGrid, List, Plus, Filter, ChevronDown, ChevronUp, Edit, Trash2 } from "lucide-react";
 import { Link } from "react-router-dom";
 import CompanyForm from "@/components/ui/CompanyForm";
 import PaginationControls from "@/components/ui/PaginationControls";
@@ -11,28 +11,13 @@ import { usePagination } from "@/hooks/usePreferences";
 import { useStatusFilter } from "@/hooks/useStatusFilter";
 import { useSorting, legacySortToUnified, unifiedToLegacySort } from "@/hooks/useSorting";
 import { formatPhoneNumber } from "@/lib/phoneUtils";
+import { CLIENT_TYPES } from "@/schemas/clientSchemas";
 
 // TEMP: All Seasons Foam prefers "Accounts" instead of "Clients"
 const USE_ACCOUNT_LABELS = true;
 
-// Account type options for filtering
-const ACCOUNT_TYPE_OPTIONS = [
-  'None',
-  'Retail',
-  'Wholesale',
-  'Services',
-  'Manufacturing',
-  'Construction',
-  'Real Estate',
-  'Healthcare',
-  'Technology',
-  'Education',
-  'Finance & Insurance',
-  'Hospitality',
-  'Transportation & Logistics',
-  'Non-Profit',
-  'Government',
-] as const;
+// Account type options for filtering - imported from schema
+const ACCOUNT_TYPE_OPTIONS = CLIENT_TYPES;
 
 // Smart default for filter visibility based on screen size
 const getDefaultFilterVisibility = () => {

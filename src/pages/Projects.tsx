@@ -205,16 +205,30 @@ export default function Projects() {
   const handleDelete = async (id: number) => {
     if (!confirm("Are you sure you want to delete this project?")) return;
 
-    const res = await apiFetch(`/projects/${id}`, {
-      method: "DELETE",
-      headers: { Authorization: `Bearer ${token}` },
-    });
+    try {
+      const res = await apiFetch(`/projects/${id}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      });
 
-    if (res.ok) {
-      setProjects((prev) => prev.filter((p) => p.id !== id));
-      setTotal((prev) => prev - 1);
-    } else {
-      alert("Failed to delete project");
+      if (res.ok) {
+        setProjects((prev) => prev.filter((p) => p.id !== id));
+        setTotal((prev) => prev - 1);
+      } else {
+        // Try to get error details from response
+        let errorMsg = "Failed to delete project";
+        try {
+          const errorData = await res.json();
+          errorMsg = errorData.detail || errorData.error || errorMsg;
+        } catch {
+          errorMsg = `Failed to delete project (${res.status})`;
+        }
+        alert(errorMsg);
+        console.error('Delete project error:', res.status, errorMsg);
+      }
+    } catch (err) {
+      console.error('Delete project exception:', err);
+      alert("Error deleting project - check console for details");
     }
   };
 

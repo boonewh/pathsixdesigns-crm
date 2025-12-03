@@ -1,4 +1,5 @@
 import toast from "react-hot-toast";
+import * as Sentry from "@sentry/react";
 
 export const API_BASE = import.meta.env.VITE_API_BASE_URL || "/api";
 
@@ -51,6 +52,18 @@ export async function apiFetch(path: string, options?: RequestInit) {
       }
 
       toast.error(errorMessage);
+      
+      // Send significant API errors to Sentry (but not auth errors)
+      if (res.status >= 500) {
+        Sentry.captureException(new Error(`API Error: ${errorMessage}`), {
+          level: 'error',
+          extra: {
+            url: `${API_BASE}${path}`,
+            status: res.status,
+            method: options?.method || 'GET',
+          },
+        });
+      }
     }
 
     return res;
@@ -59,8 +72,25 @@ export async function apiFetch(path: string, options?: RequestInit) {
     // Handle network errors (fetch failed completely)
     if (networkError instanceof TypeError && networkError.message.includes('fetch')) {
       toast.error("Unable to connect to server. Please check your internet connection.");
+      
+      // Track network failures in Sentry
+      Sentry.captureException(networkError, {
+        level: 'warning',
+        extra: {
+          url: `${API_BASE}${path}`,
+          context: 'Network connection failed',
+        },
+      });
     } else {
       toast.error("An unexpected error occurred. Please try again.");
+      
+      // Track unexpected errors
+      Sentry.captureException(networkError, {
+        level: 'error',
+        extra: {
+          url: `${API_BASE}${path}`,
+        },
+      });
     }
     
     // Re-throw so the calling code knows something went wrong

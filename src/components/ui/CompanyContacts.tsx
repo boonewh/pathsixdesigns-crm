@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { apiFetch } from "@/lib/api";
 import { formatPhoneNumber } from "@/lib/phoneUtils";
-import { useForm, useFieldArray } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { contactCreateSchema, contactUpdateSchema, type ContactCreateInput, type ContactUpdateInput } from "@/schemas/contactSchemas";
 import { Contact } from "@/types";
@@ -34,7 +34,6 @@ export default function CompanyContacts({ token, entityType, entityId }: Props) 
     watch,
     formState: { errors, isSubmitting },
     reset,
-    control,
   } = useForm<ContactCreateInput | ContactUpdateInput>({
     resolver: zodResolver(schema),
     defaultValues: {
@@ -42,14 +41,12 @@ export default function CompanyContacts({ token, entityType, entityId }: Props) 
       last_name: "",
       title: "",
       email: "",
-      phones: [],
+      phone: "",
+      phone_label: "work",
+      secondary_phone: "",
+      secondary_phone_label: "mobile",
       notes: "",
     },
-  });
-
-  const { fields: phonesFields, append: appendPhones, remove: removePhones } = useFieldArray({
-    control,
-    name: "phones",
   });
 
   // Watch all form values to sync with parent component state
@@ -176,41 +173,51 @@ export default function CompanyContacts({ token, entityType, entityId }: Props) 
               )}
             </div>
 
-            <div className="space-y-2">
-              <h5 className="text-sm font-medium">Phone Numbers</h5>
-              {phonesFields.map((field, index) => (
-                <div key={field.id} className="flex gap-2">
-                  <select
-                    {...register(`phones.${index}.label`)}
-                    className="border rounded px-2 py-1 w-24"
-                  >
-                    <option value="mobile">Mobile</option>
-                    <option value="work">Work</option>
-                    <option value="home">Home</option>
-                    <option value="fax">Fax</option>
-                  </select>
-                  <Input
-                    placeholder="Phone Number"
-                    {...register(`phones.${index}.phone`)}
-                    className={`flex-1 ${errors.phones?.[index]?.phone ? "border-red-500" : ""}`}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => removePhones(index)}
-                    className="px-2 py-1 bg-red-500 text-white rounded text-sm"
-                  >
-                    Remove
-                  </button>
-                </div>
-              ))}
-              <button
-                type="button"
-                onClick={() => appendPhones({ label: "mobile", phone: "" })}
-                className="px-3 py-1 bg-blue-500 text-white rounded text-sm"
+            <div className="grid grid-cols-3 gap-2">
+              <Input
+                placeholder="Phone"
+                {...register("phone")}
+                className={`col-span-2 ${errors.phone ? "border-red-500" : ""}`}
+              />
+              <select
+                {...register("phone_label")}
+                className={`border border-input bg-background text-sm rounded-md px-2 py-1 ${errors.phone_label ? "border-red-500" : ""}`}
               >
-                Add Phone
-              </button>
+                <option value="work">Work</option>
+                <option value="mobile">Mobile</option>
+                <option value="home">Home</option>
+                <option value="fax">Fax</option>
+                <option value="other">Other</option>
+              </select>
             </div>
+            {(errors.phone || errors.phone_label) && (
+              <p className="text-sm text-red-500 mt-1">
+                {errors.phone?.message || errors.phone_label?.message}
+              </p>
+            )}
+
+            <div className="grid grid-cols-3 gap-2">
+              <Input
+                placeholder="Secondary Phone"
+                {...register("secondary_phone")}
+                className={`col-span-2 ${errors.secondary_phone ? "border-red-500" : ""}`}
+              />
+              <select
+                {...register("secondary_phone_label")}
+                className={`border border-input bg-background text-sm rounded-md px-2 py-1 ${errors.secondary_phone_label ? "border-red-500" : ""}`}
+              >
+                <option value="mobile">Mobile</option>
+                <option value="work">Work</option>
+                <option value="home">Home</option>
+                <option value="fax">Fax</option>
+                <option value="other">Other</option>
+              </select>
+            </div>
+            {(errors.secondary_phone || errors.secondary_phone_label) && (
+              <p className="text-sm text-red-500 mt-1">
+                {errors.secondary_phone?.message || errors.secondary_phone_label?.message}
+              </p>
+            )}
 
             <div>
               <Textarea
@@ -306,7 +313,10 @@ export default function CompanyContacts({ token, entityType, entityId }: Props) 
                           last_name: c.last_name || "",
                           title: c.title || "",
                           email: c.email || "",
-                          phones: c.phones || [],
+                          phone: c.phone || "",
+                          phone_label: c.phone_label || "work",
+                          secondary_phone: c.secondary_phone || "",
+                          secondary_phone_label: c.secondary_phone_label || "mobile",
                           notes: c.notes || "",
                         });
                         setEditingId(c.id);

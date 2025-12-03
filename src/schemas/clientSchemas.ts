@@ -1,7 +1,25 @@
 import { z } from 'zod'
 
 // Match the backend TYPE_OPTIONS and PHONE_LABELS
-const CLIENT_TYPES = ['None', 'Retail', 'Services', 'Manufacturing', 'Technology', 'Healthcare', 'Education', 'Government', 'Non-Profit', 'Other'] as const
+export const CLIENT_TYPES = [
+  'None', 
+  'Retail', 
+  'Wholesale', 
+  'Services', 
+  'Manufacturing', 
+  'Construction', 
+  'Real Estate', 
+  'Healthcare', 
+  'Technology', 
+  'Education', 
+  'Finance & Insurance', 
+  'Hospitality', 
+  'Transportation & Logistics', 
+  'Non-Profit', 
+  'Government', 
+  'Other'
+] as const
+
 const PHONE_LABELS = ['work', 'mobile', 'home', 'fax', 'other'] as const
 const CLIENT_STATUSES = ['prospect', 'active', 'inactive', 'cancelled'] as const
 
