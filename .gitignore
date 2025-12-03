@@ -12,11 +12,16 @@ dist
 dist-ssr
 *.local
 
-# Environment variables (allow existing .env files but ignore others)
+# Environment variables - ALL .env files should be local only
+.env
+.env.*
+.env.local
+.env.development
 .env.development.local
+.env.test
 .env.test.local
+.env.production
 .env.production.local
-.env.production  
 
 # Testing
 coverage
