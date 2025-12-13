@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import EntityCard from "@/components/ui/EntityCard";
-import { Mail, Phone, MapPin, Flag, User, StickyNote, Wrench, LayoutGrid, List, Plus, Filter, ChevronDown, ChevronUp } from "lucide-react";
+import { Mail, Phone, MapPin, Flag, User, StickyNote, Wrench, LayoutGrid, List, Plus, Filter, ChevronDown, ChevronUp, Radio } from "lucide-react";
 import { useAuth, userHasRole } from "@/authContext";
 import { Link } from "react-router-dom";
 import LeadForm from "@/components/ui/LeadForm";
@@ -104,6 +104,7 @@ export default function Leads() {
     lead_status: "new",
     notes: "",
     type: "None",
+    lead_source: undefined,
   });
 
   const [error, setError] = useState("");
@@ -240,6 +241,7 @@ export default function Leads() {
       lead_status: "new",
       notes: "",
       type: "None",
+      lead_source: undefined,
     });
   };
 
@@ -295,6 +297,7 @@ export default function Leads() {
                 lead_status: "new",
                 notes: "",
                 type: "None",
+                lead_source: undefined,
               });
             }}
             className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 whitespace-nowrap"
@@ -502,12 +505,18 @@ export default function Leads() {
                         <li className="flex items-center gap-2">
                           <Flag size={14} />
                           <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
-                            LEAD_STATUS_CONFIG.colors[lead.lead_status as keyof typeof LEAD_STATUS_CONFIG.colors] || 
+                            LEAD_STATUS_CONFIG.colors[lead.lead_status as keyof typeof LEAD_STATUS_CONFIG.colors] ||
                             'bg-gray-100 text-gray-800'
                           }`}>
-                            {LEAD_STATUS_CONFIG.icons[lead.lead_status as keyof typeof LEAD_STATUS_CONFIG.icons]} 
+                            {LEAD_STATUS_CONFIG.icons[lead.lead_status as keyof typeof LEAD_STATUS_CONFIG.icons]}
                             {lead.lead_status.toUpperCase()}
                           </span>
+                        </li>
+                      )}
+                      {lead.lead_source && (
+                        <li className="flex items-center gap-2">
+                          <Radio size={14} />
+                          <span className="text-gray-700">{lead.lead_source}</span>
                         </li>
                       )}
                       {lead.contact_person && (

@@ -8,17 +8,23 @@ export const leadStatuses = ['new', 'contacted', 'qualified', 'lost', 'converted
 
 // Type options (must match backend TYPE_OPTIONS)
 export const typeOptions = [
-  'None', 'Retail', 'Wholesale', 'Services', 'Manufacturing', 
-  'Construction', 'Real Estate', 'Healthcare', 'Technology', 
-  'Education', 'Finance & Insurance', 'Hospitality', 
+  'None', 'Retail', 'Wholesale', 'Services', 'Manufacturing',
+  'Construction', 'Real Estate', 'Healthcare', 'Technology',
+  'Education', 'Finance & Insurance', 'Hospitality',
   'Transportation & Logistics', 'Non-Profit', 'Government'
+] as const
+
+// Lead source options (must match backend LEAD_SOURCE_OPTIONS)
+export const leadSourceOptions = [
+  'Website', 'Referral', 'Cold Call', 'Email Campaign',
+  'Social Media', 'Trade Show', 'Advertisement', 'Partner', 'Other'
 ] as const
 
 // Lead Create Schema (POST /api/leads)
 export const leadCreateSchema = z.object({
   // Required fields
   name: z.string().min(1, "Company name is required").max(100),
-  
+
   // Optional fields
   contact_person: z.string().max(100).optional().nullable(),
   contact_title: z.string().max(100).optional().nullable(),
@@ -33,7 +39,8 @@ export const leadCreateSchema = z.object({
   zip: z.string().max(20).optional().nullable(),
   notes: z.string().optional().nullable(),
   type: z.enum(typeOptions).default('None'),
-  lead_status: z.enum(leadStatuses).default('new')
+  lead_status: z.enum(leadStatuses).default('new'),
+  lead_source: z.enum(leadSourceOptions).optional().nullable()
 })
 
 // Lead Update Schema (PUT /api/leads/{id})
@@ -52,7 +59,8 @@ export const leadUpdateSchema = z.object({
   zip: z.string().max(20).optional().nullable(),
   notes: z.string().optional().nullable(),
   type: z.enum(typeOptions).optional(),
-  lead_status: z.enum(leadStatuses).optional()
+  lead_status: z.enum(leadStatuses).optional(),
+  lead_source: z.enum(leadSourceOptions).optional().nullable()
 })
 
 // Lead Assign Schema (PUT /api/leads/{id}/assign)

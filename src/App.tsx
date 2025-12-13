@@ -8,6 +8,7 @@ import Leads from "@/pages/Leads";
 import Projects from "@/pages/Projects";
 import Reports from "@/pages/Reports";
 import Settings from "@/pages/Settings";
+import HelpPage from "@/pages/HelpPage";
 import NotFound from "@/pages/NotFound";
 import LeadDetailPage from "@/pages/LeadDetailPage";
 import ClientDetailPage from "@/pages/ClientDetailPage";
@@ -46,6 +47,7 @@ function App() {
           <Route path="/projects" element={<Projects />} />
           <Route path="/reports" element={<Reports />} />
           <Route path="/settings" element={<Settings />} />
+          <Route path="/help" element={<HelpPage />} />
           <Route path="/clients/:id" element={<ClientDetailPage />} />
           <Route path="/leads/:id" element={<LeadDetailPage />} />
           <Route path="/calendar" element={<CalendarPage />} />

@@ -6,7 +6,7 @@ import { Lead } from "@/types";
 import PhoneInput from "@/components/ui/PhoneInput";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { leadCreateSchema, leadUpdateSchema, leadStatuses, typeOptions, type LeadCreateInput, type LeadUpdateInput } from "@/schemas/leadSchemas";
+import { leadCreateSchema, leadUpdateSchema, leadStatuses, typeOptions, leadSourceOptions, type LeadCreateInput, type LeadUpdateInput } from "@/schemas/leadSchemas";
 
 interface LeadFormProps {
   form: Partial<Lead>;
@@ -23,7 +23,7 @@ const LEAD_STATUS_OPTIONS = leadStatuses.map((status) => ({
 }));
 
 export default function LeadForm({ form, setForm, onSave, onCancel, isEditing = false }: LeadFormProps) {
-  const SHOW_LEAD_SOURCE = false;
+  const SHOW_LEAD_SOURCE = true;
   const SHOW_LEAD_TEMPERATURE = false;
   const SHOW_LEAD_SCORE = false;
 
@@ -56,6 +56,7 @@ export default function LeadForm({ form, setForm, onSave, onCancel, isEditing = 
       lead_status: form.lead_status || "new",
       notes: form.notes || "",
       type: form.type || "None",
+      lead_source: form.lead_source || null,
     },
   });
 
@@ -136,27 +137,27 @@ export default function LeadForm({ form, setForm, onSave, onCancel, isEditing = 
           )}
         </div>
 
-        {/* Optional Future Fields */}
+        {/* Lead Source */}
         {SHOW_LEAD_SOURCE && (
           <div className="grid gap-2">
             <Label htmlFor="lead_source">Lead Source</Label>
             <select
               id="lead_source"
-              value={(form as any).lead_source || ""}
-              onChange={(e) => setForm({ ...form, lead_source: e.target.value } as any)}
-              className="border border-input bg-background text-sm rounded-md px-2 py-1"
+              {...register("lead_source")}
+              className={`border border-input bg-background text-sm rounded-md px-2 py-1 ${
+                errors.lead_source ? "border-red-500" : ""
+              }`}
             >
-              <option value="">Select Source</option>
-              <option value="website">Website</option>
-              <option value="referral">Referral</option>
-              <option value="cold_call">Cold Call</option>
-              <option value="email_campaign">Email Campaign</option>
-              <option value="social_media">Social Media</option>
-              <option value="trade_show">Trade Show</option>
-              <option value="advertisement">Advertisement</option>
-              <option value="partner">Partner</option>
-              <option value="other">Other</option>
+              <option value="">Select a source...</option>
+              {leadSourceOptions.map((source) => (
+                <option key={source} value={source}>
+                  {source}
+                </option>
+              ))}
             </select>
+            {errors.lead_source && (
+              <p className="text-sm text-red-500">{errors.lead_source.message}</p>
+            )}
           </div>
         )}
 

@@ -59,11 +59,17 @@ export default function LeadsTable({
             >
               Status <span className="ml-1">{getSortIcon('lead_status')}</span>
             </th>
-            <th 
+            <th
               className="px-4 py-3 text-left text-sm font-medium text-gray-500 cursor-pointer hover:bg-gray-100 select-none"
               onClick={() => onSort('type')}
             >
               Type <span className="ml-1">{getSortIcon('type')}</span>
+            </th>
+            <th
+              className="px-4 py-3 text-left text-sm font-medium text-gray-500 cursor-pointer hover:bg-gray-100 select-none"
+              onClick={() => onSort('lead_source')}
+            >
+              Source <span className="ml-1">{getSortIcon('lead_source')}</span>
             </th>
             <th className="px-4 py-3 text-left text-sm font-medium text-gray-500">
               Contact Info
@@ -119,6 +125,9 @@ export default function LeadsTable({
               </td>
               <td className="px-4 py-3 text-sm text-gray-600">
                 {lead.type || '—'}
+              </td>
+              <td className="px-4 py-3 text-sm text-gray-600">
+                {lead.lead_source || '—'}
               </td>
               <td className="px-4 py-3 text-sm text-gray-600">
                 <div className="space-y-1">

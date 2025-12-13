@@ -7,6 +7,21 @@ import { formatPhoneNumber } from "@/lib/phoneUtils";
 // TEMP: All Seasons Foam prefers "Accounts" instead of "Clients"
 const USE_ACCOUNT_LABELS = true;
 
+const statusConfig = {
+  colors: {
+    new: "bg-blue-100 text-blue-800",
+    prospect: "bg-yellow-100 text-yellow-800",
+    active: "bg-green-100 text-green-800",
+    inactive: "bg-gray-100 text-gray-800",
+  },
+  icons: {
+    new: "🆕",
+    prospect: "👀",
+    active: "✅",
+    inactive: "⏸️",
+  },
+};
+
 interface ClientsTableProps {
   accounts: Client[];
   onEdit: (account: Client) => void;
@@ -64,11 +79,17 @@ export default function ClientsTable({
             >
               Primary Contact <span className="ml-1">{getSortIcon('contact_person')}</span>
             </th>
-            <th 
+            <th
               className="px-4 py-3 text-left text-sm font-medium text-gray-500 cursor-pointer hover:bg-gray-100 select-none"
               onClick={() => onSort('type')}
             >
               Type <span className="ml-1">{getSortIcon('type')}</span>
+            </th>
+            <th
+              className="px-4 py-3 text-left text-sm font-medium text-gray-500 cursor-pointer hover:bg-gray-100 select-none"
+              onClick={() => onSort('status')}
+            >
+              Status <span className="ml-1">{getSortIcon('status')}</span>
             </th>
             <th className="px-4 py-3 text-left text-sm font-medium text-gray-500">
               Contact Info
@@ -127,6 +148,13 @@ export default function ClientsTable({
                   'bg-gray-100 text-gray-800'
                 }`}>
                   {account.type || 'None'}
+                </span>
+              </td>
+              <td className="px-4 py-3">
+                <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
+                  statusConfig.colors[account.status || 'new']
+                }`}>
+                  {statusConfig.icons[account.status || 'new']} {(account.status || 'new').toUpperCase()}
                 </span>
               </td>
               <td className="px-4 py-3 text-sm text-gray-600">

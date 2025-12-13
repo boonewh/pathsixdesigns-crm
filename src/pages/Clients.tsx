@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import EntityCard from "@/components/ui/EntityCard";
 import { useAuth, userHasRole } from "@/authContext";
-import { Mail, Phone, MapPin, User, StickyNote, LayoutGrid, List, Plus, Filter, ChevronDown, ChevronUp, Edit, Trash2 } from "lucide-react";
+import { Mail, Phone, MapPin, User, StickyNote, LayoutGrid, List, Plus, Filter, ChevronDown, ChevronUp, Edit, Trash2, CircleDot } from "lucide-react";
 import { Link } from "react-router-dom";
 import CompanyForm from "@/components/ui/CompanyForm";
 import PaginationControls from "@/components/ui/PaginationControls";
@@ -25,21 +25,32 @@ const getDefaultFilterVisibility = () => {
   return window.innerWidth >= 1024; // lg breakpoint
 };
 
+const statusConfig = {
+  colors: {
+    new: "bg-blue-100 text-blue-800",
+    prospect: "bg-yellow-100 text-yellow-800",
+    active: "bg-green-100 text-green-800",
+    inactive: "bg-gray-100 text-gray-800",
+  },
+  icons: {
+    new: "🆕",
+    prospect: "👀",
+    active: "✅",
+    inactive: "⏸️",
+  },
+};
+
 // Table component for proper data table view
-function ClientsTable({ 
-  clients, 
-  onEdit, 
+function ClientsTable({
+  clients,
+  onEdit,
   onDelete,
-  sortField,
-  sortDirection,
   onSort,
   getSortIcon
 }: {
   clients: Client[];
   onEdit: (client: Client) => void;
   onDelete: (id: number) => void;
-  sortField: string;
-  sortDirection: 'asc' | 'desc';
   onSort: (field: string) => void;
   getSortIcon: (field: string) => string;
 }) {
@@ -211,8 +222,6 @@ export default function Clients() {
   const initialSort = legacySortToUnified(sortOrder, 'clients');
   
   const {
-    sortField,
-    sortDirection,
     handleSort,
     getSortIcon,
     sortData,
@@ -242,7 +251,7 @@ export default function Clients() {
     contact_person: "",
     email: "",
     phone: "",
-    phone_label: "work", 
+    phone_label: "work",
     secondary_phone: "",
     secondary_phone_label: "mobile",
     address: "",
@@ -250,7 +259,8 @@ export default function Clients() {
     state: "",
     zip: "",
     notes: "",
-    type: "None", 
+    type: "None",
+    status: "new",
   });
 
   const [error, setError] = useState("");
@@ -383,6 +393,7 @@ export default function Clients() {
       zip: "",
       notes: "",
       type: "None",
+      status: "new",
     });
   };
 
@@ -439,6 +450,7 @@ export default function Clients() {
                 zip: "",
                 notes: "",
                 type: "None",
+                status: "new",
               });
             }}
             className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 whitespace-nowrap"
@@ -642,6 +654,16 @@ export default function Clients() {
                   }
                   details={
                     <ul className="text-sm text-gray-600 space-y-2">
+                      {client.status && (
+                        <li className="flex items-start gap-2">
+                          <CircleDot size={14} className="mt-[2px] flex-shrink-0" />
+                          <span className={`inline-flex px-2 py-0.5 text-xs font-medium rounded-full ${
+                            statusConfig.colors[client.status]
+                          }`}>
+                            {statusConfig.icons[client.status]} {client.status.toUpperCase()}
+                          </span>
+                        </li>
+                      )}
                       {client.contact_person && (
                         <li className="flex items-start gap-2">
                           <User size={14} className="mt-[2px] flex-shrink-0" />
@@ -731,8 +753,6 @@ export default function Clients() {
               clients={sortedClients}
               onEdit={handleTableEdit}
               onDelete={handleDelete}
-              sortField={sortField}
-              sortDirection={sortDirection}
               onSort={handleSort}
               getSortIcon={getSortIcon}
             />

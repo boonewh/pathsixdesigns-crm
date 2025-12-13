@@ -21,7 +21,7 @@ export const CLIENT_TYPES = [
 ] as const
 
 const PHONE_LABELS = ['work', 'mobile', 'home', 'fax', 'other'] as const
-const CLIENT_STATUSES = ['prospect', 'active', 'inactive', 'cancelled'] as const
+export const CLIENT_STATUSES = ['new', 'prospect', 'active', 'inactive'] as const
 
 // Client Create Schema (POST /api/clients)
 export const clientCreateSchema = z.object({
@@ -42,7 +42,7 @@ export const clientCreateSchema = z.object({
   zip: z.string().max(20).optional(),
   notes: z.string().optional(),
   type: z.enum(CLIENT_TYPES).default('None'),
-  status: z.enum(CLIENT_STATUSES).default('prospect')
+  status: z.enum(CLIENT_STATUSES).default('new')
 })
 
 // Client Update Schema (PUT /api/clients/{id})

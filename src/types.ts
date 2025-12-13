@@ -28,6 +28,7 @@ export interface Client {
   created_at: string;
   accounts?: Account[];
   type?: string;
+  status?: "new" | "prospect" | "active" | "inactive";
 }
 
 export type Interaction = {
@@ -83,6 +84,7 @@ export interface Lead {
   lead_status: "new" | "contacted" | "qualified" | "lost" | "converted";
   converted_on?: string;
   type?: string;
+  lead_source?: "Website" | "Referral" | "Cold Call" | "Email Campaign" | "Social Media" | "Trade Show" | "Advertisement" | "Partner" | "Other";
 }
 
 export interface Project {

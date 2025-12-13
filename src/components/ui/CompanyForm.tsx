@@ -6,7 +6,7 @@ import { Client } from "@/types";
 import PhoneInput from "@/components/ui/PhoneInput";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { CLIENT_TYPES, clientCreateSchema, clientUpdateSchema, type ClientCreateInput, type ClientUpdateInput } from "@/schemas/clientSchemas";
+import { CLIENT_TYPES, CLIENT_STATUSES, clientCreateSchema, clientUpdateSchema, type ClientCreateInput, type ClientUpdateInput } from "@/schemas/clientSchemas";
 
 interface ClientFormProps {
   form: Partial<Client>
@@ -48,6 +48,7 @@ export default function ClientForm({ form, setForm, onSave, onCancel, isEditing 
       zip: form.zip || "",
       notes: form.notes || "",
       type: form.type || "None",
+      status: form.status || "new",
     },
   });
 
@@ -102,6 +103,26 @@ export default function ClientForm({ form, setForm, onSave, onCancel, isEditing 
           </select>
           {errors.type && (
             <p className="text-sm text-red-500">{errors.type.message}</p>
+          )}
+        </div>
+
+        <div className="grid gap-2">
+          <Label htmlFor="status">Status</Label>
+          <select
+            id="status"
+            {...register("status")}
+            className={`border border-input bg-background text-sm rounded-md px-2 py-1 ${
+              errors.status ? "border-red-500" : ""
+            }`}
+          >
+            {CLIENT_STATUSES.map((status) => (
+              <option key={status} value={status}>
+                {status.charAt(0).toUpperCase() + status.slice(1)}
+              </option>
+            ))}
+          </select>
+          {errors.status && (
+            <p className="text-sm text-red-500">{errors.status.message}</p>
           )}
         </div>
 
