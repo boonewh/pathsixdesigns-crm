@@ -144,12 +144,16 @@ export interface Backup {
 }
 
 export interface BackupRestore {
-  id: number;
+  restore_id: number;
+  restore_date: string; // ISO 8601 with Z suffix
+  user_email: string;
+  user_id: number;
+  backup_restored: string; // filename
   backup_id: number;
-  pre_restore_backup_id: number | null;
-  restored_by: string; // email
-  status: 'in_progress' | 'completed' | 'failed';
-  started_at: string;
-  completed_at: string | null;
-  error: string | null;
+  backup_date: string; // ISO 8601 with Z suffix
+  backup_size_bytes: number;
+  backup_checksum: string;
+  safety_backup_created: string; // filename
+  safety_backup_id: number;
+  restore_started_at: string; // ISO 8601 with Z suffix
 }

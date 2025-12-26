@@ -100,10 +100,9 @@ export default function AdminBackupsPage() {
   // Auto-enable/disable polling based on in-progress operations
   useEffect(() => {
     const hasInProgress =
-      backups.some((b) => b.status === "in_progress" || b.status === "pending") ||
-      restores.some((r) => r.status === "in_progress");
+      backups.some((b) => b.status === "in_progress" || b.status === "pending");
     setPollingEnabled(hasInProgress);
-  }, [backups, restores]);
+  }, [backups]);
 
   // Create manual backup
   const handleCreateBackup = async () => {
@@ -377,50 +376,42 @@ export default function AdminBackupsPage() {
           {restores.length === 0 ? (
             <p className="text-gray-500 text-center py-4">No restore operations yet</p>
           ) : (
-            <div className="overflow-auto">
-              <table className="min-w-full table-auto">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-4 py-2 text-left text-sm text-gray-700">Status</th>
-                    <th className="px-4 py-2 text-left text-sm text-gray-700">Backup File</th>
-                    <th className="px-4 py-2 text-left text-sm text-gray-700">Started</th>
-                    <th className="px-4 py-2 text-left text-sm text-gray-700">Completed</th>
-                    <th className="px-4 py-2 text-left text-sm text-gray-700">Restored By</th>
-                    <th className="px-4 py-2 text-left text-sm text-gray-700">Safety Backup</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {restores.map((restore) => (
-                    <tr key={restore.id} className="border-t hover:bg-gray-50">
-                      <td className="px-4 py-2">
-                        <StatusBadge status={restore.status} />
-                      </td>
-                      <td className="px-4 py-2 font-mono text-xs text-gray-700">
-                        {backups.find((b) => b.id === restore.backup_id)?.filename || `Backup #${restore.backup_id}`}
-                      </td>
-                      <td className="px-4 py-2 text-sm text-gray-600">
-                        {formatDateTime(restore.started_at)}
-                      </td>
-                      <td className="px-4 py-2 text-sm text-gray-600">
-                        {restore.completed_at ? formatDateTime(restore.completed_at) : "—"}
-                      </td>
-                      <td className="px-4 py-2 text-sm text-gray-600">
-                        {restore.restored_by || "—"}
-                      </td>
-                      <td className="px-4 py-2 text-xs">
-                        {restore.pre_restore_backup_id ? (
-                          <span className="text-green-600 flex items-center gap-1">
-                            <CheckCircle size={14} />
-                            Created
-                          </span>
-                        ) : (
-                          "—"
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+            <div className="space-y-4">
+              {restores.map((restore) => (
+                <div key={restore.restore_id} className="border rounded-lg p-4 bg-white hover:bg-gray-50">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div>
+                      <p className="text-xs text-gray-500 mb-1">Restored</p>
+                      <p className="text-sm font-semibold text-gray-900">
+                        {formatDateTime(restore.restore_date)}
+                      </p>
+                      <p className="text-xs text-gray-600 mt-1">
+                        By: {restore.user_email}
+                      </p>
+                    </div>
+
+                    <div>
+                      <p className="text-xs text-gray-500 mb-1">Restored Backup</p>
+                      <p className="text-xs font-mono text-gray-700 break-all">
+                        {restore.backup_restored}
+                      </p>
+                      <p className="text-xs text-gray-600 mt-1">
+                        Created: {formatDateTime(restore.backup_date)} ({formatBytes(restore.backup_size_bytes)})
+                      </p>
+                    </div>
+
+                    <div className="md:col-span-2">
+                      <p className="text-xs text-gray-500 mb-1">Safety Backup</p>
+                      <div className="flex items-center gap-2">
+                        <CheckCircle size={14} className="text-green-600" />
+                        <p className="text-xs font-mono text-gray-700 break-all">
+                          {restore.safety_backup_created}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
             </div>
           )}
         </div>
