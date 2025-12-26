@@ -3,6 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import { API_BASE } from "@/lib/api";
 import clsx from "clsx";
 
 export default function ResetPasswordPage() {
@@ -51,7 +52,7 @@ export default function ResetPasswordPage() {
       return;
     }
 
-    const res = await fetch("/api/reset-password", {
+    const res = await fetch(`${API_BASE}/reset-password`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ token, password }),

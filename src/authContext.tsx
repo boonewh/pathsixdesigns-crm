@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { API_BASE } from "@/lib/api";
 
 type AuthUser = {
   id: number;
@@ -89,7 +90,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       delay = 1500
     ): Promise<Response> => {
       try {
-        const res = await fetch(url, options);
+        const res = await fetch(`${API_BASE}${url}`, options);
         if (!res.ok) throw new Error("Auth check failed");
         return res;
       } catch (err) {
@@ -110,7 +111,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const giveUpTimer = setTimeout(() => setShowGiveUp(true), 15000);
 
       try {
-        const res = await fetchWithRetry("/api/user", {
+        const res = await fetchWithRetry("/user", {
           headers: {
             Authorization: `Bearer ${token}`,
           },

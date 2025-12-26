@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useAuth } from "@/authContext";
+import { API_BASE } from "@/lib/api";
 
 export default function ChangePasswordPage() {
   const { token } = useAuth();
@@ -24,7 +25,7 @@ export default function ChangePasswordPage() {
       return;
     }
 
-    const res = await fetch("/api/change-password", {
+    const res = await fetch(`${API_BASE}/change-password`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
