@@ -22,6 +22,7 @@ import AdminClientsPage from "./pages/AdminClientsPage";
 import AdminInteractionsPage from "./pages/AdminInteractionsPage";
 import AdminProjectsPage from "./pages/AdminProjectsPage";
 import AdminImportPage from "./pages/AdminImportPage";
+import AdminBackupsPage from "./pages/AdminBackupsPage";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import ProjectDetailPage from "./pages/ProjectDetailPage";
 import TrashPage from "./pages/TrashPage";
@@ -57,6 +58,7 @@ function App() {
           <Route path="/admin/interactions" element={<AdminInteractionsPage />} />
           <Route path="/admin/projects" element={<AdminProjectsPage />} />
           <Route path="/admin/import" element={<AdminImportPage />} />
+          <Route path="/admin/backups" element={<AdminBackupsPage />} />
           <Route path="/projects/:id" element={<ProjectDetailPage />} />
           <Route path="/trash" element={<TrashPage />} />
           <Route path="/vault" element={<Vault />} />

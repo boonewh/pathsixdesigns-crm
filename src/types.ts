@@ -129,3 +129,27 @@ export interface Contact {
   lead_id?: number;
   created_at?: string;
 }
+
+export interface Backup {
+  id: number;
+  filename: string;
+  type: 'manual' | 'scheduled' | 'pre_restore';
+  status: 'pending' | 'in_progress' | 'completed' | 'failed';
+  size: number; // bytes
+  checksum: string | null;
+  created_at: string; // ISO date
+  completed_at: string | null;
+  created_by: string | null; // email
+  error: string | null;
+}
+
+export interface BackupRestore {
+  id: number;
+  backup_id: number;
+  pre_restore_backup_id: number | null;
+  restored_by: string; // email
+  status: 'in_progress' | 'completed' | 'failed';
+  started_at: string;
+  completed_at: string | null;
+  error: string | null;
+}

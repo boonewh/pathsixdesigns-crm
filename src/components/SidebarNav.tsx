@@ -15,7 +15,8 @@ import {
   Upload,
   Trash,
   Archive,
-  HelpCircle
+  HelpCircle,
+  Database
 } from "lucide-react";
 
 // TEMP: All Seasons Foam uses "Accounts" instead of "Clients" and does not use multi-account section
@@ -91,7 +92,8 @@ function SidebarContent({
               { label: "Accounts Overview", path: "/admin/clients", icon: Briefcase },
               { label: "Interactions Overview", path: "/admin/interactions", icon: FileText },
               { label: "Projects Overview", path: "/admin/projects", icon: FolderKanban },
-              { label: "Data Import", path: "/admin/import", icon: Upload  },
+              { label: "Data Import", path: "/admin/import", icon: Upload },
+              { label: "Database Backups", path: "/admin/backups", icon: Database },
             ],
           },
         ]
