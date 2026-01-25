@@ -12,27 +12,16 @@ import { useSorting, legacySortToUnified, unifiedToLegacySort } from "@/hooks/us
 import LeadsTable from "@/components/ui/LeadsTable";
 import PaginationControls from "@/components/ui/PaginationControls";
 import { formatPhoneNumber } from "@/lib/phoneUtils";
+import { ACTIVE_CONFIG } from "@/config/crmConfig";
 
-// Lead status options for filtering
-const LEAD_STATUS_OPTIONS = ['new', 'contacted', 'qualified', 'lost', 'converted'] as const;
+// Lead status options from config
+const LEAD_STATUS_OPTIONS = ACTIVE_CONFIG.leads.statuses;
 
-// Lead status configuration
+// Lead status configuration from config
 const LEAD_STATUS_CONFIG = {
   statuses: LEAD_STATUS_OPTIONS,
-  colors: {
-    new: 'bg-yellow-100 text-yellow-800',
-    contacted: 'bg-blue-100 text-blue-800',
-    qualified: 'bg-orange-100 text-orange-800',
-    lost: 'bg-red-100 text-red-800',
-    converted: 'bg-green-100 text-green-800'
-  },
-  icons: {
-    new: '🟡',
-    contacted: '📞',
-    qualified: '🟠',
-    lost: '🔴',
-    converted: '🟢'
-  }
+  colors: ACTIVE_CONFIG.leads.statusConfig.colors,
+  icons: ACTIVE_CONFIG.leads.statusConfig.icons
 };
 
 // Smart default for filter visibility based on screen size

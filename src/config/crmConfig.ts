@@ -378,14 +378,70 @@ export const INDUSTRY_PRESETS: Record<string, IndustryPreset> = {
         }
       }
     }
+  },
+
+  // ASFI - Client-specific preset
+  asfi: {
+    branding: {
+      companyName: "ASFI CRM",
+    },
+    businessTypes: [
+      'None', 'Oil & Gas', 'Secondary Containment', 'Tanks', 'Pipe',
+      'Rental', 'Food and Beverage', 'Bridge', 'Culvert'
+    ],
+    leads: {
+      statuses: ['open', 'qualified', 'proposal', 'won', 'lost'],
+      statusConfig: {
+        colors: {
+          open: 'bg-yellow-100 text-yellow-800',
+          qualified: 'bg-orange-100 text-orange-800',
+          proposal: 'bg-blue-100 text-blue-800',
+          won: 'bg-green-100 text-green-800',
+          lost: 'bg-red-100 text-red-800'
+        },
+        icons: {
+          open: '🟡',
+          qualified: '🟠',
+          proposal: '🔵',
+          won: '🟢',
+          lost: '🔴'
+        },
+        labels: {
+          open: 'Open',
+          qualified: 'Qualified',
+          proposal: 'Proposal',
+          won: 'Won',
+          lost: 'Lost'
+        }
+      }
+    }
   }
 };
 
-// Hook to get current configuration (with environment overrides)
+// Get the preset name from environment variable
+const PRESET_NAME = import.meta.env.VITE_CRM_PRESET as string | undefined;
+
+// Build the active config once at load time
+function buildActiveConfig(): CRMConfig {
+  if (!PRESET_NAME || PRESET_NAME === 'default') {
+    return DEFAULT_CONFIG;
+  }
+
+  const preset = INDUSTRY_PRESETS[PRESET_NAME];
+  if (!preset) {
+    console.warn(`CRM preset "${PRESET_NAME}" not found, using default config`);
+    return DEFAULT_CONFIG;
+  }
+
+  return applyIndustryPreset(PRESET_NAME);
+}
+
+// The active configuration for this deployment
+export const ACTIVE_CONFIG = buildActiveConfig();
+
+// Hook to get current configuration
 export function useCRMConfig(): CRMConfig {
-  // In a real app, this would check environment variables, user settings, etc.
-  // For now, return the default config
-  return DEFAULT_CONFIG;
+  return ACTIVE_CONFIG;
 }
 
 // Helper to apply an industry preset

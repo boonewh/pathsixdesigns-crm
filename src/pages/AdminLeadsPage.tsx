@@ -8,6 +8,7 @@ import PaginationControls from "@/components/ui/PaginationControls";
 import { usePagination } from "@/hooks/usePreferences";
 import { formatPhoneNumber } from "@/lib/phoneUtils";
 import { Wrench } from "lucide-react";
+import { ACTIVE_CONFIG } from "@/config/crmConfig";
 
 interface AdminLead extends Lead {
   assigned_to_name?: string;
@@ -33,7 +34,7 @@ export default function AdminLeadsPage() {
   const [form, setForm] = useState<Partial<AdminLead>>({
     phone_label: "work",
     secondary_phone_label: "mobile",
-    lead_status: "new",
+    lead_status: ACTIVE_CONFIG.leads.statuses[0] as string,
     type: "None",
   });
 
@@ -260,14 +261,9 @@ export default function AdminLeadsPage() {
                       <td className="px-4 py-2">{lead.phone ? formatPhoneNumber(lead.phone) : "—"}</td>
                       <td className="px-4 py-2">
                         <span className={`inline-block px-2 py-1 text-xs rounded ${
-                          lead.lead_status === 'new' ? 'bg-yellow-100 text-yellow-800' :
-                          lead.lead_status === 'contacted' ? 'bg-blue-100 text-blue-800' :
-                          lead.lead_status === 'qualified' ? 'bg-orange-100 text-orange-800' :
-                          lead.lead_status === 'converted' ? 'bg-green-100 text-green-800' :
-                          lead.lead_status === 'lost' ? 'bg-red-100 text-red-800' :
-                          'bg-gray-100 text-gray-800'
+                          ACTIVE_CONFIG.leads.statusConfig.colors[lead.lead_status || ''] || 'bg-gray-100 text-gray-800'
                         }`}>
-                          {lead.lead_status ?? "—"}
+                          {ACTIVE_CONFIG.leads.statusConfig.icons[lead.lead_status || '']} {lead.lead_status ?? "—"}
                         </span>
                       </td>
                       <td className="px-4 py-2">{lead.type ?? "—"}</td>

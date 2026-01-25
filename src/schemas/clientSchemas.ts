@@ -1,24 +1,8 @@
 import { z } from 'zod'
+import { ACTIVE_CONFIG } from '@/config/crmConfig'
 
-// Match the backend TYPE_OPTIONS and PHONE_LABELS
-export const CLIENT_TYPES = [
-  'None', 
-  'Retail', 
-  'Wholesale', 
-  'Services', 
-  'Manufacturing', 
-  'Construction', 
-  'Real Estate', 
-  'Healthcare', 
-  'Technology', 
-  'Education', 
-  'Finance & Insurance', 
-  'Hospitality', 
-  'Transportation & Logistics', 
-  'Non-Profit', 
-  'Government', 
-  'Other'
-] as const
+// Client types - loaded from active config (businessTypes)
+export const CLIENT_TYPES = ACTIVE_CONFIG.businessTypes as unknown as readonly [string, ...string[]]
 
 const PHONE_LABELS = ['work', 'mobile', 'home', 'fax', 'other'] as const
 export const CLIENT_STATUSES = ['new', 'prospect', 'active', 'inactive'] as const

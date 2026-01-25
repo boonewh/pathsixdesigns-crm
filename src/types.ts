@@ -81,10 +81,10 @@ export interface Lead {
   assigned_to?: number;
   assigned_to_name?: string;
   created_by_name?: string;
-  lead_status: "new" | "contacted" | "qualified" | "lost" | "converted";
+  lead_status: string;
   converted_on?: string;
   type?: string;
-  lead_source?: "Website" | "Referral" | "Cold Call" | "Email Campaign" | "Social Media" | "Trade Show" | "Advertisement" | "Partner" | "Other";
+  lead_source?: string;
 }
 
 export interface Project {

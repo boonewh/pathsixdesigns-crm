@@ -1,24 +1,18 @@
 import { z } from 'zod'
+import { ACTIVE_CONFIG } from '@/config/crmConfig'
 
 // Phone label options (must match backend PHONE_LABELS)
 export const phoneLabels = ['work', 'mobile', 'home', 'fax', 'other'] as const
 
-// Lead status options (must match backend LEAD_STATUS_OPTIONS)
-export const leadStatuses = ['new', 'contacted', 'qualified', 'lost', 'converted'] as const
+// Lead status options - loaded from active config
+// Cast to tuple type for Zod enum compatibility
+export const leadStatuses = ACTIVE_CONFIG.leads.statuses as unknown as readonly [string, ...string[]]
 
-// Type options (must match backend TYPE_OPTIONS)
-export const typeOptions = [
-  'None', 'Retail', 'Wholesale', 'Services', 'Manufacturing',
-  'Construction', 'Real Estate', 'Healthcare', 'Technology',
-  'Education', 'Finance & Insurance', 'Hospitality',
-  'Transportation & Logistics', 'Non-Profit', 'Government'
-] as const
+// Type options - loaded from active config (businessTypes)
+export const typeOptions = ACTIVE_CONFIG.businessTypes as unknown as readonly [string, ...string[]]
 
-// Lead source options (must match backend LEAD_SOURCE_OPTIONS)
-export const leadSourceOptions = [
-  'Website', 'Referral', 'Cold Call', 'Email Campaign',
-  'Social Media', 'Trade Show', 'Advertisement', 'Partner', 'Other'
-] as const
+// Lead source options - loaded from active config
+export const leadSourceOptions = ACTIVE_CONFIG.leads.sources as unknown as readonly [string, ...string[]]
 
 // Lead Create Schema (POST /api/leads)
 export const leadCreateSchema = z.object({
