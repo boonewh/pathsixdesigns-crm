@@ -1,5 +1,6 @@
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/authContext";
+import { useCRMConfig } from "@/config/crmConfig";
 
 import {
   LayoutDashboard,
@@ -19,8 +20,6 @@ import {
   Database
 } from "lucide-react";
 
-// TEMP: All Seasons Foam uses "Accounts" instead of "Clients" and does not use multi-account section
-const USE_ACCOUNT_LABELS = true;
 const SHOW_REAL_ACCOUNTS_SECTION = false;
 
 interface SidebarNavProps {
@@ -37,7 +36,10 @@ function SidebarContent({
   toggleCollapsed,
 }: Pick<SidebarNavProps, "collapsed" | "closeMobile" | "toggleCollapsed">) {
   const location = useLocation();
-  const { user } = useAuth(); // ✅ Add this line here
+  const { user } = useAuth();
+  const config = useCRMConfig();
+  const clientLabel = config.labels?.client || "Client";
+  const useAccountStyle = clientLabel.toLowerCase() === "account";
 
   const navSections = [
     {
@@ -46,9 +48,9 @@ function SidebarContent({
         { label: "Dashboard", path: "/dashboard", icon: LayoutDashboard },
         { label: "Leads", path: "/leads", icon: UserPlus },
         {
-          label: USE_ACCOUNT_LABELS ? "Accounts" : "Clients",
+          label: `${clientLabel}s`,
           path: "/clients",
-          icon: USE_ACCOUNT_LABELS ? Briefcase : Users,
+          icon: useAccountStyle ? Briefcase : Users,
         },
         { label: "Calendar", path: "/calendar", icon: CalendarIcon },
       ],

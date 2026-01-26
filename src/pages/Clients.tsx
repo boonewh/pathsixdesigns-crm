@@ -12,12 +12,7 @@ import { useStatusFilter } from "@/hooks/useStatusFilter";
 import { useSorting, legacySortToUnified, unifiedToLegacySort } from "@/hooks/useSorting";
 import { formatPhoneNumber } from "@/lib/phoneUtils";
 import { CLIENT_TYPES } from "@/schemas/clientSchemas";
-
-// TEMP: All Seasons Foam prefers "Accounts" instead of "Clients"
-const USE_ACCOUNT_LABELS = true;
-
-// Account type options for filtering - imported from schema
-const ACCOUNT_TYPE_OPTIONS = CLIENT_TYPES;
+import { useCRMConfig } from "@/config/crmConfig";
 
 // Smart default for filter visibility based on screen size
 const getDefaultFilterVisibility = () => {
@@ -46,13 +41,15 @@ function ClientsTable({
   onEdit,
   onDelete,
   onSort,
-  getSortIcon
+  getSortIcon,
+  clientLabel
 }: {
   clients: Client[];
   onEdit: (client: Client) => void;
   onDelete: (id: number) => void;
   onSort: (field: string) => void;
   getSortIcon: (field: string) => string;
+  clientLabel: string;
 }) {
   const handleDelete = (client: Client) => {
     if (confirm(`Are you sure you want to delete "${client.name}"?`)) {
@@ -69,7 +66,7 @@ function ClientsTable({
               className="px-4 py-3 text-left text-sm font-medium text-gray-500 cursor-pointer hover:bg-gray-100 select-none"
               onClick={() => onSort('name')}
             >
-              {USE_ACCOUNT_LABELS ? 'Account' : 'Client'} Name <span className="ml-1">{getSortIcon('name')}</span>
+              {clientLabel} Name <span className="ml-1">{getSortIcon('name')}</span>
             </th>
             <th 
               className="px-4 py-3 text-left text-sm font-medium text-gray-500 cursor-pointer hover:bg-gray-100 select-none"
@@ -173,14 +170,14 @@ function ClientsTable({
                 <button
                   onClick={() => onEdit(client)}
                   className="text-blue-600 hover:text-blue-800 p-1 rounded hover:bg-blue-50"
-                  title={`Edit ${USE_ACCOUNT_LABELS ? 'account' : 'client'}`}
+                  title={`Edit ${clientLabel.toLowerCase()}`}
                 >
                   <Edit size={14} />
                 </button>
                 <button
                   onClick={() => handleDelete(client)}
                   className="text-red-600 hover:text-red-800 p-1 rounded hover:bg-red-50"
-                  title={`Delete ${USE_ACCOUNT_LABELS ? 'account' : 'client'}`}
+                  title={`Delete ${clientLabel.toLowerCase()}`}
                 >
                   <Trash2 size={14} />
                 </button>
@@ -193,7 +190,7 @@ function ClientsTable({
       
       {clients.length === 0 && (
         <div className="text-center py-8 text-gray-500">
-          <p>No {USE_ACCOUNT_LABELS ? 'accounts' : 'clients'} found.</p>
+          <p>No {clientLabel.toLowerCase()}s found.</p>
         </div>
       )}
     </div>
@@ -201,6 +198,10 @@ function ClientsTable({
 }
 
 export default function Clients() {
+  const config = useCRMConfig();
+  const clientLabel = config.labels?.client || "Client";
+  const ACCOUNT_TYPE_OPTIONS = config.businessTypes || CLIENT_TYPES;
+
   const [clients, setClients] = useState<Client[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -336,7 +337,7 @@ export default function Clients() {
   };
 
   const handleDelete = async (id: number) => {
-    if (!confirm(`Are you sure you want to delete this ${USE_ACCOUNT_LABELS ? 'account' : 'client'}?`)) return;
+    if (!confirm(`Are you sure you want to delete this ${clientLabel.toLowerCase()}?`)) return;
 
     const res = await apiFetch(`/clients/${id}`, {
       method: "DELETE",
@@ -347,7 +348,7 @@ export default function Clients() {
       setClients((prev) => prev.filter((c) => c.id !== id));
       setTotal((prev) => prev - 1);
     } else {
-      alert(`Failed to delete ${USE_ACCOUNT_LABELS ? 'account' : 'client'}`);
+      alert(`Failed to delete ${clientLabel.toLowerCase()}`);
     }
   };
 
@@ -362,7 +363,7 @@ export default function Clients() {
         body: JSON.stringify(data),
       });
 
-      if (!res.ok) throw new Error(`Failed to save ${USE_ACCOUNT_LABELS ? 'account' : 'client'}`);
+      if (!res.ok) throw new Error(`Failed to save ${clientLabel.toLowerCase()}`);
 
       const updatedRes = await apiFetch(`/clients/?page=${currentPage}&per_page=${perPage}&sort=${sortOrder}`, {
         headers: { Authorization: `Bearer ${token}` },
@@ -372,7 +373,7 @@ export default function Clients() {
       setTotal(fullData.total);
       handleCancel();
     } catch (err: any) {
-      setError(err.message || `Failed to save ${USE_ACCOUNT_LABELS ? 'account' : 'client'}`);
+      setError(err.message || `Failed to save ${clientLabel.toLowerCase()}`);
     }
   };
 
@@ -409,7 +410,7 @@ export default function Clients() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
         <h1 className="text-2xl font-bold">
-          {USE_ACCOUNT_LABELS ? "Accounts" : "Clients"}
+          {clientLabel}s
         </h1>
         <div className="flex gap-2 w-full sm:w-auto">
           {/* Filters Toggle Button */}
@@ -456,7 +457,7 @@ export default function Clients() {
             className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 whitespace-nowrap"
           >
             <Plus size={16} />
-            <span className="hidden sm:inline">New {USE_ACCOUNT_LABELS ? "Account" : "Client"}</span>
+            <span className="hidden sm:inline">New {clientLabel}</span>
             <span className="sm:hidden">New</span>
           </button>
         </div>
@@ -599,7 +600,7 @@ export default function Clients() {
         <div className="flex items-center justify-center py-12">
           <div className="text-center">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-2"></div>
-            <p className="text-gray-500">Loading {USE_ACCOUNT_LABELS ? 'accounts' : 'clients'}...</p>
+            <p className="text-gray-500">Loading {clientLabel.toLowerCase()}s...</p>
           </div>
         </div>
       ) : (
@@ -607,7 +608,7 @@ export default function Clients() {
           {creating && (
             <div className="w-full">
               <EntityCard
-                title={USE_ACCOUNT_LABELS ? "New Account" : "New Client"}
+                title={`New ${clientLabel}`}
                 editing
                 onSave={() => {}} // EntityCard doesn't need this since CompanyForm handles submission
                 onCancel={handleCancel}
@@ -755,6 +756,7 @@ export default function Clients() {
               onDelete={handleDelete}
               onSort={handleSort}
               getSortIcon={getSortIcon}
+              clientLabel={clientLabel}
             />
           )}
 
@@ -763,11 +765,11 @@ export default function Clients() {
               <div className="text-gray-400 mb-4">
                 <LayoutGrid size={48} className="mx-auto" />
               </div>
-              <h3 className="text-lg font-medium text-gray-900 mb-2">No {USE_ACCOUNT_LABELS ? 'accounts' : 'clients'} found</h3>
+              <h3 className="text-lg font-medium text-gray-900 mb-2">No {clientLabel.toLowerCase()}s found</h3>
               <p className="text-gray-500 mb-4">
-                {activeFiltersCount > 0 
-                  ? `No ${USE_ACCOUNT_LABELS ? 'accounts' : 'clients'} match your current filters. Try adjusting your search criteria.`
-                  : `Get started by creating your first ${USE_ACCOUNT_LABELS ? 'account' : 'client'}.`
+                {activeFiltersCount > 0
+                  ? `No ${clientLabel.toLowerCase()}s match your current filters. Try adjusting your search criteria.`
+                  : `Get started by creating your first ${clientLabel.toLowerCase()}.`
                 }
               </p>
               {activeFiltersCount > 0 && (
@@ -801,7 +803,7 @@ export default function Clients() {
       {showAssignModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white p-6 rounded-lg shadow-lg max-w-md w-full">
-            <h2 className="text-lg font-semibold mb-4">Assign {USE_ACCOUNT_LABELS ? "Account" : "Client"}</h2>
+            <h2 className="text-lg font-semibold mb-4">Assign {clientLabel}</h2>
 
             <select
               value={selectedUserId || ""}
@@ -850,7 +852,7 @@ export default function Clients() {
                     setClients(fullData.clients);
                     setTotal(fullData.total);
                   } else {
-                    alert(`Failed to assign ${USE_ACCOUNT_LABELS ? 'account' : 'client'}.`);
+                    alert(`Failed to assign ${clientLabel.toLowerCase()}.`);
                   }
                 }}
                 className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50 order-1 sm:order-2"
@@ -868,7 +870,7 @@ export default function Clients() {
             <div className="p-6">
               <div className="flex justify-between items-center mb-4">
                 <h2 className="text-lg font-semibold">
-                  Edit {USE_ACCOUNT_LABELS ? "Account" : "Client"}
+                  Edit {clientLabel}
                 </h2>
                 <button
                   onClick={() => {

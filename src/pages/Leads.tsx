@@ -12,17 +12,7 @@ import { useSorting, legacySortToUnified, unifiedToLegacySort } from "@/hooks/us
 import LeadsTable from "@/components/ui/LeadsTable";
 import PaginationControls from "@/components/ui/PaginationControls";
 import { formatPhoneNumber } from "@/lib/phoneUtils";
-import { ACTIVE_CONFIG } from "@/config/crmConfig";
-
-// Lead status options from config
-const LEAD_STATUS_OPTIONS = ACTIVE_CONFIG.leads.statuses;
-
-// Lead status configuration from config
-const LEAD_STATUS_CONFIG = {
-  statuses: LEAD_STATUS_OPTIONS,
-  colors: ACTIVE_CONFIG.leads.statusConfig.colors,
-  icons: ACTIVE_CONFIG.leads.statusConfig.icons
-};
+import { useCRMConfig } from "@/config/crmConfig";
 
 // Smart default for filter visibility based on screen size
 const getDefaultFilterVisibility = () => {
@@ -31,6 +21,16 @@ const getDefaultFilterVisibility = () => {
 };
 
 export default function Leads() {
+  const config = useCRMConfig();
+
+  // Build status config from tenant config
+  const LEAD_STATUS_OPTIONS = config.leads.statuses;
+  const LEAD_STATUS_CONFIG = {
+    statuses: LEAD_STATUS_OPTIONS,
+    colors: config.leads.statusConfig.colors,
+    icons: config.leads.statusConfig.icons
+  };
+
   const [leads, setLeads] = useState<Lead[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -90,7 +90,7 @@ export default function Leads() {
     city: "",
     state: "",
     zip: "",
-    lead_status: "new",
+    lead_status: config.leads.statuses[0] || "new",
     notes: "",
     type: "None",
     lead_source: undefined,
@@ -227,7 +227,7 @@ export default function Leads() {
       city: "",
       state: "",
       zip: "",
-      lead_status: "new",
+      lead_status: config.leads.statuses[0] || "new",
       notes: "",
       type: "None",
       lead_source: undefined,
@@ -283,7 +283,7 @@ export default function Leads() {
                 city: "",
                 state: "",
                 zip: "",
-                lead_status: "new",
+                lead_status: config.leads.statuses[0] || "new",
                 notes: "",
                 type: "None",
                 lead_source: undefined,

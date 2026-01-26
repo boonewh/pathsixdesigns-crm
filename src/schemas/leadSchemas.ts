@@ -1,18 +1,26 @@
 import { z } from 'zod'
-import { ACTIVE_CONFIG } from '@/config/crmConfig'
+import { getStoredConfig } from '@/config/crmConfig'
 
 // Phone label options (must match backend PHONE_LABELS)
 export const phoneLabels = ['work', 'mobile', 'home', 'fax', 'other'] as const
 
-// Lead status options - loaded from active config
-// Cast to tuple type for Zod enum compatibility
-export const leadStatuses = ACTIVE_CONFIG.leads.statuses as unknown as readonly [string, ...string[]]
+// Helper to get current config options
+// Uses stored tenant config if available, falls back to defaults
+const getConfig = () => getStoredConfig()
 
-// Type options - loaded from active config (businessTypes)
-export const typeOptions = ACTIVE_CONFIG.businessTypes as unknown as readonly [string, ...string[]]
+// Lead status options - loaded from tenant config
+export const getLeadStatuses = () => getConfig().leads.statuses as unknown as readonly [string, ...string[]]
 
-// Lead source options - loaded from active config
-export const leadSourceOptions = ACTIVE_CONFIG.leads.sources as unknown as readonly [string, ...string[]]
+// Type options - loaded from tenant config (businessTypes)
+export const getTypeOptions = () => getConfig().businessTypes as unknown as readonly [string, ...string[]]
+
+// Lead source options - loaded from tenant config
+export const getLeadSourceOptions = () => getConfig().leads.sources as unknown as readonly [string, ...string[]]
+
+// For backward compatibility
+export const leadStatuses = getLeadStatuses()
+export const typeOptions = getTypeOptions()
+export const leadSourceOptions = getLeadSourceOptions()
 
 // Lead Create Schema (POST /api/leads)
 export const leadCreateSchema = z.object({

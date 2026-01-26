@@ -37,7 +37,8 @@ export default function Login() {
       const data = await res.json();
 
       if (res.ok && data?.token) {
-        login(data.token);
+        // Pass tenant config from login response
+        login(data.token, data.tenant);
         navigate("/dashboard");
         return;
       }

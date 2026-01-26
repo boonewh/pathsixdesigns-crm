@@ -1,5 +1,7 @@
-// CRM Configuration - Easily customizable for any business
-// This file centralizes all business-specific settings, making the CRM adaptable to any industry
+// CRM Configuration - Dynamic tenant-based configuration from backend
+// Config is loaded at login and stored in auth context
+
+import { useAuth } from "@/authContext";
 
 export interface CRMConfig {
   // Company branding
@@ -74,17 +76,17 @@ export interface CRMConfig {
   };
 }
 
-// Default configuration - can be overridden per deployment
+// Default configuration - used as fallback when tenant config not yet loaded
 export const DEFAULT_CONFIG: CRMConfig = {
   branding: {
     companyName: "PathSix CRM",
-    primaryColor: "#2563eb", // blue-600
-    secondaryColor: "#64748b", // slate-500
+    primaryColor: "#2563eb",
+    secondaryColor: "#64748b",
   },
 
   labels: {
     client: "Client",
-    lead: "Lead", 
+    lead: "Lead",
     project: "Project",
     interaction: "Interaction",
   },
@@ -100,11 +102,11 @@ export const DEFAULT_CONFIG: CRMConfig = {
         converted: 'bg-green-100 text-green-800'
       },
       icons: {
-        new: '🟡',
-        contacted: '📞',
-        qualified: '🟠',
-        lost: '🔴',
-        converted: '🟢'
+        new: 'circle-yellow',
+        contacted: 'phone',
+        qualified: 'circle-orange',
+        lost: 'circle-red',
+        converted: 'circle-green'
       },
       labels: {
         new: 'New',
@@ -122,20 +124,20 @@ export const DEFAULT_CONFIG: CRMConfig = {
     temperatureConfig: {
       colors: {
         hot: 'text-red-600',
-        warm: 'text-orange-600', 
+        warm: 'text-orange-600',
         cold: 'text-blue-600'
       },
       icons: {
-        hot: '🔥',
-        warm: '☀️',
-        cold: '❄️'
+        hot: 'fire',
+        warm: 'sun',
+        cold: 'snowflake'
       }
     }
   },
 
   businessTypes: [
-    'None', 'Oil & Gas', 'Secondary Containment', 'Tanks', 'Pipe', 
-    'Rental', 'Food and Beverage', 'Bridge', 'Culvert'
+    'None', 'Professional Services', 'Technology', 'Manufacturing',
+    'Retail', 'Healthcare', 'Finance', 'Education', 'Other'
   ],
 
   regional: {
@@ -158,318 +160,47 @@ export const DEFAULT_CONFIG: CRMConfig = {
 
   defaults: {
     leadsPerPage: 10,
-    clientsPerPage: 10, 
+    clientsPerPage: 10,
     projectsPerPage: 10,
     defaultView: 'cards',
     defaultSort: 'newest',
   }
 };
 
-// Industry preset type - more flexible than strict CRMConfig
-interface IndustryPreset {
-  branding?: Partial<CRMConfig['branding']>;
-  labels?: Partial<CRMConfig['labels']>;
-  leads?: {
-    statuses?: readonly string[];
-    statusConfig?: {
-      colors?: Record<string, string>;
-      icons?: Record<string, string>;
-      labels?: Record<string, string>;
-    };
-    sources?: readonly string[];
-    temperatures?: readonly string[];
-    temperatureConfig?: {
-      colors?: Record<string, string>;
-      icons?: Record<string, string>;
-    };
-    customFields?: CRMConfig['leads']['customFields'];
-  };
-  businessTypes?: readonly string[];
-  regional?: Partial<CRMConfig['regional']>;
-  features?: Partial<CRMConfig['features']>;
-  defaults?: Partial<CRMConfig['defaults']>;
-}
+// For backward compatibility - points to default config
+// Components should use useCRMConfig() hook instead
+export const ACTIVE_CONFIG = DEFAULT_CONFIG;
 
-// Industry-specific presets that can be easily applied
-export const INDUSTRY_PRESETS: Record<string, IndustryPreset> = {
-  // Manufacturing/Industrial (like PathSix)
-  manufacturing: {
-    labels: {
-      client: "Account",
-      lead: "Prospect", 
-      project: "Job",
-      interaction: "Touch"
-    },
-    businessTypes: [
-      'None', 'Oil & Gas', 'Manufacturing', 'Chemical', 'Food Processing',
-      'Automotive', 'Aerospace', 'Construction', 'Mining'
-    ],
-    leads: {
-      sources: [
-        'Trade Show', 'Industry Referral', 'Cold Call', 'Website',
-        'LinkedIn', 'Industry Publication', 'Partner', 'Existing Customer'
-      ],
-      statuses: ['inquiry', 'qualified', 'quote_sent', 'negotiating', 'won', 'lost'],
-      statusConfig: {
-        colors: {
-          inquiry: 'bg-gray-100 text-gray-800',
-          qualified: 'bg-yellow-100 text-yellow-800',
-          quote_sent: 'bg-blue-100 text-blue-800',
-          negotiating: 'bg-orange-100 text-orange-800',
-          won: 'bg-green-100 text-green-800',
-          lost: 'bg-red-100 text-red-800'
-        },
-        icons: {
-          inquiry: '❓',
-          qualified: '✅',
-          quote_sent: '📄',
-          negotiating: '🤝',
-          won: '🎉',
-          lost: '❌'
-        },
-        labels: {
-          inquiry: 'Inquiry',
-          qualified: 'Qualified',
-          quote_sent: 'Quote Sent',
-          negotiating: 'Negotiating',
-          won: 'Won',
-          lost: 'Lost'
-        }
-      }
-    }
-  },
-
-  // Professional Services
-  services: {
-    labels: {
-      client: "Client",
-      lead: "Lead",
-      project: "Engagement", 
-      interaction: "Meeting"
-    },
-    businessTypes: [
-      'None', 'Legal', 'Accounting', 'Consulting', 'Marketing',
-      'IT Services', 'Financial Services', 'Real Estate', 'Healthcare'
-    ],
-    leads: {
-      sources: [
-        'Referral', 'Website', 'Networking', 'Social Media',
-        'Content Marketing', 'Speaking Event', 'Partner', 'Direct Mail'
-      ],
-      statuses: ['inquiry', 'consultation', 'proposal', 'won', 'lost'],
-      statusConfig: {
-        colors: {
-          inquiry: 'bg-blue-100 text-blue-800',
-          consultation: 'bg-yellow-100 text-yellow-800', 
-          proposal: 'bg-orange-100 text-orange-800',
-          won: 'bg-green-100 text-green-800',
-          lost: 'bg-red-100 text-red-800'
-        },
-        icons: {
-          inquiry: '📞',
-          consultation: '👥',
-          proposal: '📋',
-          won: '✅',
-          lost: '❌'
-        },
-        labels: {
-          inquiry: 'Inquiry',
-          consultation: 'Consultation',
-          proposal: 'Proposal',
-          won: 'Won',
-          lost: 'Lost'
-        }
-      }
-    }
-  },
-
-  // Real Estate
-  realestate: {
-    labels: {
-      client: "Client",
-      lead: "Lead",
-      project: "Property",
-      interaction: "Showing"
-    },
-    businessTypes: [
-      'None', 'Residential', 'Commercial', 'Industrial', 'Land',
-      'Multi-Family', 'Retail', 'Office', 'Investment'
-    ],
-    leads: {
-      sources: [
-        'Zillow', 'Realtor.com', 'Referral', 'Open House', 'Sign Call',
-        'Social Media', 'Website', 'Print Ad', 'Past Client'
-      ],
-      statuses: ['inquiry', 'qualified', 'showing', 'offer', 'closed', 'lost'],
-      statusConfig: {
-        colors: {
-          inquiry: 'bg-gray-100 text-gray-800',
-          qualified: 'bg-yellow-100 text-yellow-800',
-          showing: 'bg-blue-100 text-blue-800', 
-          offer: 'bg-orange-100 text-orange-800',
-          closed: 'bg-green-100 text-green-800',
-          lost: 'bg-red-100 text-red-800'
-        },
-        icons: {
-          inquiry: '📞',
-          qualified: '✅',
-          showing: '🏠',
-          offer: '💰',
-          closed: '🎉',
-          lost: '❌'
-        },
-        labels: {
-          inquiry: 'Inquiry',
-          qualified: 'Qualified',
-          showing: 'Showing',
-          offer: 'Offer',
-          closed: 'Closed',
-          lost: 'Lost'
-        }
-      }
-    }
-  },
-
-  // Technology/SaaS
-  technology: {
-    labels: {
-      client: "Customer",
-      lead: "Lead",
-      project: "Deal",
-      interaction: "Touch"
-    },
-    businessTypes: [
-      'None', 'Enterprise', 'Mid-Market', 'SMB', 'Startup',
-      'Government', 'Healthcare', 'Education', 'Non-Profit'
-    ],
-    leads: {
-      sources: [
-        'Website', 'Inbound Marketing', 'Cold Email', 'LinkedIn',
-        'Webinar', 'Conference', 'Partner', 'Demo Request', 'Trial Signup'
-      ],
-      statuses: ['mql', 'sql', 'demo', 'trial', 'proposal', 'closed_won', 'closed_lost'],
-      statusConfig: {
-        colors: {
-          mql: 'bg-blue-100 text-blue-800',
-          sql: 'bg-indigo-100 text-indigo-800',
-          demo: 'bg-purple-100 text-purple-800',
-          trial: 'bg-yellow-100 text-yellow-800',
-          proposal: 'bg-orange-100 text-orange-800',
-          closed_won: 'bg-green-100 text-green-800',
-          closed_lost: 'bg-red-100 text-red-800'
-        },
-        icons: {
-          mql: '🎯',
-          sql: '✅',
-          demo: '🖥️',
-          trial: '🔄',
-          proposal: '📄',
-          closed_won: '🎉',
-          closed_lost: '❌'
-        },
-        labels: {
-          mql: 'MQL',
-          sql: 'SQL',
-          demo: 'Demo',
-          trial: 'Trial',
-          proposal: 'Proposal',
-          closed_won: 'Closed Won',
-          closed_lost: 'Closed Lost'
-        }
-      }
-    }
-  },
-
-  // ASFI - Client-specific preset
-  asfi: {
-    branding: {
-      companyName: "ASFI CRM",
-    },
-    businessTypes: [
-      'None', 'Oil & Gas', 'Secondary Containment', 'Tanks', 'Pipe',
-      'Rental', 'Food and Beverage', 'Bridge', 'Culvert'
-    ],
-    leads: {
-      statuses: ['open', 'qualified', 'proposal', 'won', 'lost'],
-      statusConfig: {
-        colors: {
-          open: 'bg-yellow-100 text-yellow-800',
-          qualified: 'bg-orange-100 text-orange-800',
-          proposal: 'bg-blue-100 text-blue-800',
-          won: 'bg-green-100 text-green-800',
-          lost: 'bg-red-100 text-red-800'
-        },
-        icons: {
-          open: '🟡',
-          qualified: '🟠',
-          proposal: '🔵',
-          won: '🟢',
-          lost: '🔴'
-        },
-        labels: {
-          open: 'Open',
-          qualified: 'Qualified',
-          proposal: 'Proposal',
-          won: 'Won',
-          lost: 'Lost'
-        }
-      }
-    }
-  }
-};
-
-// Get the preset name from environment variable
-const PRESET_NAME = import.meta.env.VITE_CRM_PRESET as string | undefined;
-
-// Build the active config once at load time
-function buildActiveConfig(): CRMConfig {
-  if (!PRESET_NAME || PRESET_NAME === 'default') {
-    return DEFAULT_CONFIG;
-  }
-
-  const preset = INDUSTRY_PRESETS[PRESET_NAME];
-  if (!preset) {
-    console.warn(`CRM preset "${PRESET_NAME}" not found, using default config`);
-    return DEFAULT_CONFIG;
-  }
-
-  return applyIndustryPreset(PRESET_NAME);
-}
-
-// The active configuration for this deployment
-export const ACTIVE_CONFIG = buildActiveConfig();
-
-// Hook to get current configuration
+/**
+ * Hook to get current CRM configuration.
+ *
+ * Returns the tenant-specific config from auth context if logged in,
+ * or falls back to DEFAULT_CONFIG if not authenticated.
+ *
+ * Usage:
+ *   const config = useCRMConfig();
+ *   const statuses = config.leads.statuses;
+ */
 export function useCRMConfig(): CRMConfig {
-  return ACTIVE_CONFIG;
+  const { tenant } = useAuth();
+  return tenant?.config || DEFAULT_CONFIG;
 }
 
-// Helper to apply an industry preset
-export function applyIndustryPreset(industry: keyof typeof INDUSTRY_PRESETS): CRMConfig {
-  const preset = INDUSTRY_PRESETS[industry];
-  if (!preset) return DEFAULT_CONFIG;
-  
-  return {
-    ...DEFAULT_CONFIG,
-    ...preset,
-    // Deep merge for nested objects
-    branding: { ...DEFAULT_CONFIG.branding, ...preset.branding },
-    labels: { ...DEFAULT_CONFIG.labels, ...preset.labels },
-    leads: { 
-      ...DEFAULT_CONFIG.leads, 
-      ...preset.leads,
-      statusConfig: preset.leads?.statusConfig ? {
-        colors: { ...DEFAULT_CONFIG.leads.statusConfig.colors, ...preset.leads.statusConfig.colors },
-        icons: { ...DEFAULT_CONFIG.leads.statusConfig.icons, ...preset.leads.statusConfig.icons },
-        labels: { ...DEFAULT_CONFIG.leads.statusConfig.labels, ...preset.leads.statusConfig.labels }
-      } : DEFAULT_CONFIG.leads.statusConfig,
-      temperatureConfig: preset.leads?.temperatureConfig ? {
-        colors: { ...DEFAULT_CONFIG.leads.temperatureConfig.colors, ...preset.leads.temperatureConfig.colors },
-        icons: { ...DEFAULT_CONFIG.leads.temperatureConfig.icons, ...preset.leads.temperatureConfig.icons }
-      } : DEFAULT_CONFIG.leads.temperatureConfig
-    },
-    regional: { ...DEFAULT_CONFIG.regional, ...preset.regional },
-    features: { ...DEFAULT_CONFIG.features, ...preset.features },
-    defaults: { ...DEFAULT_CONFIG.defaults, ...preset.defaults },
-  };
+/**
+ * Get config outside of React components (for schema validation, etc.)
+ * This reads from localStorage directly.
+ *
+ * Note: Prefer useCRMConfig() in components for reactivity.
+ */
+export function getStoredConfig(): CRMConfig {
+  try {
+    const stored = localStorage.getItem("authTenant");
+    if (stored) {
+      const tenant = JSON.parse(stored);
+      return tenant.config || DEFAULT_CONFIG;
+    }
+  } catch (e) {
+    console.warn("Failed to parse stored tenant config");
+  }
+  return DEFAULT_CONFIG;
 }

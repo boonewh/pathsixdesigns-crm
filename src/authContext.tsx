@@ -1,17 +1,28 @@
 import { createContext, useContext, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { API_BASE } from "@/lib/api";
+import type { CRMConfig } from "@/config/crmConfig";
 
 type AuthUser = {
   id: number;
   email: string;
   roles: string[];
+  tenant_id: number;
+};
+
+// Tenant info returned from backend
+export type TenantInfo = {
+  id: number;
+  name: string;
+  slug: string;
+  config: CRMConfig;
 };
 
 type AuthContextType = {
   token: string | null;
   user: AuthUser | null;
-  login: (newToken: string) => void;
+  tenant: TenantInfo | null;
+  login: (newToken: string, tenant?: TenantInfo) => void;
   logout: () => void;
   isAuthenticated: boolean;
 };
@@ -26,12 +37,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const stored = localStorage.getItem("authUser");
     return stored ? JSON.parse(stored) : null;
   });
+  const [tenant, setTenant] = useState<TenantInfo | null>(() => {
+    const stored = localStorage.getItem("authTenant");
+    return stored ? JSON.parse(stored) : null;
+  });
 
   const [loading, setLoading] = useState<boolean>(!!token && !user);
   const [showRetryMessage, setShowRetryMessage] = useState(false);
   const [showGiveUp, setShowGiveUp] = useState(false);
 
-  const login = (newToken: string) => {
+  const login = (newToken: string, tenantData?: TenantInfo) => {
     try {
       const payload = JSON.parse(atob(newToken.split(".")[1]));
 
@@ -39,10 +54,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         id: payload.sub,
         email: payload.email,
         roles: payload.roles,
+        tenant_id: payload.tenant_id || tenantData?.id || 0,
       };
 
       localStorage.setItem("token", newToken);
       localStorage.setItem("authUser", JSON.stringify(newUser));
+
+      if (tenantData) {
+        localStorage.setItem("authTenant", JSON.stringify(tenantData));
+        setTenant(tenantData);
+      }
 
       setToken(newToken);
       setUser(newUser);
@@ -54,14 +75,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const logout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("authUser");
+    localStorage.removeItem("authTenant");
     setToken(null);
     setUser(null);
+    setTenant(null);
     navigate("/login");
   };
 
   const isAuthenticated = !!token;
 
-  // 🔒 Auto-logout on expiration
+  // Auto-logout on expiration
   useEffect(() => {
     const interval = setInterval(() => {
       if (!token) return;
@@ -81,7 +104,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return () => clearInterval(interval);
   }, [token]);
 
-  // 🔁 Verify token with retry on app load
+  // Verify token with retry on app load
   useEffect(() => {
     const fetchWithRetry = async (
       url: string,
@@ -111,14 +134,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const giveUpTimer = setTimeout(() => setShowGiveUp(true), 15000);
 
       try {
-        const res = await fetchWithRetry("/user", {
+        // Use /me endpoint which returns user + tenant config
+        const res = await fetchWithRetry("/me", {
           headers: {
             Authorization: `Bearer ${token}`,
           },
         });
 
         const data = await res.json();
-        setUser(data);
+
+        // Extract user data
+        const userData: AuthUser = {
+          id: data.id,
+          email: data.email,
+          roles: data.roles,
+          tenant_id: data.tenant_id,
+        };
+        setUser(userData);
+        localStorage.setItem("authUser", JSON.stringify(userData));
+
+        // Extract tenant data if present
+        if (data.tenant) {
+          setTenant(data.tenant);
+          localStorage.setItem("authTenant", JSON.stringify(data.tenant));
+        }
       } catch (err) {
         console.warn("Token invalid or server unreachable, logging out");
         logout();
@@ -132,14 +171,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     verifyToken();
   }, []);
 
-  // ⏳ Connecting / Retry / Give Up UI
+  // Connecting / Retry / Give Up UI
   if (loading) {
     return (
       <div className="h-screen flex flex-col items-center justify-center text-lg text-gray-500 space-y-4 px-4 text-center">
-        <div>🔄 Connecting to server…</div>
+        <div>Connecting to server...</div>
         {showRetryMessage && (
           <div className="text-sm text-gray-400">
-            Still trying… this may be a cold start or temporary outage.
+            Still trying... this may be a cold start or temporary outage.
           </div>
         )}
         {showGiveUp && (
@@ -155,7 +194,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <AuthContext.Provider value={{ token, user, login, logout, isAuthenticated }}>
+    <AuthContext.Provider value={{ token, user, tenant, login, logout, isAuthenticated }}>
       {children}
     </AuthContext.Provider>
   );

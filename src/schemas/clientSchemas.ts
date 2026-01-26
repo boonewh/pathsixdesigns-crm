@@ -1,8 +1,9 @@
 import { z } from 'zod'
-import { ACTIVE_CONFIG } from '@/config/crmConfig'
+import { getStoredConfig } from '@/config/crmConfig'
 
-// Client types - loaded from active config (businessTypes)
-export const CLIENT_TYPES = ACTIVE_CONFIG.businessTypes as unknown as readonly [string, ...string[]]
+// Client types - loaded from tenant config (businessTypes)
+export const getClientTypes = () => getStoredConfig().businessTypes as unknown as readonly [string, ...string[]]
+export const CLIENT_TYPES = getClientTypes()
 
 const PHONE_LABELS = ['work', 'mobile', 'home', 'fax', 'other'] as const
 export const CLIENT_STATUSES = ['new', 'prospect', 'active', 'inactive'] as const
