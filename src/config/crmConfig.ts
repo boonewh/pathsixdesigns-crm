@@ -9,7 +9,8 @@ export interface CRMConfig {
     companyName: string;
     primaryColor: string;
     secondaryColor: string;
-    logo?: string;
+    logo?: string | null;        // Full logo URL (null = use default PathSix logo)
+    logoCompact?: string | null; // Compact/icon logo URL (null = use default)
   };
 
   // Entity labels (customize for industry)

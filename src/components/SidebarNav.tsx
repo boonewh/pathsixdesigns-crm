@@ -41,6 +41,10 @@ function SidebarContent({
   const clientLabel = config.labels?.client || "Client";
   const useAccountStyle = clientLabel.toLowerCase() === "account";
 
+  // Tenant logos with fallback to default PathSix SVG logos
+  const logoFull = config.branding?.logo || "/pathsix_crm_logo.svg";
+  const logoCompact = config.branding?.logoCompact || "/crm_compact_logo.svg";
+
   const navSections = [
     {
       section: "Main",
@@ -110,13 +114,24 @@ function SidebarContent({
     >
       <div className="flex justify-center mb-4">
         {collapsed ? (
-          <img src="/crm_rocket_logo.png" alt="PS" className="w-8 h-auto" />
+          customLogoCompact ? (
+            <img src={customLogoCompact} alt="Logo" className="w-8 h-auto" />
+          ) : (
+            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 96 96" role="img" aria-label="P6">
+              <text x="10" y="68" fontFamily="Arial, sans-serif" fontSize="64" fontWeight="700" letterSpacing="-2" fill="#05133D">P</text>
+              <text x="46" y="68" fontFamily="Arial, sans-serif" fontSize="64" fontWeight="700" letterSpacing="-2" fill="#F59E0B">6</text>
+            </svg>
+          )
         ) : (
-          <img
-            src="/pathsix_crm_logo.png"
-            alt="Path Six Designs Logo"
-            className="max-w-[180px] h-auto"
-          />
+          customLogoFull ? (
+            <img src={customLogoFull} alt={config.branding?.companyName || "CRM Logo"} className="max-w-[180px] h-auto" />
+          ) : (
+            <svg xmlns="http://www.w3.org/2000/svg" width="180" height="36" viewBox="0 0 360 72" role="img" aria-label="PathSix CRM">
+              <text x="0" y="50" fontFamily="Arial, sans-serif" fontSize="44" fontWeight="700" letterSpacing="-2" fill="#05133D">Path</text>
+              <text x="90" y="50" fontFamily="Arial, sans-serif" fontSize="44" fontWeight="700" letterSpacing="-2" fill="#F59E0B">Six</text>
+              <text x="160" y="50" fontFamily="Arial, sans-serif" fontSize="26" fontWeight="600" letterSpacing="-1" fill="#334155">CRM</text>
+            </svg>
+          )
         )}
       </div>
 
