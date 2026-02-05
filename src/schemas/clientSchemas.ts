@@ -1,21 +1,21 @@
 import { z } from 'zod'
 import { getStoredConfig } from '@/config/crmConfig'
 
-// Client types - loaded from tenant config (businessTypes)
+// Client types - loaded lazily from tenant config (businessTypes)
 export const getClientTypes = () => getStoredConfig().businessTypes as unknown as readonly [string, ...string[]]
-export const CLIENT_TYPES = getClientTypes()
 
 const PHONE_LABELS = ['work', 'mobile', 'home', 'fax', 'other'] as const
 export const CLIENT_STATUSES = ['new', 'prospect', 'active', 'inactive'] as const
 
 // Client Create Schema (POST /api/clients)
-export const clientCreateSchema = z.object({
+// Built lazily to avoid circular dependency at module load time
+export const getClientCreateSchema = () => z.object({
   // Required field
   name: z.string().min(1, 'Company name is required').max(100),
-  
+
   // Optional fields
   contact_person: z.string().max(100).optional(),
-  contact_title: z.string().max(100).optional(), 
+  contact_title: z.string().max(100).optional(),
   email: z.string().email('Invalid email format').max(255).optional(),
   phone: z.string().max(20).optional(),
   phone_label: z.enum(PHONE_LABELS).default('work'),
@@ -26,12 +26,12 @@ export const clientCreateSchema = z.object({
   state: z.string().max(100).optional(),
   zip: z.string().max(20).optional(),
   notes: z.string().optional(),
-  type: z.enum(CLIENT_TYPES).default('None'),
+  type: z.enum(getClientTypes()).default('None'),
   status: z.enum(CLIENT_STATUSES).default('new')
 })
 
 // Client Update Schema (PUT /api/clients/{id})
-export const clientUpdateSchema = z.object({
+export const getClientUpdateSchema = () => z.object({
   name: z.string().min(1).max(100).optional(),
   contact_person: z.string().max(100).optional(),
   contact_title: z.string().max(100).optional(),
@@ -45,7 +45,7 @@ export const clientUpdateSchema = z.object({
   state: z.string().max(100).optional(),
   zip: z.string().max(20).optional(),
   notes: z.string().optional(),
-  type: z.enum(CLIENT_TYPES).optional(),
+  type: z.enum(getClientTypes()).optional(),
   status: z.enum(CLIENT_STATUSES).optional()
 })
 
@@ -55,6 +55,6 @@ export const clientAssignSchema = z.object({
 })
 
 // TypeScript types
-export type ClientCreateInput = z.infer<typeof clientCreateSchema>
-export type ClientUpdateInput = z.infer<typeof clientUpdateSchema>
+export type ClientCreateInput = z.infer<ReturnType<typeof getClientCreateSchema>>
+export type ClientUpdateInput = z.infer<ReturnType<typeof getClientUpdateSchema>>
 export type ClientAssignInput = z.infer<typeof clientAssignSchema>

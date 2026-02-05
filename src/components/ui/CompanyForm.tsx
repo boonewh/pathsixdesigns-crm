@@ -6,7 +6,7 @@ import { Client } from "@/types";
 import PhoneInput from "@/components/ui/PhoneInput";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { CLIENT_TYPES, CLIENT_STATUSES, clientCreateSchema, clientUpdateSchema, type ClientCreateInput, type ClientUpdateInput } from "@/schemas/clientSchemas";
+import { getClientTypes, CLIENT_STATUSES, getClientCreateSchema, getClientUpdateSchema, type ClientCreateInput, type ClientUpdateInput } from "@/schemas/clientSchemas";
 
 interface ClientFormProps {
   form: Partial<Client>
@@ -16,12 +16,12 @@ interface ClientFormProps {
   isEditing?: boolean;
 }
 
-// Business type options - imported from schema to match backend
-const TYPE_OPTIONS = CLIENT_TYPES;
-
 export default function ClientForm({ form, setForm, onSave, onCancel, isEditing = false }: ClientFormProps) {
+  // Business type options - loaded lazily from tenant config
+  const TYPE_OPTIONS = getClientTypes();
+
   // Determine which schema to use based on editing mode
-  const schema = isEditing ? clientUpdateSchema : clientCreateSchema;
+  const schema = isEditing ? getClientUpdateSchema() : getClientCreateSchema();
 
   // Set up React Hook Form with Zod validation
   const {

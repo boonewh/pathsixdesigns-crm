@@ -8,7 +8,7 @@ import { useEffect, useState } from "react";
 import { apiFetch } from "@/lib/api";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { PROJECT_STATUSES, PROJECT_TYPES, projectCreateSchema, projectUpdateSchema, type ProjectCreateInput, type ProjectUpdateInput } from "@/schemas/projectSchemas";
+import { PROJECT_STATUSES, getProjectTypes, getProjectCreateSchema, getProjectUpdateSchema, type ProjectCreateInput, type ProjectUpdateInput } from "@/schemas/projectSchemas";
 
 // TEMP: All Seasons Foam prefers "Accounts" instead of "Clients"
 const USE_ACCOUNT_LABELS = true;
@@ -32,17 +32,17 @@ type ContactOption = {
   phone_label?: "work" | "mobile" | "home";
 };
 
-// Project type options - matches backend constants
-const TYPE_OPTIONS = PROJECT_TYPES;
-
 // Project status options - matches backend constants
 const STATUS_OPTIONS = PROJECT_STATUSES;
 
 export default function ProjectForm({ form, setForm, clients, leads, onSave, onCancel, isEditing = false }: ProjectFormProps) {
   const [contactOptions, setContactOptions] = useState<ContactOption[]>([]);
-  
+
+  // Project type options - loaded lazily from tenant config
+  const TYPE_OPTIONS = getProjectTypes();
+
   // Determine which schema to use based on editing mode
-  const schema = isEditing ? projectUpdateSchema : projectCreateSchema;
+  const schema = isEditing ? getProjectUpdateSchema() : getProjectCreateSchema();
 
   // Set up React Hook Form with Zod validation
   const {

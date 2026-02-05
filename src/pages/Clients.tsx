@@ -11,7 +11,7 @@ import { usePagination } from "@/hooks/usePreferences";
 import { useStatusFilter } from "@/hooks/useStatusFilter";
 import { useSorting, legacySortToUnified, unifiedToLegacySort } from "@/hooks/useSorting";
 import { formatPhoneNumber } from "@/lib/phoneUtils";
-import { CLIENT_TYPES } from "@/schemas/clientSchemas";
+import { getClientTypes } from "@/schemas/clientSchemas";
 import { useCRMConfig } from "@/config/crmConfig";
 
 // Smart default for filter visibility based on screen size
@@ -200,7 +200,7 @@ function ClientsTable({
 export default function Clients() {
   const config = useCRMConfig();
   const clientLabel = config.labels?.client || "Client";
-  const ACCOUNT_TYPE_OPTIONS = config.businessTypes || CLIENT_TYPES;
+  const ACCOUNT_TYPE_OPTIONS = config.businessTypes || getClientTypes();
 
   const [clients, setClients] = useState<Client[]>([]);
   const [total, setTotal] = useState(0);

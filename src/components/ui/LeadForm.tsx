@@ -6,7 +6,7 @@ import { Lead } from "@/types";
 import PhoneInput from "@/components/ui/PhoneInput";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { leadCreateSchema, leadUpdateSchema, leadStatuses, typeOptions, leadSourceOptions, type LeadCreateInput, type LeadUpdateInput } from "@/schemas/leadSchemas";
+import { getLeadCreateSchema, getLeadUpdateSchema, getLeadStatuses, getTypeOptions, getLeadSourceOptions, type LeadCreateInput, type LeadUpdateInput } from "@/schemas/leadSchemas";
 
 interface LeadFormProps {
   form: Partial<Lead>;
@@ -16,19 +16,23 @@ interface LeadFormProps {
   isEditing?: boolean;
 }
 
-// Lead status options - matches backend constants
-const LEAD_STATUS_OPTIONS = leadStatuses.map((status) => ({
-  value: status,
-  label: status.replace('_', ' ').replace(/\b\w/g, (char) => char.toUpperCase()),
-}));
-
 export default function LeadForm({ form, setForm, onSave, onCancel, isEditing = false }: LeadFormProps) {
   const SHOW_LEAD_SOURCE = true;
   const SHOW_LEAD_TEMPERATURE = false;
   const SHOW_LEAD_SCORE = false;
 
+  // Lead status options - loaded lazily from tenant config
+  const LEAD_STATUS_OPTIONS = getLeadStatuses().map((status) => ({
+    value: status,
+    label: status.replace('_', ' ').replace(/\b\w/g, (char: string) => char.toUpperCase()),
+  }));
+
+  // Type and source options - loaded lazily from tenant config
+  const typeOptions = getTypeOptions();
+  const leadSourceOptions = getLeadSourceOptions();
+
   // Determine which schema to use based on editing mode
-  const schema = isEditing ? leadUpdateSchema : leadCreateSchema;
+  const schema = isEditing ? getLeadUpdateSchema() : getLeadCreateSchema();
 
   // Set up React Hook Form with Zod validation
   const {
