@@ -17,6 +17,21 @@ export const getTypeOptions = () => getConfig().businessTypes as unknown as read
 // Lead source options - loaded lazily from tenant config
 export const getLeadSourceOptions = () => getConfig().leads.sources as unknown as readonly [string, ...string[]]
 
+// Helper: Transform empty strings to undefined (for optional fields)
+const emptyToUndefined = (val: unknown) => (val === '' ? undefined : val)
+
+// Helper: Optional string that treats empty strings as undefined
+const optionalString = (maxLength?: number) => {
+  const base = z.preprocess(emptyToUndefined, z.string().optional().nullable())
+  return maxLength ? z.preprocess(emptyToUndefined, z.string().max(maxLength).optional().nullable()) : base
+}
+
+// Helper: Optional email that treats empty strings as undefined
+const optionalEmail = () => z.preprocess(
+  emptyToUndefined,
+  z.string().email('Invalid email format').max(255).optional().nullable()
+)
+
 // Lead Create Schema (POST /api/leads)
 // Built lazily to avoid circular dependency at module load time
 export const getLeadCreateSchema = () => z.object({
@@ -24,18 +39,18 @@ export const getLeadCreateSchema = () => z.object({
   name: z.string().min(1, "Company name is required").max(100),
 
   // Optional fields
-  contact_person: z.string().max(100).optional().nullable(),
-  contact_title: z.string().max(100).optional().nullable(),
-  email: z.string().email().max(255).optional().nullable(),
-  phone: z.string().max(20).optional().nullable(),
+  contact_person: optionalString(100),
+  contact_title: optionalString(100),
+  email: optionalEmail(),
+  phone: optionalString(20),
   phone_label: z.enum(phoneLabels).default('work'),
-  secondary_phone: z.string().max(20).optional().nullable(),
+  secondary_phone: optionalString(20),
   secondary_phone_label: z.enum(phoneLabels).optional().nullable(),
-  address: z.string().max(255).optional().nullable(),
-  city: z.string().max(100).optional().nullable(),
-  state: z.string().max(100).optional().nullable(),
-  zip: z.string().max(20).optional().nullable(),
-  notes: z.string().optional().nullable(),
+  address: optionalString(255),
+  city: optionalString(100),
+  state: optionalString(100),
+  zip: optionalString(20),
+  notes: optionalString(),
   type: z.enum(getTypeOptions()).default('None'),
   lead_status: z.enum(getLeadStatuses()).default('new'),
   lead_source: z.enum(getLeadSourceOptions()).optional().nullable()
@@ -43,19 +58,19 @@ export const getLeadCreateSchema = () => z.object({
 
 // Lead Update Schema (PUT /api/leads/{id})
 export const getLeadUpdateSchema = () => z.object({
-  name: z.string().min(1).max(100).optional(),
-  contact_person: z.string().max(100).optional().nullable(),
-  contact_title: z.string().max(100).optional().nullable(),
-  email: z.string().email().max(255).optional().nullable(),
-  phone: z.string().max(20).optional().nullable(),
+  name: z.preprocess(emptyToUndefined, z.string().min(1).max(100).optional()),
+  contact_person: optionalString(100),
+  contact_title: optionalString(100),
+  email: optionalEmail(),
+  phone: optionalString(20),
   phone_label: z.enum(phoneLabels).optional(),
-  secondary_phone: z.string().max(20).optional().nullable(),
+  secondary_phone: optionalString(20),
   secondary_phone_label: z.enum(phoneLabels).optional().nullable(),
-  address: z.string().max(255).optional().nullable(),
-  city: z.string().max(100).optional().nullable(),
-  state: z.string().max(100).optional().nullable(),
-  zip: z.string().max(20).optional().nullable(),
-  notes: z.string().optional().nullable(),
+  address: optionalString(255),
+  city: optionalString(100),
+  state: optionalString(100),
+  zip: optionalString(20),
+  notes: optionalString(),
   type: z.enum(getTypeOptions()).optional(),
   lead_status: z.enum(getLeadStatuses()).optional(),
   lead_source: z.enum(getLeadSourceOptions()).optional().nullable()

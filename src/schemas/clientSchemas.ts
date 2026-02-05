@@ -7,6 +7,21 @@ export const getClientTypes = () => getStoredConfig().businessTypes as unknown a
 const PHONE_LABELS = ['work', 'mobile', 'home', 'fax', 'other'] as const
 export const CLIENT_STATUSES = ['new', 'prospect', 'active', 'inactive'] as const
 
+// Helper: Transform empty strings to undefined (for optional fields)
+const emptyToUndefined = (val: unknown) => (val === '' ? undefined : val)
+
+// Helper: Optional string that treats empty strings as undefined
+const optionalString = (maxLength?: number) => {
+  const base = z.preprocess(emptyToUndefined, z.string().optional())
+  return maxLength ? z.preprocess(emptyToUndefined, z.string().max(maxLength).optional()) : base
+}
+
+// Helper: Optional email that treats empty strings as undefined
+const optionalEmail = () => z.preprocess(
+  emptyToUndefined,
+  z.string().email('Invalid email format').max(255).optional()
+)
+
 // Client Create Schema (POST /api/clients)
 // Built lazily to avoid circular dependency at module load time
 export const getClientCreateSchema = () => z.object({
@@ -14,37 +29,37 @@ export const getClientCreateSchema = () => z.object({
   name: z.string().min(1, 'Company name is required').max(100),
 
   // Optional fields
-  contact_person: z.string().max(100).optional(),
-  contact_title: z.string().max(100).optional(),
-  email: z.string().email('Invalid email format').max(255).optional(),
-  phone: z.string().max(20).optional(),
+  contact_person: optionalString(100),
+  contact_title: optionalString(100),
+  email: optionalEmail(),
+  phone: optionalString(20),
   phone_label: z.enum(PHONE_LABELS).default('work'),
-  secondary_phone: z.string().max(20).optional(),
+  secondary_phone: optionalString(20),
   secondary_phone_label: z.enum(PHONE_LABELS).optional(),
-  address: z.string().max(255).optional(),
-  city: z.string().max(100).optional(),
-  state: z.string().max(100).optional(),
-  zip: z.string().max(20).optional(),
-  notes: z.string().optional(),
+  address: optionalString(255),
+  city: optionalString(100),
+  state: optionalString(100),
+  zip: optionalString(20),
+  notes: optionalString(),
   type: z.enum(getClientTypes()).default('None'),
   status: z.enum(CLIENT_STATUSES).default('new')
 })
 
 // Client Update Schema (PUT /api/clients/{id})
 export const getClientUpdateSchema = () => z.object({
-  name: z.string().min(1).max(100).optional(),
-  contact_person: z.string().max(100).optional(),
-  contact_title: z.string().max(100).optional(),
-  email: z.string().email().max(255).optional(),
-  phone: z.string().max(20).optional(),
+  name: z.preprocess(emptyToUndefined, z.string().min(1).max(100).optional()),
+  contact_person: optionalString(100),
+  contact_title: optionalString(100),
+  email: optionalEmail(),
+  phone: optionalString(20),
   phone_label: z.enum(PHONE_LABELS).optional(),
-  secondary_phone: z.string().max(20).optional(),
+  secondary_phone: optionalString(20),
   secondary_phone_label: z.enum(PHONE_LABELS).optional(),
-  address: z.string().max(255).optional(),
-  city: z.string().max(100).optional(),
-  state: z.string().max(100).optional(),
-  zip: z.string().max(20).optional(),
-  notes: z.string().optional(),
+  address: optionalString(255),
+  city: optionalString(100),
+  state: optionalString(100),
+  zip: optionalString(20),
+  notes: optionalString(),
   type: z.enum(getClientTypes()).optional(),
   status: z.enum(CLIENT_STATUSES).optional()
 })
