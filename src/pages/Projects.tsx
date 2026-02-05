@@ -193,9 +193,9 @@ export default function Projects() {
       const updated = await apiFetch(`/projects/?page=${currentPage}&per_page=${perPage}&sort=${sortOrder}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      const data = await updated.json();
-      setProjects(data.projects);
-      setTotal(data.total);
+      const refreshed = await updated.json();
+      setProjects(refreshed.projects);
+      setTotal(refreshed.total);
       resetForm();
     } catch (err: any) {
       setError(err.message || "Failed to save project");
