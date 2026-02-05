@@ -95,7 +95,8 @@ function SidebarContent({
               { label: "Interactions Overview", path: "/admin/interactions", icon: FileText },
               { label: "Projects Overview", path: "/admin/projects", icon: FolderKanban },
               { label: "Data Import", path: "/admin/import", icon: Upload },
-              { label: "Database Backups", path: "/admin/backups", icon: Database },
+              // DISABLED: Backup feature - possible future project
+              // { label: "Database Backups", path: "/admin/backups", icon: Database },
             ],
           },
         ]
