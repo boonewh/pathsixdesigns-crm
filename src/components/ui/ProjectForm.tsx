@@ -158,6 +158,9 @@ export default function ProjectForm({ form, setForm, clients, leads, onSave, onC
               onChange={async (e) => {
                 const clientId = e.target.value ? parseInt(e.target.value) : undefined;
                 setForm({ ...form, client_id: clientId, lead_id: undefined });
+                // Sync with React Hook Form state
+                setValue("client_id", clientId);
+                setValue("lead_id", undefined);
 
                 if (clientId) {
                   const res = await apiFetch(`/clients/${clientId}`);
@@ -172,6 +175,12 @@ export default function ProjectForm({ form, setForm, clients, leads, onSave, onC
                     primary_contact_phone: data.phone || "",
                     primary_contact_phone_label: data.phone_label || "work",
                   }));
+                  // Sync contact fields with React Hook Form
+                  setValue("primary_contact_name", data.contact_person || "");
+                  setValue("primary_contact_title", data.contact_title || "");
+                  setValue("primary_contact_email", data.email || "");
+                  setValue("primary_contact_phone", data.phone || "");
+                  setValue("primary_contact_phone_label", data.phone_label || "work");
 
                   // Add both primary and additional contacts to the dropdown
                   const primary: ContactOption = {
@@ -218,6 +227,9 @@ export default function ProjectForm({ form, setForm, clients, leads, onSave, onC
               onChange={async (e) => {
                 const leadId = e.target.value ? parseInt(e.target.value) : undefined;
                 setForm({ ...form, lead_id: leadId, client_id: undefined });
+                // Sync with React Hook Form state
+                setValue("lead_id", leadId);
+                setValue("client_id", undefined);
 
                 if (leadId) {
                   const res = await apiFetch(`/leads/${leadId}`);
@@ -231,6 +243,12 @@ export default function ProjectForm({ form, setForm, clients, leads, onSave, onC
                     primary_contact_phone: data.phone || "",
                     primary_contact_phone_label: data.phone_label || "work",
                   }));
+                  // Sync contact fields with React Hook Form
+                  setValue("primary_contact_name", data.contact_person || "");
+                  setValue("primary_contact_title", data.contact_title || "");
+                  setValue("primary_contact_email", data.email || "");
+                  setValue("primary_contact_phone", data.phone || "");
+                  setValue("primary_contact_phone_label", data.phone_label || "work");
 
                   const primary: ContactOption = {
                     id: 0,
@@ -287,6 +305,12 @@ export default function ProjectForm({ form, setForm, clients, leads, onSave, onC
                       primary_contact_phone: selected.phone || "",
                       primary_contact_phone_label: (selected.phone_label as "work" | "mobile" | "home") || "work",
                     }));
+                    // Sync contact fields with React Hook Form
+                    setValue("primary_contact_name", selected.name || "");
+                    setValue("primary_contact_title", selected.title || "");
+                    setValue("primary_contact_email", selected.email || "");
+                    setValue("primary_contact_phone", selected.phone || "");
+                    setValue("primary_contact_phone_label", (selected.phone_label as "work" | "mobile" | "home") || "work");
                   }
                 }}
                 className="border border-input bg-background text-sm rounded-md px-2 py-1"
