@@ -96,8 +96,9 @@ export default function ProjectsTable({
               </td>
               <td className="px-4 py-3">
                 <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
-                  project.project_status === 'won' ? 'bg-green-100 text-green-800' :
-                  project.project_status === 'lost' ? 'bg-red-100 text-red-800' :
+                  project.project_status === 'active' ? 'bg-blue-100 text-blue-800' :
+                  project.project_status === 'completed' ? 'bg-green-100 text-green-800' :
+                  project.project_status === 'cancelled' ? 'bg-red-100 text-red-800' :
                   'bg-yellow-100 text-yellow-800'
                 }`}>
                   {project.project_status?.toUpperCase() || 'PENDING'}

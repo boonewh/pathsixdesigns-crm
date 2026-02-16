@@ -74,7 +74,10 @@ export default function LeadsTable({
             <th className="px-4 py-3 text-left text-sm font-medium text-gray-500">
               Contact Info
             </th>
-            <th 
+            <th className="px-4 py-3 text-left text-sm font-medium text-gray-500">
+              Assigned To
+            </th>
+            <th
               className="px-4 py-3 text-left text-sm font-medium text-gray-500 cursor-pointer hover:bg-gray-100 select-none"
               onClick={() => onSort('created_at')}
             >
@@ -162,6 +165,9 @@ export default function LeadsTable({
                     <span className="text-gray-400">—</span>
                   )}
                 </div>
+              </td>
+              <td className="px-4 py-3 text-sm text-gray-600">
+                {lead.assigned_to_name || <span className="text-gray-400">—</span>}
               </td>
               <td className="px-4 py-3 text-sm text-gray-600">
                 {lead.created_at ? new Date(lead.created_at).toLocaleDateString() : '—'}

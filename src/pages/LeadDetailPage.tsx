@@ -5,10 +5,12 @@ import {
   Phone,
   MapPin,
   User,
+  UserCheck,
   FolderKanban,
   Wrench,
 } from "lucide-react";
 import { useAuth, userHasRole } from "@/authContext";
+import toast from "react-hot-toast";
 import { Lead, Interaction } from "@/types";
 import { apiFetch } from "@/lib/api";
 import { formatPhoneNumber } from "@/lib/phoneUtils";
@@ -208,6 +210,13 @@ export default function LeadDetailPage() {
         <span className="text-gray-500 font-medium">Type:</span>{" "}
         {lead.type || "None"}
       </div>
+      {lead.assigned_to_name && (
+        <div className="flex items-center gap-2 text-sm text-gray-600 mt-1">
+          <UserCheck size={14} className="text-gray-500" />
+          <span className="text-gray-500 font-medium">Assigned To:</span>{" "}
+          {lead.assigned_to_name}
+        </div>
+      )}
       <ul className="text-sm text-gray-700 space-y-1">
         {lead.contact_person && (
           <li className="flex items-start gap-2">
@@ -455,6 +464,7 @@ export default function LeadDetailPage() {
                   });
 
                   if (res.ok) {
+                    toast.success("Lead assigned successfully");
                     setShowAssignModal(false);
                     window.location.reload();
                   } else {

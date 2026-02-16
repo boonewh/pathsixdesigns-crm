@@ -1,4 +1,4 @@
-import { Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 import Login from "@/pages/Login";
 import Accounts from "@/pages/Accounts";
 import AdminUsersPage from "@/pages/AdminUsersPage";
@@ -30,8 +30,10 @@ import TrashPage from "./pages/TrashPage";
 import Vault from "./pages/Vault";
 
 function App() {
+  const location = useLocation();
+
   return (
-    <ErrorBoundary>
+    <ErrorBoundary key={location.pathname}>
       <Routes>
         {/* Public Routes */}
         <Route path="/" element={<Navigate to="/login" replace />} />

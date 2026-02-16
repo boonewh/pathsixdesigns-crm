@@ -187,7 +187,13 @@ export default function AdminUsersPage() {
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold">User Management</h1>
         <button
-          onClick={() => setShowForm((prev) => !prev)}
+          onClick={() => {
+            setShowForm((prev) => !prev);
+            setEmail("");
+            setPassword("");
+            setRole("user");
+            setError("");
+          }}
           className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
         >
           {showForm ? "Cancel" : "+ New User"}

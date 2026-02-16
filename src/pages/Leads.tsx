@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import EntityCard from "@/components/ui/EntityCard";
-import { Mail, Phone, MapPin, Flag, User, StickyNote, Wrench, LayoutGrid, List, Plus, Filter, ChevronDown, ChevronUp, Radio } from "lucide-react";
+import { Mail, Phone, MapPin, Flag, User, UserCheck, StickyNote, Wrench, LayoutGrid, List, Plus, Filter, ChevronDown, ChevronUp, Radio } from "lucide-react";
 import { useAuth, userHasRole } from "@/authContext";
+import toast from "react-hot-toast";
 import { Link } from "react-router-dom";
 import LeadForm from "@/components/ui/LeadForm";
 import { Lead } from "@/types";
@@ -13,6 +14,21 @@ import LeadsTable from "@/components/ui/LeadsTable";
 import PaginationControls from "@/components/ui/PaginationControls";
 import { formatPhoneNumber } from "@/lib/phoneUtils";
 import { useCRMConfig } from "@/config/crmConfig";
+
+// Map icon string names from config to actual emoji characters
+const ICON_MAP: Record<string, string> = {
+  'circle-yellow': '🟡',
+  'circle-blue': '🔵',
+  'circle-orange': '🟠',
+  'circle-red': '🔴',
+  'circle-green': '🟢',
+  'phone': '📞',
+  'fire': '🔥',
+  'sun': '☀️',
+  'snowflake': '❄️',
+};
+const resolveIcons = (icons: Record<string, string>) =>
+  Object.fromEntries(Object.entries(icons).map(([k, v]) => [k, ICON_MAP[v] || v]));
 
 // Smart default for filter visibility based on screen size
 const getDefaultFilterVisibility = () => {
@@ -28,7 +44,7 @@ export default function Leads() {
   const LEAD_STATUS_CONFIG = {
     statuses: LEAD_STATUS_OPTIONS,
     colors: config.leads.statusConfig.colors,
-    icons: config.leads.statusConfig.icons
+    icons: resolveIcons(config.leads.statusConfig.icons)
   };
 
   const [leads, setLeads] = useState<Lead[]>([]);
@@ -102,6 +118,7 @@ export default function Leads() {
   const [selectedLeadId, setSelectedLeadId] = useState<number | null>(null);
   const [selectedUserId, setSelectedUserId] = useState<number | null>(null);
   const [availableUsers, setAvailableUsers] = useState<{ id: number; email: string }[]>([]);
+  const [isAssigning, setIsAssigning] = useState(false);
 
   // Update filter visibility on window resize
   useEffect(() => {
@@ -445,7 +462,6 @@ export default function Leads() {
               <EntityCard
                 title="New Lead"
                 editing
-                onSave={handleSave}
                 onCancel={handleCancel}
                 editForm={
                   <LeadForm
@@ -476,7 +492,6 @@ export default function Leads() {
                   typeLabel={lead.type || "None"}
                   editing={editingId === lead.id}
                   onEdit={() => handleTableEdit(lead)}
-                  onSave={handleSave}
                   onCancel={handleCancel}
                   onDelete={() => handleDelete(lead.id)}
                   editForm={
@@ -572,6 +587,12 @@ export default function Leads() {
                         <li className="flex items-start gap-2">
                           <StickyNote size={14} className="mt-[2px] flex-shrink-0" />
                           <div className="break-words">{lead.notes}</div>
+                        </li>
+                      )}
+                      {lead.assigned_to_name && (
+                        <li className="flex items-center gap-2">
+                          <UserCheck size={14} className="flex-shrink-0" />
+                          <span className="text-gray-700">{lead.assigned_to_name}</span>
                         </li>
                       )}
                     </ul>
@@ -674,8 +695,9 @@ export default function Leads() {
                 Cancel
               </button>
               <button
-                disabled={!selectedUserId}
+                disabled={!selectedUserId || isAssigning}
                 onClick={async () => {
+                  setIsAssigning(true);
                   const res = await apiFetch(`/leads/${selectedLeadId}/assign`, {
                     method: "PUT",
                     headers: {
@@ -686,6 +708,7 @@ export default function Leads() {
                   });
 
                   if (res.ok) {
+                    toast.success("Lead assigned successfully");
                     setShowAssignModal(false);
                     setSelectedUserId(null);
                     setSelectedLeadId(null);
@@ -698,10 +721,11 @@ export default function Leads() {
                   } else {
                     alert("Failed to assign lead.");
                   }
+                  setIsAssigning(false);
                 }}
                 className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50 order-1 sm:order-2"
               >
-                Assign
+                {isAssigning ? "Assigning…" : "Assign"}
               </button>
             </div>
           </div>
