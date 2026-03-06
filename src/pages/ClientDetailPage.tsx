@@ -15,6 +15,7 @@ import { formatPhoneNumber } from "@/lib/phoneUtils";
 import CompanyNotes from "@/components/ui/CompanyNotes";
 import CompanyInteractions from "@/components/ui/CompanyInteractions";
 import CompanyContacts from "@/components/ui/CompanyContacts";
+import CompanySubscriptions from "@/components/ui/CompanySubscriptions";
 
 export default function ClientDetailPage() {
   const { id } = useParams();
@@ -255,6 +256,11 @@ export default function ClientDetailPage() {
           token={token!}
           entityType="client"
           entityId={client.id}
+        />
+
+        <CompanySubscriptions
+          token={token!}
+          clientId={client.id}
         />
 
         {/* Projects Section */}
