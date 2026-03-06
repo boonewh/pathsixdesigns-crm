@@ -34,6 +34,7 @@ export default function EntityInteractions({
   const [editingInteraction, setEditingInteraction] = useState<Interaction | null>(null);
   const [openMenuId, setOpenMenuId] = useState<number | null>(null);
   const [selectedInteraction, setSelectedInteraction] = useState<Interaction | null>(null);
+  const [editDefaultValues, setEditDefaultValues] = useState<Partial<InteractionCreateInput> | undefined>(undefined);
 
   // Use pagination hook with entity-specific key
   const {
@@ -46,13 +47,7 @@ export default function EntityInteractions({
   } = usePagination(`${entityType}_interactions`);
 
   const resetForm = () => {
-    setForm({
-      contact_date: "",
-      summary: "",
-      outcome: "",
-      notes: "",
-      follow_up: null,
-    });
+    setEditDefaultValues(undefined);
   };
 
   const fetchInteractions = async () => {
@@ -197,8 +192,8 @@ export default function EntityInteractions({
       <div className="p-4 space-y-4">
         {showForm && (
           <InteractionForm
-            form={form}
-            updateForm={setForm}
+            key={editingId ?? "new"}
+            defaultValues={editDefaultValues}
             onSubmit={handleSubmit}
             onCancel={() => {
               setShowForm(false);
@@ -298,12 +293,12 @@ export default function EntityInteractions({
                         className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
                         onClick={(e) => {
                           e.stopPropagation();
-                          setForm({
+                          setEditDefaultValues({
                             contact_date: i.contact_date,
                             summary: i.summary,
-                            outcome: i.outcome,
-                            notes: i.notes,
-                            follow_up: i.follow_up ?? null,
+                            outcome: i.outcome ?? "",
+                            notes: i.notes ?? "",
+                            follow_up: i.follow_up ?? undefined,
                           });
                           setShowForm(true);
                           setEditingId(i.id);
