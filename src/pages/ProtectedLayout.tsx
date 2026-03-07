@@ -1,4 +1,4 @@
-import { Outlet, Navigate, Link } from "react-router-dom";
+import { Outlet, Navigate, Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/authContext";
 import { useState, useEffect, useRef } from "react";
 import SidebarNav from "@/components/SidebarNav";
@@ -6,6 +6,8 @@ import { apiFetch } from "@/lib/api";
 
 export default function ProtectedLayout() {
   const { isAuthenticated, logout, token } = useAuth();
+  const location = useLocation();
+  const mainRef = useRef<HTMLElement>(null);
 
   const [collapsed, setCollapsed] = useState<boolean | null>(null);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
@@ -17,6 +19,10 @@ export default function ProtectedLayout() {
   useEffect(() => {
     setCollapsed(false);
   }, []);
+
+  useEffect(() => {
+    mainRef.current?.scrollTo({ top: 0 });
+  }, [location.pathname]);
 
   useEffect(() => {
     const delayDebounce = setTimeout(() => {
@@ -164,7 +170,7 @@ export default function ProtectedLayout() {
           </button>
         </header>
 
-        <main className="flex-1 p-6 overflow-y-auto">
+        <main ref={mainRef} className="flex-1 p-6 overflow-y-auto">
           <Outlet />
         </main>
       </div>
