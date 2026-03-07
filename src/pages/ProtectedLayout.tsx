@@ -9,16 +9,12 @@ export default function ProtectedLayout() {
   const location = useLocation();
   const mainRef = useRef<HTMLElement>(null);
 
-  const [collapsed, setCollapsed] = useState<boolean | null>(null);
+  const [collapsed, setCollapsed] = useState(false);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [results, setResults] = useState<any[]>([]);
   const [showResults, setShowResults] = useState(false);
   const searchRef = useRef<HTMLInputElement | null>(null);
-
-  useEffect(() => {
-    setCollapsed(false);
-  }, []);
 
   useEffect(() => {
     mainRef.current?.scrollTo({ top: 0 });
@@ -62,7 +58,6 @@ export default function ProtectedLayout() {
   }, []);
 
   if (!isAuthenticated) return <Navigate to="/login" replace />;
-  if (collapsed === null) return null;
 
   return (
     <div className="flex min-h-screen bg-muted">
