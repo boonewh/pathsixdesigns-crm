@@ -1,4 +1,3 @@
-import React from "react";
 import { useEffect, useState } from "react";
 import { UserPlus, MoreVertical } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -19,7 +18,6 @@ type Props = {
 export default function CompanyContacts({ token, entityType, entityId }: Props) {
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [showForm, setShowForm] = useState(false);
-  const [form, setForm] = useState<Partial<Contact>>({});
   const [editingId, setEditingId] = useState<number | null>(null);
   const [openMenuId, setOpenMenuId] = useState<number | null>(null);
 
@@ -30,8 +28,6 @@ export default function CompanyContacts({ token, entityType, entityId }: Props) 
   const {
     register,
     handleSubmit,
-    setValue,
-    watch,
     formState: { errors, isSubmitting },
     reset,
   } = useForm<ContactCreateInput | ContactUpdateInput>({
@@ -48,14 +44,6 @@ export default function CompanyContacts({ token, entityType, entityId }: Props) 
       notes: "",
     },
   });
-
-  // Watch all form values to sync with parent component state
-  const watchedValues = watch();
-
-  // Sync form state with parent component
-  React.useEffect(() => {
-    setForm(watchedValues as Partial<Contact>);
-  }, [watchedValues]);
 
   const loadContacts = async () => {
     const res = await apiFetch(`/contacts/?${entityType}_id=${entityId}`, {
