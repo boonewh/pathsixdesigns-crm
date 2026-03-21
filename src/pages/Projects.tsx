@@ -524,7 +524,13 @@ export default function Projects() {
                         {!project.client_id && !project.lead_id && !project.primary_contact_name && (
                           <li className="text-yellow-600 text-xs font-medium">⚠️ Unassigned Project</li>
                         )}
-                        {project.project_worth && <li>Worth: ${project.project_worth.toLocaleString()}</li>}
+                        {project.project_worth && (
+                          <li>
+                            Worth: ${project.project_worth.toLocaleString()}
+                            {project.value_type === 'monthly' && ' / mo'}
+                            {project.value_type === 'yearly' && ` / yr ($${(project.project_worth / 12).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} / mo)`}
+                          </li>
+                        )}
                         {project.project_start && <li>Start: {new Date(project.project_start).toLocaleDateString()}</li>}
                         {project.project_end && <li>End: {new Date(project.project_end).toLocaleDateString()}</li>}
                         {project.notes && (

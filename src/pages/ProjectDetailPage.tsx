@@ -278,6 +278,15 @@ export default function ProjectDetailPage() {
             <DollarSign size={14} className="text-gray-500" />
             <span className="text-gray-500 font-medium">Value:</span>{" "}
             ${project.project_worth.toLocaleString()}
+            {project.value_type === 'monthly' && <span className="text-gray-400 text-xs">/ mo</span>}
+            {project.value_type === 'yearly' && (
+              <>
+                <span className="text-gray-400 text-xs">/ yr</span>
+                <span className="text-gray-400 text-xs">
+                  (${(project.project_worth / 12).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} / mo)
+                </span>
+              </>
+            )}
           </div>
         )}
       </div>

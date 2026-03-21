@@ -9,6 +9,7 @@ import {
   Wrench,
 } from "lucide-react";
 import { useAuth, userHasRole } from "@/authContext";
+import { useCRMConfig } from "@/config/crmConfig";
 import { Client, Interaction, Account } from "@/types";
 import { apiFetch } from "@/lib/api";
 import { formatPhoneNumber } from "@/lib/phoneUtils";
@@ -20,6 +21,7 @@ import CompanySubscriptions from "@/components/ui/CompanySubscriptions";
 export default function ClientDetailPage() {
   const { id } = useParams();
   const { token, user } = useAuth();
+  const config = useCRMConfig();
 
   const [client, setClient] = useState<Client | null>(null);
   const [interactions, setInteractions] = useState<Interaction[]>([]);
@@ -258,10 +260,12 @@ export default function ClientDetailPage() {
           entityId={client.id}
         />
 
-        <CompanySubscriptions
-          token={token!}
-          clientId={client.id}
-        />
+        {config.features.enableSubscriptions && (
+          <CompanySubscriptions
+            token={token!}
+            clientId={client.id}
+          />
+        )}
 
         {/* Projects Section */}
         <details className="bg-white rounded shadow-sm border">
@@ -307,6 +311,8 @@ export default function ClientDetailPage() {
                     {p.project_worth !== undefined && p.project_worth !== null && (
                       <div className="text-gray-500 text-xs">
                         Worth: ${p.project_worth.toLocaleString()}
+                        {p.value_type === 'monthly' && ' / mo'}
+                        {p.value_type === 'yearly' && ` / yr ($${(p.project_worth / 12).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} / mo)`}
                       </div>
                     )}
                   </li>

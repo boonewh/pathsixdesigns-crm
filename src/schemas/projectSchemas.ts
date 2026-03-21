@@ -34,6 +34,7 @@ export const getProjectCreateSchema = () => z.object({
   project_start: optionalString(), // ISO date string
   project_end: optionalString(), // ISO date string
   project_worth: z.number().optional(),
+  value_type: z.enum(['one_time', 'monthly', 'yearly']).default('one_time'),
   client_id: z.number().optional(),
   lead_id: z.number().optional(),
   notes: optionalString(),
@@ -55,6 +56,7 @@ export const getProjectUpdateSchema = () => z.object({
   project_start: optionalString(),
   project_end: optionalString(),
   project_worth: z.number().optional(),
+  value_type: z.enum(['one_time', 'monthly', 'yearly']).optional(),
   client_id: z.number().optional(),
   lead_id: z.number().optional(),
   notes: optionalString(),

@@ -96,6 +96,7 @@ export interface Project {
   project_start?: string;
   project_end?: string;
   project_worth?: number;
+  value_type?: 'one_time' | 'monthly' | 'yearly';
   client_id?: number;
   lead_id?: number;
   client_name?: string;

@@ -62,6 +62,7 @@ export default function ProjectForm({ form, setForm, clients, leads, onSave, onC
       project_start: form.project_start || "",
       project_end: form.project_end || "",
       project_worth: form.project_worth || undefined,
+      value_type: (form as any).value_type || 'one_time',
       client_id: form.client_id || undefined,
       lead_id: form.lead_id || undefined,
       notes: form.notes || "",
@@ -412,7 +413,34 @@ export default function ProjectForm({ form, setForm, clients, leads, onSave, onC
         </div>
 
         <div className="grid gap-2 mb-4">
-          <Label htmlFor="project_worth">Project Worth ($)</Label>
+          <Label>Value Type</Label>
+          <div className="flex rounded-md border border-input overflow-hidden">
+            {(['one_time', 'monthly', 'yearly'] as const).map((vt) => (
+              <button
+                key={vt}
+                type="button"
+                onClick={() => setValue("value_type" as any, vt)}
+                className={`flex-1 py-1.5 text-sm font-medium transition-colors ${
+                  watch("value_type" as any) === vt
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-white text-gray-600 hover:bg-gray-50'
+                }`}
+              >
+                {vt === 'one_time' ? 'One-Time' : vt === 'monthly' ? 'Monthly' : 'Yearly'}
+              </button>
+            ))}
+          </div>
+          <input type="hidden" {...register("value_type" as any)} />
+        </div>
+
+        <div className="grid gap-2 mb-4">
+          <Label htmlFor="project_worth">
+            {watch("value_type" as any) === 'monthly'
+              ? 'Value ($ / mo)'
+              : watch("value_type" as any) === 'yearly'
+              ? 'Value ($ / yr)'
+              : 'Value ($)'}
+          </Label>
           <Input
             id="project_worth"
             type="number"
@@ -421,6 +449,11 @@ export default function ProjectForm({ form, setForm, clients, leads, onSave, onC
             {...register("project_worth", { valueAsNumber: true })}
             className={errors.project_worth ? "border-red-500" : ""}
           />
+          {watch("value_type" as any) === 'yearly' && watch("project_worth") && (
+            <p className="text-xs text-gray-500">
+              ≈ ${(Number(watch("project_worth")) / 12).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} / mo
+            </p>
+          )}
           {errors.project_worth && (
             <p className="text-sm text-red-500">{errors.project_worth.message}</p>
           )}

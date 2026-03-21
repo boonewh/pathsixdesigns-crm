@@ -399,6 +399,8 @@ export default function LeadDetailPage() {
                   {p.project_worth !== undefined && p.project_worth !== null && (
                     <div className="text-gray-500 text-xs">
                       Worth: ${p.project_worth.toLocaleString()}
+                      {p.value_type === 'monthly' && ' / mo'}
+                      {p.value_type === 'yearly' && ` / yr ($${(p.project_worth / 12).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} / mo)`}
                     </div>
                   )}
                 </li>

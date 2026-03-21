@@ -65,6 +65,7 @@ export interface CRMConfig {
     enableBulkOperations: boolean;
     enableAdvancedFilters: boolean;
     enableDataExport: boolean;
+    enableSubscriptions: boolean;
   };
 
   // Default view preferences
@@ -157,6 +158,7 @@ export const DEFAULT_CONFIG: CRMConfig = {
     enableBulkOperations: true,
     enableAdvancedFilters: true,
     enableDataExport: true,
+    enableSubscriptions: false,
   },
 
   defaults: {

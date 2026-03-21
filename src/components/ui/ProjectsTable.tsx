@@ -108,7 +108,9 @@ export default function ProjectsTable({
                 {project.type || '—'}
               </td>
               <td className="px-4 py-3 text-sm text-gray-600 font-medium">
-                {project.project_worth ? `$${project.project_worth.toLocaleString()}` : '—'}
+                {project.project_worth
+                  ? `$${project.project_worth.toLocaleString()}${project.value_type === 'monthly' ? ' / mo' : project.value_type === 'yearly' ? ' / yr' : ''}`
+                  : '—'}
               </td>
               <td className="px-4 py-3 text-sm text-gray-600">
                 <div>
