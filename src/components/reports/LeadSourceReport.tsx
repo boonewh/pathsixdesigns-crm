@@ -5,20 +5,25 @@ import { Target } from "lucide-react";
 
 const COLORS = ["#3b82f6", "#8b5cf6", "#10b981", "#f59e0b", "#ef4444", "#06b6d4"];
 
-export function LeadSourceReport() {
+type Props = {
+  startDate?: string;
+  endDate?: string;
+};
+
+export function LeadSourceReport({ startDate, endDate }: Props) {
   const [data, setData] = useState<LeadSourceData[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
   useEffect(() => {
     loadData();
-  }, []);
+  }, [startDate, endDate]);
 
   const loadData = async () => {
     try {
       setLoading(true);
       setError("");
-      const sources = await reportService.getLeadSource();
+      const sources = await reportService.getLeadSource({ start_date: startDate, end_date: endDate });
       setData(sources || []);
     } catch (err) {
       setError("Failed to load lead source data");
@@ -29,7 +34,7 @@ export function LeadSourceReport() {
     }
   };
 
-  if (loading) return <div className="p-6 text-center">Loading sources...</div>;
+  if (loading) return <div className="p-6 text-center text-gray-500">Loading sources...</div>;
   if (error) return <div className="p-6 text-center text-red-600">{error}</div>;
   if (!data || data.length === 0) {
     return (
@@ -45,7 +50,7 @@ export function LeadSourceReport() {
 
   const chartData = data.map((item) => ({
     name: item.source,
-    value: item.count,
+    value: item.total_leads,
   }));
 
   return (
@@ -88,7 +93,7 @@ export function LeadSourceReport() {
                 <span className="font-medium">{item.source}</span>
               </div>
               <div className="text-right">
-                <div className="font-semibold">{item.count} leads</div>
+                <div className="font-semibold">{item.total_leads} leads</div>
                 <div className="text-sm text-gray-600">
                   {item.conversion_rate.toFixed(1)}% conversion
                 </div>

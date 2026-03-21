@@ -1,40 +1,61 @@
 import { useEffect, useState } from "react";
-import { reportService, UserActivityData, FollowUpData } from "@/lib/reportService";
-import { Users, Bell } from "lucide-react";
+import { reportService, UserActivityData, FollowUpsResponse } from "@/lib/reportService";
+import { Users, Bell, AlertTriangle, UserX } from "lucide-react";
 
-export function ActivityReports() {
+type Props = {
+  startDate?: string;
+  endDate?: string;
+};
+
+export function ActivityReports({ startDate, endDate }: Props) {
   const [activityData, setActivityData] = useState<UserActivityData[]>([]);
-  const [followUps, setFollowUps] = useState<FollowUpData[]>([]);
+  const [followUps, setFollowUps] = useState<FollowUpsResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
   useEffect(() => {
     loadData();
-  }, []);
+  }, [startDate, endDate]);
 
   const loadData = async () => {
     try {
       setLoading(true);
       setError("");
       const [activity, followUpData] = await Promise.all([
-        reportService.getUserActivity(),
-        reportService.getFollowUps({ limit: 10 }),
+        reportService.getUserActivity({ start_date: startDate, end_date: endDate }),
+        reportService.getFollowUps({ start_date: startDate, end_date: endDate }),
       ]);
       setActivityData(activity || []);
-      setFollowUps(followUpData || []);
+      setFollowUps(followUpData || null);
     } catch (err) {
-      setError("Failed to load activity data");
-      console.error(err);
-      setActivityData([]);
-      setFollowUps([]);
+      // User activity is admin-only; if it 403s, still show follow-ups
+      try {
+        const followUpData = await reportService.getFollowUps({ start_date: startDate, end_date: endDate });
+        setFollowUps(followUpData || null);
+        setActivityData([]);
+      } catch {
+        setError("Failed to load activity data");
+        console.error(err);
+      }
     } finally {
       setLoading(false);
     }
   };
 
-  if (loading) return <div className="p-6 text-center">Loading activity data...</div>;
+  if (loading) return <div className="p-6 text-center text-gray-500">Loading activity data...</div>;
   if (error) return <div className="p-6 text-center text-red-600">{error}</div>;
-  if ((!activityData || activityData.length === 0) && (!followUps || followUps.length === 0)) {
+
+  const overdueFollowUps = followUps?.overdue_follow_ups ?? [];
+  const inactiveClients = followUps?.inactive_clients ?? [];
+  const inactiveLeads = followUps?.inactive_leads ?? [];
+
+  const hasData =
+    activityData.length > 0 ||
+    overdueFollowUps.length > 0 ||
+    inactiveClients.length > 0 ||
+    inactiveLeads.length > 0;
+
+  if (!hasData) {
     return (
       <div className="bg-white rounded-lg shadow p-6">
         <p className="text-center text-gray-500 py-8">No activity data available</p>
@@ -44,8 +65,8 @@ export function ActivityReports() {
 
   return (
     <div className="space-y-6">
-      {/* User Activity */}
-      {activityData && activityData.length > 0 && (
+      {/* User Activity — admin only; silently omitted for non-admins */}
+      {activityData.length > 0 && (
         <div className="bg-white rounded-lg shadow p-6">
           <div className="flex items-center gap-2 mb-4">
             <Users className="h-5 w-5 text-purple-600" />
@@ -53,22 +74,24 @@ export function ActivityReports() {
           </div>
 
           <div className="overflow-x-auto">
-            <table className="min-w-full">
+            <table className="min-w-full text-sm">
               <thead className="bg-gray-50">
                 <tr>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-500">User</th>
-                  <th className="px-4 py-3 text-right text-sm font-medium text-gray-500">Leads Created</th>
-                  <th className="px-4 py-3 text-right text-sm font-medium text-gray-500">Clients Created</th>
-                  <th className="px-4 py-3 text-right text-sm font-medium text-gray-500">Interactions</th>
+                  <th className="px-4 py-3 text-left font-medium text-gray-500">User</th>
+                  <th className="px-4 py-3 text-right font-medium text-gray-500">Interactions</th>
+                  <th className="px-4 py-3 text-right font-medium text-gray-500">Leads Assigned</th>
+                  <th className="px-4 py-3 text-right font-medium text-gray-500">Clients Assigned</th>
+                  <th className="px-4 py-3 text-right font-medium text-gray-500">Activity Logs</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
-                {activityData.map((user) => (
-                  <tr key={user.user_email} className="hover:bg-gray-50">
-                    <td className="px-4 py-3 text-sm font-medium">{user.user_email}</td>
-                    <td className="px-4 py-3 text-sm text-right">{user.leads_created}</td>
-                    <td className="px-4 py-3 text-sm text-right">{user.clients_created}</td>
-                    <td className="px-4 py-3 text-sm text-right">{user.interactions_logged}</td>
+                {activityData.map((u) => (
+                  <tr key={u.user_id} className="hover:bg-gray-50">
+                    <td className="px-4 py-3 font-medium">{u.email}</td>
+                    <td className="px-4 py-3 text-right">{u.interactions}</td>
+                    <td className="px-4 py-3 text-right">{u.leads_assigned}</td>
+                    <td className="px-4 py-3 text-right">{u.clients_assigned}</td>
+                    <td className="px-4 py-3 text-right">{u.activity_count}</td>
                   </tr>
                 ))}
               </tbody>
@@ -77,40 +100,131 @@ export function ActivityReports() {
         </div>
       )}
 
-      {/* Follow-ups */}
-      {followUps && followUps.length > 0 && (
+      {/* Overdue Follow-ups */}
+      {overdueFollowUps.length > 0 && (
         <div className="bg-white rounded-lg shadow p-6">
           <div className="flex items-center gap-2 mb-4">
-            <Bell className="h-5 w-5 text-orange-600" />
-            <h2 className="text-lg font-semibold">Upcoming Follow-ups</h2>
+            <Bell className="h-5 w-5 text-red-500" />
+            <h2 className="text-lg font-semibold">Overdue Follow-ups</h2>
+            <span className="ml-auto text-xs bg-red-100 text-red-700 px-2 py-0.5 rounded-full font-medium">
+              {overdueFollowUps.length} overdue
+            </span>
           </div>
 
           <div className="space-y-3">
-            {followUps.map((item) => (
-              <div key={item.id} className="flex items-center justify-between p-4 bg-gray-50 rounded hover:bg-gray-100">
+            {overdueFollowUps.map((item) => (
+              <div
+                key={item.interaction_id}
+                className="flex items-center justify-between p-4 bg-red-50 border border-red-200 rounded"
+              >
                 <div className="flex-1">
-                  <div className="font-medium">{item.title}</div>
-                  <div className="text-sm text-gray-600 mt-1">
-                    {item.entity_type}: {item.entity_name}
-                  </div>
-                  <div className="text-xs text-gray-500 mt-1">
-                    Assigned to: {item.assigned_to}
-                  </div>
+                  <div className="font-medium text-sm">{item.entity_name || "Unknown"}</div>
+                  {item.summary && (
+                    <div className="text-xs text-gray-600 mt-0.5 line-clamp-1">{item.summary}</div>
+                  )}
                 </div>
-                <div className="text-right ml-4">
-                  <div className="text-sm font-medium text-gray-900">
-                    {new Date(item.due_date).toLocaleDateString()}
+                <div className="text-right ml-4 flex-shrink-0">
+                  <div className="text-sm text-gray-700">
+                    {item.follow_up_date ? new Date(item.follow_up_date).toLocaleDateString() : "—"}
                   </div>
-                  <div className={`text-xs px-2 py-1 rounded mt-1 ${
-                    item.priority === "high" ? "bg-red-100 text-red-800" :
-                    item.priority === "medium" ? "bg-yellow-100 text-yellow-800" :
-                    "bg-green-100 text-green-800"
-                  }`}>
-                    {item.priority}
+                  <div className="text-xs text-red-600 font-semibold mt-0.5">
+                    {item.days_overdue}d overdue
                   </div>
                 </div>
               </div>
             ))}
+          </div>
+        </div>
+      )}
+
+      {/* Inactive Clients */}
+      {inactiveClients.length > 0 && (
+        <div className="bg-white rounded-lg shadow p-6">
+          <div className="flex items-center gap-2 mb-4">
+            <UserX className="h-5 w-5 text-orange-500" />
+            <h2 className="text-lg font-semibold">Inactive Clients</h2>
+            <span className="ml-auto text-xs text-gray-400">No interaction in 30+ days</span>
+          </div>
+
+          <div className="overflow-x-auto">
+            <table className="min-w-full text-sm">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-4 py-2 text-left font-medium text-gray-500">Client</th>
+                  <th className="px-4 py-2 text-right font-medium text-gray-500">Last Contact</th>
+                  <th className="px-4 py-2 text-right font-medium text-gray-500">Days Inactive</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {inactiveClients.map((c) => (
+                  <tr key={c.client_id} className="hover:bg-gray-50">
+                    <td className="px-4 py-2 font-medium">{c.name}</td>
+                    <td className="px-4 py-2 text-right text-gray-500">
+                      {c.last_interaction ? new Date(c.last_interaction).toLocaleDateString() : "Never"}
+                    </td>
+                    <td className="px-4 py-2 text-right">
+                      {c.days_inactive != null ? (
+                        <span
+                          className={`font-medium ${
+                            c.days_inactive >= 90 ? "text-red-600" : "text-orange-500"
+                          }`}
+                        >
+                          {c.days_inactive}d
+                        </span>
+                      ) : (
+                        <span className="text-gray-400">—</span>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* Inactive Leads */}
+      {inactiveLeads.length > 0 && (
+        <div className="bg-white rounded-lg shadow p-6">
+          <div className="flex items-center gap-2 mb-4">
+            <AlertTriangle className="h-5 w-5 text-yellow-500" />
+            <h2 className="text-lg font-semibold">Stalled Leads</h2>
+            <span className="ml-auto text-xs text-gray-400">Open/qualified, no recent activity</span>
+          </div>
+
+          <div className="overflow-x-auto">
+            <table className="min-w-full text-sm">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-4 py-2 text-left font-medium text-gray-500">Lead</th>
+                  <th className="px-4 py-2 text-right font-medium text-gray-500">Last Contact</th>
+                  <th className="px-4 py-2 text-right font-medium text-gray-500">Days Inactive</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {inactiveLeads.map((l) => (
+                  <tr key={l.lead_id} className="hover:bg-gray-50">
+                    <td className="px-4 py-2 font-medium">{l.name}</td>
+                    <td className="px-4 py-2 text-right text-gray-500">
+                      {l.last_interaction ? new Date(l.last_interaction).toLocaleDateString() : "Never"}
+                    </td>
+                    <td className="px-4 py-2 text-right">
+                      {l.days_inactive != null ? (
+                        <span
+                          className={`font-medium ${
+                            l.days_inactive >= 60 ? "text-red-600" : "text-yellow-600"
+                          }`}
+                        >
+                          {l.days_inactive}d
+                        </span>
+                      ) : (
+                        <span className="text-gray-400">—</span>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </div>
       )}

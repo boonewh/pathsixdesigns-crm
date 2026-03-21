@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { BarChart3, TrendingUp, Target, Activity, DollarSign, Users, Bell, HelpCircle } from "lucide-react";
+import { BarChart3, TrendingUp, Target, Activity, DollarSign, Users, HelpCircle } from "lucide-react";
 import { PipelineReport } from "@/components/reports/PipelineReport";
 import { LeadSourceReport } from "@/components/reports/LeadSourceReport";
 import { ConversionRateReport } from "@/components/reports/ConversionRateReport";
@@ -15,6 +15,8 @@ export default function Reports() {
   const [activeTab, setActiveTab] = useState<ReportTab>("overview");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
+  const [appliedStart, setAppliedStart] = useState("");
+  const [appliedEnd, setAppliedEnd] = useState("");
   const [showHelp, setShowHelp] = useState<ReportTab | null>(null);
 
   const tabs = [
@@ -25,6 +27,8 @@ export default function Reports() {
     { id: "revenue" as ReportTab, label: "Revenue", icon: DollarSign },
     { id: "activity" as ReportTab, label: "Activity", icon: Users },
   ];
+
+  const filters = { startDate: appliedStart, endDate: appliedEnd };
 
   return (
     <div className="p-6 space-y-6">
@@ -38,8 +42,8 @@ export default function Reports() {
         onStartDateChange={setStartDate}
         onEndDateChange={setEndDate}
         onApply={() => {
-          // Date filter will be applied when backend supports it
-          console.log("Date range:", startDate, endDate);
+          setAppliedStart(startDate);
+          setAppliedEnd(endDate);
         }}
       />
 
@@ -82,19 +86,29 @@ export default function Reports() {
       <div>
         {activeTab === "overview" && (
           <div className="space-y-6">
-            <PipelineReport />
+            <PipelineReport startDate={filters.startDate} endDate={filters.endDate} />
             <div className="grid md:grid-cols-2 gap-6">
-              <LeadSourceReport />
-              <ConversionRateReport />
+              <LeadSourceReport startDate={filters.startDate} endDate={filters.endDate} />
+              <ConversionRateReport startDate={filters.startDate} endDate={filters.endDate} />
             </div>
           </div>
         )}
 
-        {activeTab === "pipeline" && <PipelineReport />}
-        {activeTab === "sources" && <LeadSourceReport />}
-        {activeTab === "conversion" && <ConversionRateReport />}
-        {activeTab === "revenue" && <RevenueReports />}
-        {activeTab === "activity" && <ActivityReports />}
+        {activeTab === "pipeline" && (
+          <PipelineReport startDate={filters.startDate} endDate={filters.endDate} />
+        )}
+        {activeTab === "sources" && (
+          <LeadSourceReport startDate={filters.startDate} endDate={filters.endDate} />
+        )}
+        {activeTab === "conversion" && (
+          <ConversionRateReport startDate={filters.startDate} endDate={filters.endDate} />
+        )}
+        {activeTab === "revenue" && (
+          <RevenueReports startDate={filters.startDate} endDate={filters.endDate} />
+        )}
+        {activeTab === "activity" && (
+          <ActivityReports startDate={filters.startDate} endDate={filters.endDate} />
+        )}
       </div>
 
       {/* Help Modal */}
