@@ -12,8 +12,8 @@ const LEAD_STATUS_COLORS: Record<string, string> = {
 };
 
 const PROJECT_STATUS_COLORS: Record<string, string> = {
-  pending: "#f59e0b",
-  won: "#10b981",
+  active: "#f59e0b",
+  completed: "#10b981",
   lost: "#ef4444",
 };
 

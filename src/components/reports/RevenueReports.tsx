@@ -29,8 +29,8 @@ const VALUE_TYPE_LABELS: Record<string, string> = {
 };
 
 const STATUS_COLORS: Record<string, string> = {
-  won: "#10b981",
-  pending: "#f59e0b",
+  completed: "#10b981",
+  active: "#f59e0b",
   lost: "#ef4444",
 };
 
@@ -97,8 +97,8 @@ export function RevenueReports({ startDate, endDate }: Props) {
   }));
 
   // Forecast summary stats
-  const wonEntry = forecastData?.projects.find((p) => p.status === "won");
-  const pendingEntry = forecastData?.projects.find((p) => p.status === "pending");
+  const wonEntry = forecastData?.projects.find((p) => p.status === "completed");
+  const pendingEntry = forecastData?.projects.find((p) => p.status === "active");
 
   return (
     <div className="space-y-6">
