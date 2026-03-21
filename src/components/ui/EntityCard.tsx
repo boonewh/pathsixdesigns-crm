@@ -3,11 +3,11 @@ import { Menu } from "@headlessui/react";
 import { MoreVertical } from "lucide-react";
 
 interface EntityCardProps {
-  title: React.ReactNode;
+  title: ReactNode;
   typeLabel?: string; 
-  details?: React.ReactNode;
+  details?: ReactNode;
   editing?: boolean;
-  editForm?: React.ReactNode;
+  editForm?: ReactNode;
   onEdit?: () => void;
   onDelete?: () => void;
   onSave?: () => void;

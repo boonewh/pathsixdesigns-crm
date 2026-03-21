@@ -3,13 +3,12 @@ import { CreditCard, MoreVertical, RefreshCw } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { apiFetch } from "@/lib/api";
-import { useForm } from "react-hook-form";
+import { useForm, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   subscriptionCreateSchema,
   subscriptionUpdateSchema,
   type SubscriptionCreateInput,
-  type SubscriptionUpdateInput,
   type Subscription,
 } from "@/schemas/subscriptionSchemas";
 
@@ -57,8 +56,8 @@ export default function CompanySubscriptions({ token, clientId }: Props) {
     handleSubmit,
     formState: { errors, isSubmitting },
     reset,
-  } = useForm<SubscriptionCreateInput | SubscriptionUpdateInput>({
-    resolver: zodResolver(schema),
+  } = useForm<SubscriptionCreateInput>({
+    resolver: zodResolver(schema) as Resolver<SubscriptionCreateInput>,
     defaultValues: {
       plan_name: "",
       price: undefined,
@@ -112,7 +111,7 @@ export default function CompanySubscriptions({ token, clientId }: Props) {
     setSaveError("");
   };
 
-  const handleSave = async (data: SubscriptionCreateInput | SubscriptionUpdateInput) => {
+  const handleSave = async (data: SubscriptionCreateInput) => {
     setSaveError("");
     const url = editingId ? `/subscriptions/${editingId}` : "/subscriptions/";
     const method = editingId ? "PUT" : "POST";

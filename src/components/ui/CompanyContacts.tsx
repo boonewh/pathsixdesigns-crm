@@ -4,9 +4,9 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { apiFetch } from "@/lib/api";
 import { formatPhoneNumber } from "@/lib/phoneUtils";
-import { useForm } from "react-hook-form";
+import { useForm, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { contactCreateSchema, contactUpdateSchema, type ContactCreateInput, type ContactUpdateInput } from "@/schemas/contactSchemas";
+import { contactCreateSchema, contactUpdateSchema, type ContactCreateInput } from "@/schemas/contactSchemas";
 import { Contact } from "@/types";
 
 type Props = {
@@ -28,10 +28,10 @@ export default function CompanyContacts({ token, entityType, entityId }: Props) 
   const {
     register,
     handleSubmit,
-    formState: { errors, isSubmitting },
+    formState: { errors },
     reset,
-  } = useForm<ContactCreateInput | ContactUpdateInput>({
-    resolver: zodResolver(schema),
+  } = useForm<ContactCreateInput>({
+    resolver: zodResolver(schema) as Resolver<ContactCreateInput>,
     defaultValues: {
       first_name: "",
       last_name: "",
@@ -74,7 +74,7 @@ export default function CompanyContacts({ token, entityType, entityId }: Props) 
     setShowForm(false);
   };
 
-  const handleSave = async (data: ContactCreateInput | ContactUpdateInput) => {
+  const handleSave = async (data: ContactCreateInput) => {
     const url = editingId ? `/contacts/${editingId}` : "/contacts/";
     const method = editingId ? "PUT" : "POST";
 

@@ -4,7 +4,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { Client } from "@/types";
 import PhoneInput from "@/components/ui/PhoneInput";
-import { useForm } from "react-hook-form";
+import { useForm, type SubmitHandler, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { getClientTypes, CLIENT_STATUSES, getClientCreateSchema, getClientUpdateSchema, type ClientCreateInput, type ClientUpdateInput } from "@/schemas/clientSchemas";
 
@@ -32,7 +32,7 @@ export default function ClientForm({ form, setForm, onSave, onCancel, isEditing 
     formState: { errors, isSubmitting },
     reset,
   } = useForm<ClientCreateInput | ClientUpdateInput>({
-    resolver: zodResolver(schema),
+    resolver: zodResolver(schema) as Resolver<ClientCreateInput | ClientUpdateInput>,
     defaultValues: {
       name: form.name || "",
       contact_person: form.contact_person || "",
@@ -72,7 +72,7 @@ export default function ClientForm({ form, setForm, onSave, onCancel, isEditing 
   };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="relative">
+    <form onSubmit={handleSubmit(onSubmit as SubmitHandler<ClientCreateInput | ClientUpdateInput>)} className="relative">
       <div className="space-y-4 pb-28">
         <div className="grid gap-2">
           <Label htmlFor="name">Company Name *</Label>

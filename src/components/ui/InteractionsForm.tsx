@@ -1,10 +1,9 @@
-import { useForm } from "react-hook-form";
+import { useForm, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { interactionCreateSchema, interactionUpdateSchema, type InteractionCreateInput, type InteractionUpdateInput } from "@/schemas/interactionSchemas";
-import { useState } from "react";
+import { interactionCreateSchema, interactionUpdateSchema, type InteractionCreateInput } from "@/schemas/interactionSchemas";
 
 type InteractionFormProps = {
-  onSubmit: (data: InteractionCreateInput | InteractionUpdateInput) => Promise<void>;
+  onSubmit: (data: InteractionCreateInput) => Promise<void>;
   onCancel: () => void;
   isEditing: boolean;
   editingId?: number | null;
@@ -31,10 +30,9 @@ export default function InteractionForm(props: InteractionFormProps) {
     handleSubmit,
     watch,
     formState: { errors, isSubmitting },
-    reset,
     setValue,
-  } = useForm<InteractionCreateInput | InteractionUpdateInput>({
-    resolver: zodResolver(schema),
+  } = useForm<InteractionCreateInput>({
+    resolver: zodResolver(schema) as Resolver<InteractionCreateInput>,
     defaultValues: {
       contact_date: "",
       summary: "",

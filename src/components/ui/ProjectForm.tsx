@@ -4,9 +4,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Project } from "@/types";
 import PhoneInput from "@/components/ui/PhoneInput";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { apiFetch } from "@/lib/api";
-import { useForm } from "react-hook-form";
+import { useForm, type SubmitHandler, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { PROJECT_STATUSES, getProjectTypes, getProjectCreateSchema, getProjectUpdateSchema, type ProjectCreateInput, type ProjectUpdateInput } from "@/schemas/projectSchemas";
 
@@ -53,12 +53,12 @@ export default function ProjectForm({ form, setForm, clients, leads, onSave, onC
     formState: { errors, isSubmitting },
     reset,
   } = useForm<ProjectCreateInput | ProjectUpdateInput>({
-    resolver: zodResolver(schema),
+    resolver: zodResolver(schema) as Resolver<ProjectCreateInput | ProjectUpdateInput>,
     defaultValues: {
       project_name: form.project_name || "",
       type: form.type || "None",
       project_description: form.project_description || "",
-      project_status: form.project_status || "active",
+      project_status: (form.project_status as ProjectCreateInput["project_status"]) || "active",
       project_start: form.project_start || "",
       project_end: form.project_end || "",
       project_worth: form.project_worth || undefined,
@@ -94,7 +94,7 @@ export default function ProjectForm({ form, setForm, clients, leads, onSave, onC
   };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="relative">
+    <form onSubmit={handleSubmit(onSubmit as SubmitHandler<ProjectCreateInput | ProjectUpdateInput>)} className="relative">
       <div className="space-y-4 pb-28">
         {/* Basic Project Information */}
         <div className="grid gap-2">

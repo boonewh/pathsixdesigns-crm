@@ -4,7 +4,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Lead } from "@/types";
 import PhoneInput from "@/components/ui/PhoneInput";
-import { useForm } from "react-hook-form";
+import { useForm, type SubmitHandler, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { getLeadCreateSchema, getLeadUpdateSchema, getLeadStatuses, getTypeOptions, getLeadSourceOptions, type LeadCreateInput, type LeadUpdateInput } from "@/schemas/leadSchemas";
 
@@ -43,7 +43,7 @@ export default function LeadForm({ form, setForm, onSave, onCancel, isEditing = 
     formState: { errors, isSubmitting },
     reset,
   } = useForm<LeadCreateInput | LeadUpdateInput>({
-    resolver: zodResolver(schema),
+    resolver: zodResolver(schema) as Resolver<LeadCreateInput | LeadUpdateInput>,
     defaultValues: {
       name: form.name || "",
       contact_person: form.contact_person || "",
@@ -84,7 +84,7 @@ export default function LeadForm({ form, setForm, onSave, onCancel, isEditing = 
   };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="relative">
+    <form onSubmit={handleSubmit(onSubmit as SubmitHandler<LeadCreateInput | LeadUpdateInput>)} className="relative">
       <div className="space-y-4 pb-28">
         {/* Company Name */}
         <div className="grid gap-2">
