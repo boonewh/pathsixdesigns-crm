@@ -4,11 +4,14 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import { TrendingUp, Briefcase } from "lucide-react";
 
 const LEAD_STATUS_COLORS: Record<string, string> = {
+  open: "#3b82f6",
   new: "#3b82f6",
   contacted: "#8b5cf6",
+  proposal: "#f59e0b",
   qualified: "#10b981",
-  lost: "#ef4444",
+  won: "#22c55e",
   converted: "#22c55e",
+  lost: "#ef4444",
 };
 
 const PROJECT_STATUS_COLORS: Record<string, string> = {
