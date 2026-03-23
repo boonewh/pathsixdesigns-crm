@@ -4,12 +4,11 @@ import { Interaction } from "@/types";
 import { addDays, isBefore, isToday, isWithinInterval, parseISO, formatDistanceToNow } from "date-fns";
 import InteractionModal from "@/components/ui/InteractionModal";
 import { apiFetch } from "@/lib/api";
-
-// TEMP: All Seasons Foam prefers "Accounts" instead of "Clients"
-const USE_ACCOUNT_LABELS = true;
+import { useCRMConfig } from "@/config/crmConfig";
 
 export default function Dashboard() {
   const { token } = useAuth();
+  const config = useCRMConfig();
   const [interactions, setInteractions] = useState<Interaction[]>([]);
   const [selectedInteraction, setSelectedInteraction] = useState<Interaction | null>(null);
 
@@ -29,7 +28,6 @@ export default function Dashboard() {
     })
       .then((res) => res.json())
       .then((data) => {
-        console.log("Dashboard interactions:", data);
         setInteractions(data.interactions || data); // Handle both paginated and direct array responses
       });
   }, [token]);
@@ -76,7 +74,7 @@ export default function Dashboard() {
     if (interaction.client_name) {
       return {
         name: interaction.client_name,
-        type: USE_ACCOUNT_LABELS ? "Account" : "Client",
+        type: config.labels.client,
         icon: "🏢"
       };
     } else if (interaction.lead_name) {
@@ -108,7 +106,6 @@ export default function Dashboard() {
         key={i.id}
         className="text-gray-700 hover:bg-gray-100 px-2 py-1 rounded cursor-pointer transition-colors"
         onClick={() => {
-          console.log("Selected interaction:", i);
           setSelectedInteraction(i);
         }}
       >
@@ -213,7 +210,7 @@ export default function Dashboard() {
 
               const getEntityLabel = (entityType: string) => {
                 switch (entityType) {
-                  case 'client': return USE_ACCOUNT_LABELS ? 'Account' : 'Client';
+                  case 'client': return config.labels.client;
                   case 'lead': return 'Lead';
                   case 'project': return 'Project';
                   case 'account': return 'Account';

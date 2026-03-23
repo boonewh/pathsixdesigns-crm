@@ -159,7 +159,6 @@ export default function AdminUsersPage() {
 
     if (res.ok) {
       const updated = await res.json();
-      console.log("Updated user response:", updated);
 
       setUsers((prev) =>
         prev.map((u) =>

@@ -1,9 +1,7 @@
 import { FC } from "react";
 import { Menu } from "@headlessui/react";
 import { MoreVertical } from "lucide-react";
-
-// TEMP: All Seasons Foam prefers "Accounts" instead of "Clients"
-const USE_ACCOUNT_LABELS = true;
+import { useCRMConfig } from "@/config/crmConfig";
 
 interface Client {
   id: number;
@@ -35,8 +33,9 @@ const ClientCard: FC<Props> = ({
   onSave,
   onDelete,
 }) => {
+  const config = useCRMConfig();
   function confirmDelete() {
-    if (window.confirm(`Are you sure you want to delete this ${USE_ACCOUNT_LABELS ? "account" : "client"}?`)) {
+    if (window.confirm(`Are you sure you want to delete this ${config.labels.client.toLowerCase()}?`)) {
       onDelete();
     }
   }

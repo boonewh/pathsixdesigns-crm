@@ -8,8 +8,7 @@ import PaginationControls from "@/components/ui/PaginationControls";
 import { usePagination } from "@/hooks/usePreferences";
 import { generateGoogleCalendarUrl, generateOutlookComUrl } from "@/lib/calendarUtils";
 import { type InteractionCreateInput } from "@/schemas/interactionSchemas";
-
-const USE_ACCOUNT_LABELS = true;
+import { useCRMConfig } from "@/config/crmConfig";
 
 type EntityType = "lead" | "client" | "project"; // NEW: Add project support
 
@@ -26,6 +25,7 @@ export default function EntityInteractions({
   entityId,
   initialInteractions,
 }: Props) {
+  const config = useCRMConfig();
   const [interactions, setInteractions] = useState<Interaction[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(false);
@@ -172,7 +172,7 @@ const [openMenuId, setOpenMenuId] = useState<number | null>(null);
   const getEntityDisplayName = () => {
     switch (entityType) {
       case "client":
-        return USE_ACCOUNT_LABELS ? "Account" : "Client";
+        return config.labels.client;
       case "lead":
         return "Lead";
       case "project":

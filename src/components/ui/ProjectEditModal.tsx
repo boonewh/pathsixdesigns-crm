@@ -8,7 +8,6 @@ interface ProjectEditModalProps {
   leads: { id: number; name: string }[];
   onSave: (data: any) => void;
   onCancel: () => void;
-  onClose: () => void; // ✅ Add this line
 }
 
 

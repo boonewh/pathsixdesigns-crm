@@ -2,10 +2,7 @@ import { Edit, Trash2, MessageCircle, Phone, Mail } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Client } from "@/types";
 import { formatPhoneNumber } from "@/lib/phoneUtils";
-
-
-// TEMP: All Seasons Foam prefers "Accounts" instead of "Clients"
-const USE_ACCOUNT_LABELS = true;
+import { useCRMConfig } from "@/config/crmConfig";
 
 const statusConfig = {
   colors: {
@@ -39,6 +36,7 @@ export default function ClientsTable({
   sortDirection,
   onSort
 }: ClientsTableProps) {
+  const config = useCRMConfig();
   const getSortIcon = (field: string) => {
     if (sortField !== field) return '↕️';
     return sortDirection === 'asc' ? '↑' : '↓';
@@ -71,7 +69,7 @@ export default function ClientsTable({
               className="px-4 py-3 text-left text-sm font-medium text-gray-500 cursor-pointer hover:bg-gray-100 select-none"
               onClick={() => onSort('name')}
             >
-              {USE_ACCOUNT_LABELS ? 'Account' : 'Client'} Name <span className="ml-1">{getSortIcon('name')}</span>
+              {config.labels.client} Name <span className="ml-1">{getSortIcon('name')}</span>
             </th>
             <th 
               className="px-4 py-3 text-left text-sm font-medium text-gray-500 cursor-pointer hover:bg-gray-100 select-none"
@@ -232,14 +230,14 @@ export default function ClientsTable({
                   <button
                     onClick={() => onEdit(account)}
                     className="text-blue-600 hover:text-blue-800 p-1 rounded hover:bg-blue-50"
-                    title={`Edit ${USE_ACCOUNT_LABELS ? 'account' : 'client'}`}
+                    title={`Edit ${config.labels.client.toLowerCase()}`}
                   >
                     <Edit size={14} />
                   </button>
                   <button
                     onClick={() => handleDelete(account)}
                     className="text-red-600 hover:text-red-800 p-1 rounded hover:bg-red-50"
-                    title={`Delete ${USE_ACCOUNT_LABELS ? 'account' : 'client'}`}
+                    title={`Delete ${config.labels.client.toLowerCase()}`}
                   >
                     <Trash2 size={14} />
                   </button>
@@ -252,7 +250,7 @@ export default function ClientsTable({
       
       {accounts.length === 0 && (
         <div className="text-center py-8 text-gray-500">
-          <p>No {USE_ACCOUNT_LABELS ? 'accounts' : 'clients'} found.</p>
+          <p>No {config.labels.client.toLowerCase() + 's'} found.</p>
         </div>
       )}
     </div>

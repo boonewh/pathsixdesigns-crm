@@ -5,9 +5,7 @@ import AccountForm from "@/components/ui/AccountForm";
 import EntityCard from "@/components/ui/EntityCard";
 import { FormWrapper } from "@/components/ui/FormWrapper";
 import { apiFetch } from "@/lib/api";
-
-// TEMP: All Seasons Foam prefers "Accounts" instead of "Clients"
-const USE_ACCOUNT_LABELS = true;
+import { useCRMConfig } from "@/config/crmConfig";
 
 interface SelectableEntity {
   id: number;
@@ -16,6 +14,7 @@ interface SelectableEntity {
 
 export default function Accounts() {
   const { token } = useAuth();
+  const config = useCRMConfig();
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [clients, setClients] = useState<SelectableEntity[]>([]);
   const [form, setForm] = useState<Partial<Account>>({});
@@ -160,8 +159,8 @@ export default function Accounts() {
                 {account.client_id && (
                   <li>
                     {account.client_name
-                      ? <li>{USE_ACCOUNT_LABELS ? "Owner" : "Client"}: {account.client_name}</li>
-                      : <li>{USE_ACCOUNT_LABELS ? "Owner ID" : "Client ID"}: {account.client_id}</li>}
+                      ? <li>{config.labels.client}: {account.client_name}</li>
+                      : <li>{config.labels.client} ID: {account.client_id}</li>}
                   </li>
                 )}
                 {account.notes && <li>Notes: {account.notes}</li>}

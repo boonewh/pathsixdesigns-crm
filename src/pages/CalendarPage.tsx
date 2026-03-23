@@ -8,9 +8,7 @@ import { useAuth } from "@/authContext";
 import InteractionModal from "@/components/ui/InteractionModal";
 import { Interaction } from "@/types";
 import { apiFetch } from "@/lib/api";
-
-// TEMP: All Seasons Foam prefers "Accounts" instead of "Clients"
-const USE_ACCOUNT_LABELS = true;
+import { useCRMConfig } from "@/config/crmConfig";
 
 interface CalendarEvent {
   id: string;
@@ -32,6 +30,7 @@ interface CalendarEvent {
 
 export default function CalendarPage() {
   const { token } = useAuth();
+  const config = useCRMConfig();
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
   const [filterType, setFilterType] = useState<"all" | "client" | "lead" | "project">("all"); // Add project option
@@ -207,7 +206,7 @@ export default function CalendarPage() {
           className="border rounded px-2 py-1"
         >
           <option value="all">All Entities</option>
-          <option value="client">{USE_ACCOUNT_LABELS ? "Accounts Only" : "Clients Only"}</option>
+          <option value="client">{config.labels.client + 's Only'}</option>
           <option value="lead">Leads Only</option>
           <option value="project">Projects Only</option>
         </select>
@@ -217,7 +216,7 @@ export default function CalendarPage() {
       <div className="mb-4 flex gap-4 text-sm">
         <div className="flex items-center gap-1">
           <span className="text-blue-600">🏢</span>
-          <span>{USE_ACCOUNT_LABELS ? "Accounts" : "Clients"}</span>
+          <span>{config.labels.client + 's'}</span>
         </div>
         <div className="flex items-center gap-1">
           <span className="text-green-600">🎯</span>
@@ -262,8 +261,8 @@ export default function CalendarPage() {
       
       {selectedEvent && (
         <InteractionModal
-          title={`${selectedEvent.extendedProps.entity_type === "client" ? (USE_ACCOUNT_LABELS ? "Account" : "Client") : 
-                  selectedEvent.extendedProps.entity_type === "lead" ? "Lead" : 
+          title={`${selectedEvent.extendedProps.entity_type === "client" ? config.labels.client :
+                  selectedEvent.extendedProps.entity_type === "lead" ? "Lead" :
                   selectedEvent.extendedProps.entity_type === "project" ? "Project" : "Entity"} Follow-up: ${selectedEvent.title}`}
           date={new Date(selectedEvent.start).toLocaleString()}
           outcome={selectedEvent.extendedProps.outcome}

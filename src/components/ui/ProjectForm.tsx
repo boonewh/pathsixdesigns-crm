@@ -9,9 +9,7 @@ import { apiFetch } from "@/lib/api";
 import { useForm, type SubmitHandler, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { PROJECT_STATUSES, getProjectTypes, getProjectCreateSchema, getProjectUpdateSchema, type ProjectCreateInput, type ProjectUpdateInput } from "@/schemas/projectSchemas";
-
-// TEMP: All Seasons Foam prefers "Accounts" instead of "Clients"
-const USE_ACCOUNT_LABELS = true;
+import { useCRMConfig } from "@/config/crmConfig";
 
 interface ProjectFormProps {
   form: Partial<Project>;
@@ -36,6 +34,7 @@ type ContactOption = {
 const STATUS_OPTIONS = PROJECT_STATUSES;
 
 export default function ProjectForm({ form, setForm, clients, leads, onSave, onCancel, isEditing = false }: ProjectFormProps) {
+  const config = useCRMConfig();
   const [contactOptions, setContactOptions] = useState<ContactOption[]>([]);
 
   // Project type options - loaded lazily from tenant config
@@ -152,7 +151,7 @@ export default function ProjectForm({ form, setForm, clients, leads, onSave, onC
         {/* Entity Assignment */}
         <div className="grid grid-cols-2 gap-4">
           <div className="grid gap-2">
-            <Label htmlFor="client_id">{USE_ACCOUNT_LABELS ? "Account" : "Client"} (Optional)</Label>
+            <Label htmlFor="client_id">{config.labels.client} (Optional)</Label>
             <select
               id="client_id"
               value={form.client_id || ""}
@@ -211,7 +210,7 @@ export default function ProjectForm({ form, setForm, clients, leads, onSave, onC
 
               className="border border-input bg-background text-sm rounded-md px-2 py-1"
             >
-              <option value="">-- No {USE_ACCOUNT_LABELS ? "Account" : "Client"} --</option>
+              <option value="">-- No {config.labels.client} --</option>
               {clients.map((client) => (
                 <option key={client.id} value={client.id}>
                   {client.name}
@@ -506,7 +505,7 @@ export default function ProjectForm({ form, setForm, clients, leads, onSave, onC
             <div className="flex items-center gap-2">
               <span className="text-yellow-600">⚠️</span>
               <p className="text-sm text-yellow-800">
-                <strong>Standalone Project:</strong> This project is not linked to a {USE_ACCOUNT_LABELS ? "account" : "client"} or lead.
+                <strong>Standalone Project:</strong> This project is not linked to a {config.labels.client.toLowerCase()} or lead.
                 Make sure to add contact information above for proper interaction tracking.
               </p>
             </div>

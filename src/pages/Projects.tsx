@@ -13,9 +13,7 @@ import { useSorting, legacySortToUnified, unifiedToLegacySort } from "@/hooks/us
 import ProjectsTable from "@/components/ui/ProjectsTable";
 import { LayoutGrid, List, Plus, Filter, ChevronDown, ChevronUp } from "lucide-react";
 import { PROJECT_STATUSES } from "@/schemas/projectSchemas";
-
-// TEMP: All Seasons Foam prefers "Accounts" instead of "Clients"
-const USE_ACCOUNT_LABELS = true;
+import { useCRMConfig } from "@/config/crmConfig";
 
 // Project status options for filtering (align with backend/Pydantic)
 const PROJECT_STATUS_OPTIONS = PROJECT_STATUSES;
@@ -51,6 +49,7 @@ const getDefaultFilterVisibility = () => {
 
 export default function Projects() {
   const { token } = useAuth();
+  const config = useCRMConfig();
   const [projects, setProjects] = useState<Project[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -505,7 +504,7 @@ export default function Projects() {
                         {project.client_id && project.client_name && (
                           <li>
                             <Link to={`/clients/${project.client_id}`} className="text-blue-600 hover:underline">
-                              {USE_ACCOUNT_LABELS ? "Account" : "Client"}: {project.client_name}
+                              {config.labels.client}: {project.client_name}
                             </Link>
                           </li>
                         )}

@@ -17,13 +17,12 @@ import { formatPhoneNumber } from "@/lib/phoneUtils";
 import CompanyNotes from "@/components/ui/CompanyNotes";
 import CompanyInteractions from "@/components/ui/CompanyInteractions";
 import CompanyContacts from "@/components/ui/CompanyContacts";
-
-// TEMP: All Seasons Foam prefers "Accounts" instead of "Clients"
-const USE_ACCOUNT_LABELS = true;
+import { useCRMConfig } from "@/config/crmConfig";
 
 export default function LeadDetailPage() {
   const { id } = useParams();
   const { token, user } = useAuth();
+  const config = useCRMConfig();
 
   const [lead, setLead] = useState<Lead | null>(null);
   const [interactions, setInteractions] = useState<Interaction[]>([]);
@@ -154,7 +153,7 @@ export default function LeadDetailPage() {
     if (!lead) return;
 
     const confirmed = confirm(
-      `Convert "${lead.name}" to a ${USE_ACCOUNT_LABELS ? "Account" : "Client"}? This will permanently change the lead to an account.`
+      `Convert "${lead.name}" to a ${config.labels.client}? This will permanently change the lead to an account.`
     );
 
     if (!confirmed) return;
@@ -415,7 +414,7 @@ export default function LeadDetailPage() {
         onClick={handleConvertToClient}
         className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
       >
-        {`Convert to ${USE_ACCOUNT_LABELS ? "Account" : "Client"}`}
+        {`Convert to ${config.labels.client}`}
       </button>
 
       {userHasRole(user, "admin") && (

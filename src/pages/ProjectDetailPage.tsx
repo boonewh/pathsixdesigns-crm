@@ -17,9 +17,7 @@ import CompanyNotes from "@/components/ui/CompanyNotes";
 import CompanyInteractions from "@/components/ui/CompanyInteractions";
 import { toast } from "react-hot-toast";
 import { PROJECT_STATUSES } from "@/schemas/projectSchemas";
-
-// TEMP: All Seasons Foam prefers "Accounts" instead of "Clients"
-const USE_ACCOUNT_LABELS = true;
+import { useCRMConfig } from "@/config/crmConfig";
 
 const PROJECT_STATUS_CONFIG = {
   statuses: PROJECT_STATUSES,
@@ -40,6 +38,7 @@ const PROJECT_STATUS_CONFIG = {
 export default function ProjectDetailPage() {
   const { id } = useParams();
   const { token, user } = useAuth();
+  const config = useCRMConfig();
 
   const [project, setProject] = useState<Project | null>(null);
   const [interactions, setInteractions] = useState<Interaction[]>([]);
@@ -156,7 +155,7 @@ export default function ProjectDetailPage() {
     if (!project) return;
 
     const confirmed = confirm(
-      `Convert "${project.project_name}" to a ${USE_ACCOUNT_LABELS ? "Account" : "Client"}? This will create a new account and link this project to it.`
+      `Convert "${project.project_name}" to a ${config.labels.client}? This will create a new account and link this project to it.`
     );
 
     if (!confirmed) return;
@@ -415,7 +414,7 @@ export default function ProjectDetailPage() {
           <div className="text-sm text-gray-700">
             {project.client_id && project.client_name && (
               <p>
-                <strong>{USE_ACCOUNT_LABELS ? "Account" : "Client"}:</strong>{" "}
+                <strong>{config.labels.client}:</strong>{" "}
                 <a href={`/clients/${project.client_id}`} className="text-blue-600 hover:underline">
                   {project.client_name}
                 </a>
@@ -503,7 +502,7 @@ export default function ProjectDetailPage() {
             onClick={handleConvertToClient}
             className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
           >
-            {`Convert to ${USE_ACCOUNT_LABELS ? "Account" : "Client"}`}
+            {`Convert to ${config.labels.client}`}
           </button>
         )}
 
