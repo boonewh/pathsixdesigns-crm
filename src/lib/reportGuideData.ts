@@ -19,7 +19,7 @@ export const reportGuides: Record<string, ReportGuide> = {
       "Active projects and their total dollar values",
       "Overall health of your sales funnel"
     ],
-    howItWorks: "This report looks at all your leads and groups them by status (new, contacted, qualified, lost, converted). It also shows your projects grouped by status (pending, won, lost) along with the total value in each category.",
+    howItWorks: "This report looks at all your leads and groups them by their current status. It also shows your projects grouped by status (active, completed, lost) along with the total value in each category. Status names may vary depending on your CRM configuration.",
     dataUsed: [
       "Lead records with their current status",
       "Project records with status and dollar values",
@@ -33,7 +33,7 @@ export const reportGuides: Record<string, ReportGuide> = {
     ],
     whatToWatchFor: [
       "Too many leads stuck in one stage (indicates bottleneck)",
-      "Projects sitting in 'pending' too long",
+      "Projects sitting in active status too long",
       "Conversion drops between stages"
     ]
   },
@@ -74,7 +74,7 @@ export const reportGuides: Record<string, ReportGuide> = {
       "How long it typically takes to close a deal",
       "Individual team member performance (admin view)"
     ],
-    howItWorks: "The system counts all leads created in your selected time period, then calculates what percentage reached 'converted' status. It also tracks the average number of days between lead creation and conversion.",
+    howItWorks: "The system counts all leads created in your selected time period, then calculates what percentage reached 'won' status — either manually or by using the Convert to Client button. It also tracks the average number of days between lead creation and conversion. Leads that were converted to clients are included in this count even after they are removed from the leads list.",
     dataUsed: [
       "Total leads created",
       "Number of converted leads",
@@ -100,30 +100,30 @@ export const reportGuides: Record<string, ReportGuide> = {
     title: "Revenue Reports",
     whatItShows: [
       "Your top clients by total project value",
-      "How many projects each client has",
-      "Split between won revenue and pending opportunities",
-      "Predicted future revenue based on current pipeline"
+      "Split between completed revenue and active (in-progress) opportunities",
+      "Predicted future revenue based on your current pipeline",
+      "Monthly and annual recurring revenue from subscriptions (if enabled)"
     ],
-    howItWorks: "The system adds up all project values for each client, separating won projects (done deals) from pending projects (still in progress). For forecasting, it applies probability weights based on project status (pending: 30%, won: 100%, lost: 0%).",
+    howItWorks: "Revenue is tracked in two separate buckets that are never double-counted. Project revenue comes from projects linked to clients — completed projects count as earned, active projects count as pipeline. Subscription revenue (if your plan includes it) comes from recurring billing records on client accounts and shows MRR and ARR separately. For forecasting, probability weights are applied by status: active projects at 30%, completed at 100%, lost at 0%.",
     dataUsed: [
       "All projects linked to each client",
-      "Project values and statuses",
-      "Historical win rates",
+      "Project values, statuses, and billing types (one-time, monthly, yearly)",
+      "Subscription records (if subscriptions are enabled)",
       "Optional date range filters"
     ],
     bestUsedFor: [
+      "Understanding true recurring revenue vs one-time project income",
       "Account management prioritization",
-      "Upselling and cross-selling opportunities",
       "Revenue planning and forecasting",
-      "Cash flow projections"
+      "Identifying upsell and cross-sell opportunities"
     ],
     whatToWatchFor: [
-      "Clients with large pending values (need attention)",
-      "One-project clients (upsell opportunity)",
+      "Clients with large active project values (need attention to close)",
+      "One-project clients with no subscription (upsell opportunity)",
       "High-value clients with no recent activity (retention risk)",
-      "Heavy dependence on a few large deals"
+      "Heavy dependence on a few large one-time deals (revenue volatility)"
     ],
-    proTip: "Compare your forecast to actual results each quarter. If reality is very different, adjust expectations accordingly."
+    proTip: "If your business model is subscription-first (you build first, then charge monthly), keep projects at $0 and track all recurring income through subscriptions. Your MRR and ARR are then your real business health metrics. If you charge for both project work and subscriptions, both will appear as separate line items — they are never combined."
   },
 
   activity: {
