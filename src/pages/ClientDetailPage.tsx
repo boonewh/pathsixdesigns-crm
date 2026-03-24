@@ -7,6 +7,7 @@ import {
   User,
   FolderKanban,
   Wrench,
+  ArrowRightLeft,
 } from "lucide-react";
 import { useAuth, userHasRole } from "@/authContext";
 import { useCRMConfig } from "@/config/crmConfig";
@@ -230,6 +231,26 @@ export default function ClientDetailPage() {
             </div>
           </li>
         </ul>
+
+        {client.lead_origin && (
+          <div className="bg-green-50 border border-green-200 rounded-lg p-4 flex items-start gap-3">
+            <ArrowRightLeft size={16} className="text-green-600 mt-0.5 shrink-0" />
+            <div className="text-sm">
+              <div className="font-semibold text-green-800 mb-1">Converted from Lead</div>
+              <div className="text-green-700 space-y-0.5">
+                {client.lead_origin.converted_on && (
+                  <div>Converted on {new Date(client.lead_origin.converted_on).toLocaleDateString()}</div>
+                )}
+                {client.lead_origin.lead_source && (
+                  <div>Lead source: <span className="font-medium">{client.lead_origin.lead_source}</span></div>
+                )}
+                {client.lead_origin.days_in_pipeline != null && (
+                  <div>Time in pipeline: <span className="font-medium">{client.lead_origin.days_in_pipeline} days</span></div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
 
         <CompanyInteractions
           token={token!}

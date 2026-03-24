@@ -10,6 +10,14 @@ export interface Account {
   notes?: string;
 }
 
+export interface LeadOrigin {
+  lead_id: number;
+  lead_source?: string;
+  lead_created_at: string;
+  converted_on?: string;
+  days_in_pipeline?: number;
+}
+
 export interface Client {
   id: number;
   name: string;
@@ -29,6 +37,7 @@ export interface Client {
   accounts?: Account[];
   type?: string;
   status?: "new" | "prospect" | "active" | "inactive";
+  lead_origin?: LeadOrigin | null;
 }
 
 export type Interaction = {

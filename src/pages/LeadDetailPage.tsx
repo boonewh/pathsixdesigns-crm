@@ -158,6 +158,13 @@ export default function LeadDetailPage() {
 
     if (!confirmed) return;
 
+    // Mark lead as won first so it's tracked in reports even after soft-delete
+    await apiFetch(`/leads/${lead.id}`, {
+      method: "PUT",
+      headers: { Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ lead_status: "won" }),
+    });
+
     const res = await apiFetch("/clients/", {
       method: "POST",
       headers: { Authorization: `Bearer ${token}` },
@@ -171,6 +178,7 @@ export default function LeadDetailPage() {
         state: lead.state,
         zip: lead.zip,
         notes: lead.notes,
+        source_lead_id: lead.id,
       }),
     });
 
