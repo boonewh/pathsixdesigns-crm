@@ -92,8 +92,8 @@ export function RevenueReports({ startDate, endDate }: Props) {
   // Chart data for revenue by client
   const clientChartData = revenueData.map((c) => ({
     name: c.client_name,
-    "Won": c.won_value,
-    "Pending": c.pending_value,
+    "Won": c.won_value ?? 0,
+    "Pending": c.pending_value ?? 0,
   }));
 
   // Forecast summary stats
@@ -223,7 +223,7 @@ export function RevenueReports({ startDate, endDate }: Props) {
             <div className="text-right">
               <div className="text-xs text-gray-500">Total Won</div>
               <div className="text-xl font-bold text-blue-700">
-                {fmt(revenueData.reduce((s, c) => s + c.won_value, 0))}
+                {fmt(revenueData.reduce((s, c) => s + (c.won_value ?? 0), 0))}
               </div>
             </div>
           </div>
@@ -264,8 +264,8 @@ export function RevenueReports({ startDate, endDate }: Props) {
                   return (
                     <tr key={c.client_id} className="hover:bg-gray-50">
                       <td className="px-4 py-2 font-medium">{c.client_name}</td>
-                      <td className="px-4 py-2 text-right text-green-700 font-medium">{fmt(c.won_value)}</td>
-                      <td className="px-4 py-2 text-right text-yellow-600">{fmt(c.pending_value)}</td>
+                      <td className="px-4 py-2 text-right text-green-700 font-medium">{fmt(c.won_value ?? 0)}</td>
+                      <td className="px-4 py-2 text-right text-yellow-600">{fmt(c.pending_value ?? 0)}</td>
                       {showBreakdown && (
                         <td className="px-4 py-2 text-right">
                           {hasBreakdown ? (
