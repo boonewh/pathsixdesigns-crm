@@ -10,6 +10,21 @@ import { formatPhoneNumber } from "@/lib/phoneUtils";
 import { Wrench } from "lucide-react";
 import { useCRMConfig } from "@/config/crmConfig";
 
+const ICON_MAP: Record<string, string> = {
+  'circle-yellow': '🟡',
+  'circle-blue': '🔵',
+  'circle-orange': '🟠',
+  'circle-red': '🔴',
+  'circle-green': '🟢',
+  'phone': '📞',
+  'star': '⭐',
+  'check': '✅',
+  'x': '❌',
+  'snowflake': '❄️',
+};
+const resolveIcons = (icons: Record<string, string>) =>
+  Object.fromEntries(Object.entries(icons).map(([k, v]) => [k, ICON_MAP[v] || v]));
+
 interface AdminLead extends Lead {
   assigned_to_name?: string;
   created_by_name?: string;
@@ -264,7 +279,7 @@ export default function AdminLeadsPage() {
                         <span className={`inline-block px-2 py-1 text-xs rounded ${
                           config.leads.statusConfig.colors[lead.lead_status || ''] || 'bg-gray-100 text-gray-800'
                         }`}>
-                          {config.leads.statusConfig.icons[lead.lead_status || '']} {lead.lead_status ?? "—"}
+                          {resolveIcons(config.leads.statusConfig.icons)[lead.lead_status || '']} {lead.lead_status ?? "—"}
                         </span>
                       </td>
                       <td className="px-4 py-2">{lead.type ?? "—"}</td>
