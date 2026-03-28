@@ -276,10 +276,11 @@ export default function AdminLeadsPage() {
                       <td className="px-4 py-2">{lead.email ?? "—"}</td>
                       <td className="px-4 py-2">{lead.phone ? formatPhoneNumber(lead.phone) : "—"}</td>
                       <td className="px-4 py-2">
-                        <span className={`inline-block px-2 py-1 text-xs rounded ${
+                        <span className={`inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-full ${
                           config.leads.statusConfig.colors[lead.lead_status || ''] || 'bg-gray-100 text-gray-800'
                         }`}>
-                          {resolveIcons(config.leads.statusConfig.icons)[lead.lead_status || '']} {lead.lead_status ?? "—"}
+                          <span>{resolveIcons(config.leads.statusConfig.icons)[lead.lead_status || '']}</span>
+                          {lead.lead_status ?? "—"}
                         </span>
                       </td>
                       <td className="px-4 py-2">{lead.type ?? "—"}</td>
