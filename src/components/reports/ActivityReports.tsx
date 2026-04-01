@@ -1,11 +1,43 @@
 import { useEffect, useState } from "react";
 import { reportService, UserActivityData, FollowUpsResponse, ConvertedLead } from "@/lib/reportService";
-import { Users, Bell, AlertTriangle, UserX, TrendingUp } from "lucide-react";
+import { Users, Bell, AlertTriangle, UserX, TrendingUp, ChevronDown, ChevronUp } from "lucide-react";
 
 type Props = {
   startDate?: string;
   endDate?: string;
 };
+
+function CollapsibleSection({
+  title,
+  icon,
+  badge,
+  defaultOpen = true,
+  children,
+}: {
+  title: string;
+  icon: React.ReactNode;
+  badge?: React.ReactNode;
+  defaultOpen?: boolean;
+  children: React.ReactNode;
+}) {
+  const [open, setOpen] = useState(defaultOpen);
+  return (
+    <div className="bg-white rounded-lg shadow">
+      <button
+        onClick={() => setOpen((o) => !o)}
+        className="w-full flex items-center gap-2 px-6 py-4 text-left hover:bg-gray-50 rounded-lg transition-colors"
+      >
+        {icon}
+        <h2 className="text-lg font-semibold">{title}</h2>
+        {badge && <span className="ml-2">{badge}</span>}
+        <span className="ml-auto text-gray-400">
+          {open ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+        </span>
+      </button>
+      {open && <div className="px-6 pb-6">{children}</div>}
+    </div>
+  );
+}
 
 export function ActivityReports({ startDate, endDate }: Props) {
   const [activityData, setActivityData] = useState<UserActivityData[]>([]);
@@ -72,15 +104,14 @@ export function ActivityReports({ startDate, endDate }: Props) {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {/* User Activity — admin only; silently omitted for non-admins */}
       {activityData.length > 0 && (
-        <div className="bg-white rounded-lg shadow p-6">
-          <div className="flex items-center gap-2 mb-4">
-            <Users className="h-5 w-5 text-purple-600" />
-            <h2 className="text-lg font-semibold">User Activity</h2>
-          </div>
-
+        <CollapsibleSection
+          title="User Activity"
+          icon={<Users className="h-5 w-5 text-purple-600" />}
+          defaultOpen={true}
+        >
           <div className="overflow-x-auto">
             <table className="min-w-full text-sm">
               <thead className="bg-gray-50">
@@ -105,20 +136,68 @@ export function ActivityReports({ startDate, endDate }: Props) {
               </tbody>
             </table>
           </div>
-        </div>
+        </CollapsibleSection>
       )}
 
-      {/* Overdue Follow-ups */}
+      {/* Converted Leads — shown near top since client specifically requested this */}
+      {convertedLeads.length > 0 && (
+        <CollapsibleSection
+          title="Converted Leads"
+          icon={<TrendingUp className="h-5 w-5 text-green-600" />}
+          badge={
+            <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-medium">
+              {convertedLeads.length} total
+            </span>
+          }
+          defaultOpen={true}
+        >
+          <div className="overflow-x-auto">
+            <table className="min-w-full text-sm">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-4 py-3 text-left font-medium text-gray-500">Lead</th>
+                  <th className="px-4 py-3 text-left font-medium text-gray-500">Client</th>
+                  <th className="px-4 py-3 text-left font-medium text-gray-500">Source</th>
+                  <th className="px-4 py-3 text-left font-medium text-gray-500">Assigned To</th>
+                  <th className="px-4 py-3 text-right font-medium text-gray-500">Converted</th>
+                  <th className="px-4 py-3 text-right font-medium text-gray-500">Days in Pipeline</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {convertedLeads.map((lead) => (
+                  <tr key={lead.lead_id} className="hover:bg-gray-50">
+                    <td className="px-4 py-3 font-medium">{lead.name}</td>
+                    <td className="px-4 py-3 text-gray-600">{lead.client_name ?? "—"}</td>
+                    <td className="px-4 py-3 text-gray-500">{lead.lead_source ?? "—"}</td>
+                    <td className="px-4 py-3 text-gray-500">{lead.assigned_to ?? "—"}</td>
+                    <td className="px-4 py-3 text-right text-gray-500">
+                      {lead.converted_on ? new Date(lead.converted_on).toLocaleDateString() : "—"}
+                    </td>
+                    <td className="px-4 py-3 text-right">
+                      {lead.days_in_pipeline != null ? (
+                        <span className="font-medium text-green-700">{lead.days_in_pipeline}d</span>
+                      ) : "—"}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </CollapsibleSection>
+      )}
+
+      {/* Overdue Follow-ups — collapsible so it doesn't bury everything below */}
       {overdueFollowUps.length > 0 && (
-        <div className="bg-white rounded-lg shadow p-6">
-          <div className="flex items-center gap-2 mb-4">
-            <Bell className="h-5 w-5 text-red-500" />
-            <h2 className="text-lg font-semibold">Overdue Follow-ups</h2>
-            <span className="ml-auto text-xs bg-red-100 text-red-700 px-2 py-0.5 rounded-full font-medium">
+        <CollapsibleSection
+          title="Overdue Follow-ups"
+          icon={<Bell className="h-5 w-5 text-red-500" />}
+          badge={
+            <span className="text-xs bg-red-100 text-red-700 px-2 py-0.5 rounded-full font-medium">
               {overdueFollowUps.length} overdue
             </span>
-          </div>
-
+          }
+          defaultOpen={true}
+        >
           <div className="space-y-3">
             {overdueFollowUps.map((item) => (
               <div
@@ -142,18 +221,19 @@ export function ActivityReports({ startDate, endDate }: Props) {
               </div>
             ))}
           </div>
-        </div>
+        </CollapsibleSection>
       )}
 
       {/* Inactive Clients */}
       {inactiveClients.length > 0 && (
-        <div className="bg-white rounded-lg shadow p-6">
-          <div className="flex items-center gap-2 mb-4">
-            <UserX className="h-5 w-5 text-orange-500" />
-            <h2 className="text-lg font-semibold">Inactive Clients</h2>
-            <span className="ml-auto text-xs text-gray-400">No interaction in 30+ days</span>
-          </div>
-
+        <CollapsibleSection
+          title="Inactive Clients"
+          icon={<UserX className="h-5 w-5 text-orange-500" />}
+          badge={
+            <span className="text-xs text-gray-400 text-sm">No interaction in 30+ days</span>
+          }
+          defaultOpen={false}
+        >
           <div className="overflow-x-auto">
             <table className="min-w-full text-sm">
               <thead className="bg-gray-50">
@@ -172,11 +252,7 @@ export function ActivityReports({ startDate, endDate }: Props) {
                     </td>
                     <td className="px-4 py-2 text-right">
                       {c.days_inactive != null ? (
-                        <span
-                          className={`font-medium ${
-                            c.days_inactive >= 90 ? "text-red-600" : "text-orange-500"
-                          }`}
-                        >
+                        <span className={`font-medium ${c.days_inactive >= 90 ? "text-red-600" : "text-orange-500"}`}>
                           {c.days_inactive}d
                         </span>
                       ) : (
@@ -188,62 +264,19 @@ export function ActivityReports({ startDate, endDate }: Props) {
               </tbody>
             </table>
           </div>
-        </div>
+        </CollapsibleSection>
       )}
 
-      {/* Converted Leads */}
-      {convertedLeads.length > 0 && (
-        <div className="bg-white rounded-lg shadow p-6">
-          <div className="flex items-center gap-2 mb-4">
-            <TrendingUp className="h-5 w-5 text-green-600" />
-            <h2 className="text-lg font-semibold">Converted Leads</h2>
-            <span className="ml-auto text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-medium">
-              {convertedLeads.length} total
-            </span>
-          </div>
-
-          <div className="overflow-x-auto">
-            <table className="min-w-full text-sm">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-4 py-3 text-left font-medium text-gray-500">Lead</th>
-                  <th className="px-4 py-3 text-left font-medium text-gray-500">Client</th>
-                  <th className="px-4 py-3 text-left font-medium text-gray-500">Source</th>
-                  <th className="px-4 py-3 text-right font-medium text-gray-500">Converted</th>
-                  <th className="px-4 py-3 text-right font-medium text-gray-500">Days in Pipeline</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100">
-                {convertedLeads.map((lead) => (
-                  <tr key={lead.lead_id} className="hover:bg-gray-50">
-                    <td className="px-4 py-3 font-medium">{lead.name}</td>
-                    <td className="px-4 py-3 text-gray-600">{lead.client_name ?? "—"}</td>
-                    <td className="px-4 py-3 text-gray-500">{lead.lead_source ?? "—"}</td>
-                    <td className="px-4 py-3 text-right text-gray-500">
-                      {lead.converted_on ? new Date(lead.converted_on).toLocaleDateString() : "—"}
-                    </td>
-                    <td className="px-4 py-3 text-right">
-                      {lead.days_in_pipeline != null ? (
-                        <span className="font-medium text-green-700">{lead.days_in_pipeline}d</span>
-                      ) : "—"}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
-
-      {/* Inactive Leads */}
+      {/* Stalled Leads */}
       {inactiveLeads.length > 0 && (
-        <div className="bg-white rounded-lg shadow p-6">
-          <div className="flex items-center gap-2 mb-4">
-            <AlertTriangle className="h-5 w-5 text-yellow-500" />
-            <h2 className="text-lg font-semibold">Stalled Leads</h2>
-            <span className="ml-auto text-xs text-gray-400">Open/qualified, no recent activity</span>
-          </div>
-
+        <CollapsibleSection
+          title="Stalled Leads"
+          icon={<AlertTriangle className="h-5 w-5 text-yellow-500" />}
+          badge={
+            <span className="text-xs text-gray-400 text-sm">Open/qualified, no recent activity</span>
+          }
+          defaultOpen={false}
+        >
           <div className="overflow-x-auto">
             <table className="min-w-full text-sm">
               <thead className="bg-gray-50">
@@ -262,11 +295,7 @@ export function ActivityReports({ startDate, endDate }: Props) {
                     </td>
                     <td className="px-4 py-2 text-right">
                       {l.days_inactive != null ? (
-                        <span
-                          className={`font-medium ${
-                            l.days_inactive >= 60 ? "text-red-600" : "text-yellow-600"
-                          }`}
-                        >
+                        <span className={`font-medium ${l.days_inactive >= 60 ? "text-red-600" : "text-yellow-600"}`}>
                           {l.days_inactive}d
                         </span>
                       ) : (
@@ -278,7 +307,7 @@ export function ActivityReports({ startDate, endDate }: Props) {
               </tbody>
             </table>
           </div>
-        </div>
+        </CollapsibleSection>
       )}
     </div>
   );
