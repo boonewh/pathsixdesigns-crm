@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import { reportService, UserActivityData, FollowUpsResponse } from "@/lib/reportService";
-import { Users, Bell, AlertTriangle, UserX } from "lucide-react";
+import { reportService, UserActivityData, FollowUpsResponse, ConvertedLead } from "@/lib/reportService";
+import { Users, Bell, AlertTriangle, UserX, TrendingUp } from "lucide-react";
 
 type Props = {
   startDate?: string;
@@ -10,6 +10,7 @@ type Props = {
 export function ActivityReports({ startDate, endDate }: Props) {
   const [activityData, setActivityData] = useState<UserActivityData[]>([]);
   const [followUps, setFollowUps] = useState<FollowUpsResponse | null>(null);
+  const [convertedLeads, setConvertedLeads] = useState<ConvertedLead[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -21,17 +22,23 @@ export function ActivityReports({ startDate, endDate }: Props) {
     try {
       setLoading(true);
       setError("");
-      const [activity, followUpData] = await Promise.all([
+      const [activity, followUpData, converted] = await Promise.all([
         reportService.getUserActivity({ start_date: startDate, end_date: endDate }),
         reportService.getFollowUps({ start_date: startDate, end_date: endDate }),
+        reportService.getConvertedLeads({ start_date: startDate, end_date: endDate }),
       ]);
       setActivityData(activity || []);
       setFollowUps(followUpData || null);
+      setConvertedLeads(converted || []);
     } catch (err) {
-      // User activity is admin-only; if it 403s, still show follow-ups
+      // User activity is admin-only; if it 403s, still show follow-ups and converted leads
       try {
-        const followUpData = await reportService.getFollowUps({ start_date: startDate, end_date: endDate });
+        const [followUpData, converted] = await Promise.all([
+          reportService.getFollowUps({ start_date: startDate, end_date: endDate }),
+          reportService.getConvertedLeads({ start_date: startDate, end_date: endDate }),
+        ]);
         setFollowUps(followUpData || null);
+        setConvertedLeads(converted || []);
         setActivityData([]);
       } catch {
         setError("Failed to load activity data");
@@ -53,7 +60,8 @@ export function ActivityReports({ startDate, endDate }: Props) {
     activityData.length > 0 ||
     overdueFollowUps.length > 0 ||
     inactiveClients.length > 0 ||
-    inactiveLeads.length > 0;
+    inactiveLeads.length > 0 ||
+    convertedLeads.length > 0;
 
   if (!hasData) {
     return (
@@ -174,6 +182,50 @@ export function ActivityReports({ startDate, endDate }: Props) {
                       ) : (
                         <span className="text-gray-400">—</span>
                       )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* Converted Leads */}
+      {convertedLeads.length > 0 && (
+        <div className="bg-white rounded-lg shadow p-6">
+          <div className="flex items-center gap-2 mb-4">
+            <TrendingUp className="h-5 w-5 text-green-600" />
+            <h2 className="text-lg font-semibold">Converted Leads</h2>
+            <span className="ml-auto text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-medium">
+              {convertedLeads.length} total
+            </span>
+          </div>
+
+          <div className="overflow-x-auto">
+            <table className="min-w-full text-sm">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-4 py-3 text-left font-medium text-gray-500">Lead</th>
+                  <th className="px-4 py-3 text-left font-medium text-gray-500">Client</th>
+                  <th className="px-4 py-3 text-left font-medium text-gray-500">Source</th>
+                  <th className="px-4 py-3 text-right font-medium text-gray-500">Converted</th>
+                  <th className="px-4 py-3 text-right font-medium text-gray-500">Days in Pipeline</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {convertedLeads.map((lead) => (
+                  <tr key={lead.lead_id} className="hover:bg-gray-50">
+                    <td className="px-4 py-3 font-medium">{lead.name}</td>
+                    <td className="px-4 py-3 text-gray-600">{lead.client_name ?? "—"}</td>
+                    <td className="px-4 py-3 text-gray-500">{lead.lead_source ?? "—"}</td>
+                    <td className="px-4 py-3 text-right text-gray-500">
+                      {lead.converted_on ? new Date(lead.converted_on).toLocaleDateString() : "—"}
+                    </td>
+                    <td className="px-4 py-3 text-right">
+                      {lead.days_in_pipeline != null ? (
+                        <span className="font-medium text-green-700">{lead.days_in_pipeline}d</span>
+                      ) : "—"}
                     </td>
                   </tr>
                 ))}

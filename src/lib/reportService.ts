@@ -101,6 +101,17 @@ export interface InactiveLead {
   days_inactive: number | null;
 }
 
+export interface ConvertedLead {
+  lead_id: number;
+  name: string;
+  lead_source: string | null;
+  converted_on: string | null;
+  days_in_pipeline: number | null;
+  client_id: number | null;
+  client_name: string | null;
+  assigned_to: string | null;
+}
+
 export interface FollowUpsResponse {
   overdue_follow_ups: OverdueFollowUp[];
   inactive_clients: InactiveClient[];
@@ -233,6 +244,11 @@ class ReportService {
 
   async getFollowUps(filters?: ReportFilters): Promise<FollowUpsResponse> {
     return this.fetchReport<FollowUpsResponse>("follow-ups", filters);
+  }
+
+  async getConvertedLeads(filters?: ReportFilters): Promise<ConvertedLead[]> {
+    const data = await this.fetchReport<{ converted_leads: ConvertedLead[] }>("converted-leads", filters);
+    return data.converted_leads ?? [];
   }
 
   async getRevenueForecast(filters?: ReportFilters): Promise<RevenueForecastResponse> {
