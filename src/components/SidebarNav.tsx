@@ -70,10 +70,6 @@ function SidebarContent({
       items: [{ label: "Files", path: "/vault", icon: Archive }],
     },
     {
-      section: "Reports",
-      items: [{ label: "Reports", path: "/reports", icon: FileText }],
-    },
-    {
       section: "Settings",
       items: [
         { label: "Settings", path: "/settings", icon: Settings },
@@ -95,6 +91,7 @@ function SidebarContent({
               { label: "Interactions Overview", path: "/admin/interactions", icon: FileText },
               { label: "Projects Overview", path: "/admin/projects", icon: FolderKanban },
               { label: "Data Import", path: "/admin/import", icon: Upload },
+              { label: "Reports", path: "/reports", icon: FileText },
               // DISABLED: Backup feature - possible future project
               // { label: "Database Backups", path: "/admin/backups", icon: Database },
             ],
