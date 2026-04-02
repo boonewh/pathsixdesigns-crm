@@ -1,4 +1,5 @@
-import { Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route, Navigate, Outlet } from "react-router-dom";
+import { useAuth } from "@/authContext";
 import Login from "@/pages/Login";
 import Accounts from "@/pages/Accounts";
 import AdminUsersPage from "@/pages/AdminUsersPage";
@@ -29,6 +30,11 @@ import ProjectDetailPage from "./pages/ProjectDetailPage";
 import TrashPage from "./pages/TrashPage";
 import Vault from "./pages/Vault";
 
+function AdminRoute() {
+  const { user } = useAuth();
+  return user?.roles.includes("admin") ? <Outlet /> : <Navigate to="/dashboard" replace />;
+}
+
 function App() {
   return (
     <ErrorBoundary>
@@ -42,26 +48,29 @@ function App() {
         {/* Protected Routes */}
         <Route element={<ProtectedLayout />}>
           <Route path="/accounts" element={<Accounts />} />
-          <Route path="/admin/users" element={<AdminUsersPage />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/clients" element={<Clients />} />
           <Route path="/leads" element={<Leads />} />
           <Route path="/projects" element={<Projects />} />
-          <Route path="/reports" element={<Reports />} />
           <Route path="/settings" element={<Settings />} />
           <Route path="/help" element={<HelpPage />} />
           <Route path="/clients/:id" element={<ClientDetailPage />} />
           <Route path="/leads/:id" element={<LeadDetailPage />} />
           <Route path="/calendar" element={<CalendarPage />} />
           <Route path="/change-password" element={<ChangePasswordPage />} />
-          <Route path="/admin/leads" element={<AdminLeadsPage />} />
-          <Route path="/admin/clients" element={<AdminClientsPage />} />
-          <Route path="/admin/interactions" element={<AdminInteractionsPage />} />
-          <Route path="/admin/projects" element={<AdminProjectsPage />} />
-          <Route path="/admin/import" element={<AdminImportPage />} />
-          {/* DISABLED: Backup feature - possible future project */}
-          {/* <Route path="/admin/backups" element={<AdminBackupsPage />} /> */}
           <Route path="/projects/:id" element={<ProjectDetailPage />} />
+          {/* Admin-only routes */}
+          <Route element={<AdminRoute />}>
+            <Route path="/reports" element={<Reports />} />
+            <Route path="/admin/users" element={<AdminUsersPage />} />
+            <Route path="/admin/leads" element={<AdminLeadsPage />} />
+            <Route path="/admin/clients" element={<AdminClientsPage />} />
+            <Route path="/admin/interactions" element={<AdminInteractionsPage />} />
+            <Route path="/admin/projects" element={<AdminProjectsPage />} />
+            <Route path="/admin/import" element={<AdminImportPage />} />
+            {/* DISABLED: Backup feature - possible future project */}
+            {/* <Route path="/admin/backups" element={<AdminBackupsPage />} /> */}
+          </Route>
           <Route path="/trash" element={<TrashPage />} />
           <Route path="/vault" element={<Vault />} />
         </Route>
