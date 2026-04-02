@@ -4,6 +4,7 @@ import { Interaction } from "@/types";
 import { apiFetch } from "@/lib/api";
 import InteractionForm from "@/components/ui/InteractionsForm";
 import InteractionModal from "@/components/ui/InteractionModal";
+import CompleteInteractionModal from "@/components/ui/CompleteInteractionModal";
 import PaginationControls from "@/components/ui/PaginationControls";
 import { usePagination } from "@/hooks/usePreferences";
 import { generateGoogleCalendarUrl, generateOutlookComUrl } from "@/lib/calendarUtils";
@@ -33,6 +34,7 @@ export default function EntityInteractions({
   const [editingId, setEditingId] = useState<number | null>(null);
 const [openMenuId, setOpenMenuId] = useState<number | null>(null);
   const [selectedInteraction, setSelectedInteraction] = useState<Interaction | null>(null);
+  const [completingInteraction, setCompletingInteraction] = useState<Interaction | null>(null);
   const [editDefaultValues, setEditDefaultValues] = useState<Partial<InteractionCreateInput> | undefined>(undefined);
 
   // Use pagination hook with entity-specific key
@@ -311,7 +313,7 @@ const [openMenuId, setOpenMenuId] = useState<number | null>(null);
                           className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
                           onClick={(e) => {
                             e.stopPropagation();
-                            markAsComplete(i.id);
+                            setCompletingInteraction(i);
                             setOpenMenuId(null);
                           }}
                         >
@@ -355,6 +357,18 @@ const [openMenuId, setOpenMenuId] = useState<number | null>(null);
             entityName="interactions"
             perPageOptions={[5, 10, 20]}
             className="border-t pt-4"
+          />
+        )}
+
+        {completingInteraction && (
+          <CompleteInteractionModal
+            interaction={completingInteraction}
+            token={token}
+            onSuccess={() => {
+              setCompletingInteraction(null);
+              fetchInteractions();
+            }}
+            onCancel={() => setCompletingInteraction(null)}
           />
         )}
 

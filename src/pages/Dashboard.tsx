@@ -3,6 +3,7 @@ import { useAuth } from "@/authContext";
 import { Interaction } from "@/types";
 import { addDays, isBefore, isToday, isWithinInterval, parseISO, formatDistanceToNow } from "date-fns";
 import InteractionModal from "@/components/ui/InteractionModal";
+import CompleteInteractionModal from "@/components/ui/CompleteInteractionModal";
 import { apiFetch } from "@/lib/api";
 import { useCRMConfig } from "@/config/crmConfig";
 
@@ -11,6 +12,7 @@ export default function Dashboard() {
   const config = useCRMConfig();
   const [interactions, setInteractions] = useState<Interaction[]>([]);
   const [selectedInteraction, setSelectedInteraction] = useState<Interaction | null>(null);
+  const [completingInteraction, setCompletingInteraction] = useState<Interaction | null>(null);
 
   interface ActivityEntry {
     entity_type: string;
@@ -240,6 +242,18 @@ export default function Dashboard() {
         </section>
       )}
 
+      {completingInteraction && (
+        <CompleteInteractionModal
+          interaction={completingInteraction}
+          token={token!}
+          onSuccess={() => {
+            setInteractions((prev) => prev.filter((i) => i.id !== completingInteraction.id));
+            setCompletingInteraction(null);
+          }}
+          onCancel={() => setCompletingInteraction(null)}
+        />
+      )}
+
       {selectedInteraction && (
         <InteractionModal
           title={`Follow-up: ${getEntityDisplay(selectedInteraction).name}`}
@@ -255,17 +269,9 @@ export default function Dashboard() {
           secondary_phone_label={selectedInteraction.secondary_phone_label}
           profile_link={selectedInteraction.profile_link}
           onClose={() => setSelectedInteraction(null)}
-          onMarkComplete={async () => {
-            const res = await apiFetch(`/interactions/${selectedInteraction.id}/complete`, {
-              method: "PUT",
-              headers: { Authorization: `Bearer ${token}` },
-            });
-            if (res.ok) {
-              setInteractions(prev => prev.filter(i => i.id !== selectedInteraction.id));
-              setSelectedInteraction(null);
-            } else {
-              alert("Failed to mark interaction as completed.");
-            }
+          onMarkComplete={() => {
+            setSelectedInteraction(null);
+            setCompletingInteraction(selectedInteraction);
           }}
         />
       )}
