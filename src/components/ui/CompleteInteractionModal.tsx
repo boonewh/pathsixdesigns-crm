@@ -47,21 +47,33 @@ export default function CompleteInteractionModal({
     setIsSubmitting(true);
 
     try {
-      // Step 1: Mark current interaction complete (update outcome/notes at the same time)
-      const updateRes = await apiFetch(`/interactions/${interaction.id}`, {
+      // Step 1a: Save outcome/notes if the user entered anything
+      if (outcome.trim() || notes.trim()) {
+        const updateRes = await apiFetch(`/interactions/${interaction.id}`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            ...(outcome.trim() ? { outcome: outcome.trim() } : {}),
+            ...(notes.trim() ? { notes: notes.trim() } : {}),
+          }),
+        });
+
+        if (!updateRes.ok) {
+          setIsSubmitting(false);
+          return;
+        }
+      }
+
+      // Step 1b: Mark complete via the dedicated endpoint (guaranteed to work)
+      const completeRes = await apiFetch(`/interactions/${interaction.id}/complete`, {
         method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          followup_status: "completed",
-          ...(outcome.trim() ? { outcome: outcome.trim() } : {}),
-          ...(notes.trim() ? { notes: notes.trim() } : {}),
-        }),
+        headers: { Authorization: `Bearer ${token}` },
       });
 
-      if (!updateRes.ok) {
+      if (!completeRes.ok) {
         setIsSubmitting(false);
         return;
       }
