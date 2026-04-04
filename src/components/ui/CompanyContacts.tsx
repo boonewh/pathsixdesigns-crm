@@ -265,15 +265,15 @@ export default function CompanyContacts({ token, entityType, entityId }: Props) 
                       ({c.phone_label})
                     </span>
                   )}
-                  {c.secondary_phone && (
-                    <div>
-                      ☎️ <a href={`tel:${c.secondary_phone}`} className="text-blue-600 underline">{formatPhoneNumber(c.secondary_phone)}</a>
-                      {c.secondary_phone_label && (
-                        <span className="text-muted-foreground text-sm ml-1">
-                          ({c.secondary_phone_label})
-                        </span>
-                      )}
-                    </div>
+                </div>
+              )}
+              {c.secondary_phone && (
+                <div className="text-sm">
+                  ☎️ <a href={`tel:${c.secondary_phone}`} className="text-blue-600 underline">{formatPhoneNumber(c.secondary_phone)}</a>
+                  {c.secondary_phone_label && (
+                    <span className="text-muted-foreground text-sm ml-1">
+                      ({c.secondary_phone_label})
+                    </span>
                   )}
                 </div>
               )}
