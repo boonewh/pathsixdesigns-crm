@@ -156,6 +156,13 @@ export default function Dashboard() {
     <div className="p-6 space-y-8">
       <h1 className="text-2xl font-bold">Dashboard</h1>
 
+      <div className="text-sm text-gray-500 bg-gray-50 border border-gray-200 rounded px-4 py-2">
+        Found a bug or have a suggestion? Email{" "}
+        <a href="mailto:support@pathsixsolutions.com" className="text-blue-600 hover:underline">
+          support@pathsixsolutions.com
+        </a>
+      </div>
+
       {overdueFollowUps.length > 0 && (
         <section className="bg-red-50 border-l-4 border-red-500 p-4 rounded">
           <h2 className="font-semibold text-red-800 mb-2">⚠️ Overdue Follow-ups</h2>
