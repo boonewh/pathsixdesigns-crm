@@ -220,7 +220,7 @@ export default function ProjectDetailPage() {
   const handleAssignProject = async () => {
     if (!project || !selectedUserId) return;
     setIsAssigning(true);
-    const res = await apiFetch(`/projects/${project.id}`, {
+    const res = await apiFetch(`/projects/${project.id}/assign`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
@@ -229,8 +229,8 @@ export default function ProjectDetailPage() {
       body: JSON.stringify({ assigned_to: selectedUserId }),
     });
     if (res.ok) {
-      const updated = await res.json();
-      setProject((prev) => prev && { ...prev, assigned_to: updated.assigned_to });
+      const assignedUser = availableUsers.find((u) => u.id === selectedUserId);
+      setProject((prev) => prev && { ...prev, assigned_to: selectedUserId, assigned_to_name: assignedUser?.email });
       setShowAssignModal(false);
       setSelectedUserId(null);
       toast.success("Project assigned");
@@ -432,9 +432,9 @@ export default function ProjectDetailPage() {
         </>
       )}
 
-      {project.assigned_to?.email && (
+      {project.assigned_to_name && (
         <div className="text-sm text-gray-600">
-          <strong>Assigned to:</strong> {project.assigned_to.email}
+          <strong>Assigned to:</strong> {project.assigned_to_name}
         </div>
       )}
 
