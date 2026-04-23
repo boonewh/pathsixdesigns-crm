@@ -10,6 +10,8 @@ export default function ChangePasswordPage() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
 
+  const [loading, setLoading] = useState(false);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
@@ -25,30 +27,37 @@ export default function ChangePasswordPage() {
       return;
     }
 
-    const res = await fetch(`${API_BASE}/change-password`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({
-        current_password: currentPassword,
-        new_password: newPassword,
-      }),
-    });
+    setLoading(true);
+    try {
+      const res = await fetch(`${API_BASE}/change-password`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          current_password: currentPassword,
+          new_password: newPassword,
+        }),
+      });
 
-    if (res.ok) {
-      setSuccess(true);
-      setCurrentPassword("");
-      setNewPassword("");
-      setConfirmPassword("");
-    } else {
-      let message = "Password change failed";
-      try {
-        const data = await res.json();
-        message = data.error || message;
-      } catch {}
-      setError(message);
+      if (res.ok) {
+        setSuccess(true);
+        setCurrentPassword("");
+        setNewPassword("");
+        setConfirmPassword("");
+      } else {
+        let message = "Password change failed";
+        try {
+          const data = await res.json();
+          message = data.error || message;
+        } catch {}
+        setError(message);
+      }
+    } catch {
+      setError("Network error — please check your connection and try again");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -102,9 +111,10 @@ export default function ChangePasswordPage() {
 
         <button
           type="submit"
-          className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+          disabled={loading}
+          className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 disabled:opacity-50"
         >
-          Update Password
+          {loading ? "Updating..." : "Update Password"}
         </button>
       </form>
     </div>
