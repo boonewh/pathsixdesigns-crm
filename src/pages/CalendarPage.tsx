@@ -33,7 +33,8 @@ export default function CalendarPage() {
   const config = useCRMConfig();
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
-  const [filterType, setFilterType] = useState<"all" | "client" | "lead" | "project">("all"); // Add project option
+  const [filterType, setFilterType] = useState<"all" | "client" | "lead" | "project">("all");
+  const [showAllHours, setShowAllHours] = useState(false);
   const [loading, setLoading] = useState(true);
   const calendarRef = useRef<FullCalendar>(null);
 
@@ -198,18 +199,26 @@ export default function CalendarPage() {
     <div className="p-6">
       <h1 className="text-xl sm:text-2xl font-bold mb-4">Follow-Up Calendar</h1>
 
-      <div className="mb-4">
-        <label className="mr-2 font-semibold">Filter by:</label>
-        <select
-          value={filterType}
-          onChange={(e) => setFilterType(e.target.value as "all" | "client" | "lead" | "project")}
-          className="border rounded px-2 py-1"
+      <div className="mb-4 flex flex-wrap items-center gap-4">
+        <div>
+          <label className="mr-2 font-semibold">Filter by:</label>
+          <select
+            value={filterType}
+            onChange={(e) => setFilterType(e.target.value as "all" | "client" | "lead" | "project")}
+            className="border rounded px-2 py-1"
+          >
+            <option value="all">All Entities</option>
+            <option value="client">{config.labels.client + 's Only'}</option>
+            <option value="lead">Leads Only</option>
+            <option value="project">Projects Only</option>
+          </select>
+        </div>
+        <button
+          onClick={() => setShowAllHours((v) => !v)}
+          className="border rounded px-3 py-1 text-sm bg-white hover:bg-gray-50"
         >
-          <option value="all">All Entities</option>
-          <option value="client">{config.labels.client + 's Only'}</option>
-          <option value="lead">Leads Only</option>
-          <option value="project">Projects Only</option>
-        </select>
+          {showAllHours ? "Show Business Hours" : "Show All 24 Hours"}
+        </button>
       </div>
 
       {/* Add legend for entity types */}
@@ -251,6 +260,9 @@ export default function CalendarPage() {
             }}
             events={events}
             editable={true}
+            slotMinTime={showAllHours ? "00:00:00" : "05:00:00"}
+            slotMaxTime={showAllHours ? "24:00:00" : "22:00:00"}
+            scrollTime="07:00:00"
             eventDrop={handleEventDrop}
             eventClick={handleEventClick}
             eventContent={renderEventContent}
