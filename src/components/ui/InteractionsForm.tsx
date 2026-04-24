@@ -168,18 +168,19 @@ export default function InteractionForm(props: InteractionFormProps) {
         )}
       </div>
 
-      {!isEditing && (
-        <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
-          <input
-            type="checkbox"
-            onChange={(e) =>
-              setValue("followup_status", e.target.checked ? "completed" : undefined)
-            }
-            className="w-4 h-4"
-          />
-          Mark as completed
-        </label>
-      )}
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
+        <select
+          {...register("followup_status")}
+          className="w-full border rounded px-2 py-1 text-sm"
+          defaultValue="pending"
+        >
+          <option value="pending">Pending</option>
+          <option value="contacted">Contacted</option>
+          <option value="rescheduled">Rescheduled</option>
+          <option value="completed">Completed</option>
+        </select>
+      </div>
 
       <div className="flex gap-2">
         <button

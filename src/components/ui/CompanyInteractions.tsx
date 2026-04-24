@@ -300,6 +300,7 @@ const [openMenuId, setOpenMenuId] = useState<number | null>(null);
                             outcome: i.outcome ?? "",
                             notes: i.notes ?? "",
                             follow_up: i.follow_up ?? undefined,
+                            followup_status: (i.followup_status as "pending" | "contacted" | "rescheduled" | "completed") ?? "pending",
                           });
                           setShowForm(true);
                           setEditingId(i.id);
