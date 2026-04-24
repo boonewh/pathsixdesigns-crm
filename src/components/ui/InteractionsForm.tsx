@@ -78,6 +78,20 @@ export default function InteractionForm(props: InteractionFormProps) {
       )}
 
       <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
+        <select
+          {...register("followup_status")}
+          className="w-full border rounded px-2 py-1 text-sm"
+          defaultValue="pending"
+        >
+          <option value="pending">Pending</option>
+          <option value="contacted">Contacted</option>
+          <option value="rescheduled">Rescheduled</option>
+          <option value="completed">Completed</option>
+        </select>
+      </div>
+
+      <div>
         <input
           placeholder="Summary"
           {...register("summary")}
@@ -166,20 +180,6 @@ export default function InteractionForm(props: InteractionFormProps) {
         {errors.phone && (
           <p className="text-sm text-red-600 mt-1">{errors.phone.message}</p>
         )}
-      </div>
-
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
-        <select
-          {...register("followup_status")}
-          className="w-full border rounded px-2 py-1 text-sm"
-          defaultValue="pending"
-        >
-          <option value="pending">Pending</option>
-          <option value="contacted">Contacted</option>
-          <option value="rescheduled">Rescheduled</option>
-          <option value="completed">Completed</option>
-        </select>
       </div>
 
       <div className="flex gap-2">

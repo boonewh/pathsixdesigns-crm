@@ -388,6 +388,14 @@ const [openMenuId, setOpenMenuId] = useState<number | null>(null);
             secondary_phone_label={selectedInteraction.secondary_phone_label}
             profile_link={selectedInteraction.profile_link}
             onClose={() => setSelectedInteraction(null)}
+            onMarkComplete={
+              selectedInteraction.followup_status !== "completed"
+                ? () => {
+                    markAsComplete(selectedInteraction.id);
+                    setSelectedInteraction(null);
+                  }
+                : undefined
+            }
             calendarLink={
               selectedInteraction.follow_up
                 ? generateGoogleCalendarUrl(selectedInteraction)
