@@ -168,6 +168,19 @@ export default function InteractionForm(props: InteractionFormProps) {
         )}
       </div>
 
+      {!isEditing && (
+        <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+          <input
+            type="checkbox"
+            onChange={(e) =>
+              setValue("followup_status", e.target.checked ? "completed" : undefined)
+            }
+            className="w-4 h-4"
+          />
+          Mark as completed
+        </label>
+      )}
+
       <div className="flex gap-2">
         <button
           type="submit"

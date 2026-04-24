@@ -34,6 +34,7 @@ export const interactionCreateSchema = z.object({
   contact_person: z.string().max(100).optional(),
   email: z.string().email("Invalid email format").max(255).optional().or(z.literal("")),
   phone: z.string().max(20).optional(),
+  followup_status: z.enum(["pending", "completed", "contacted", "rescheduled"]).optional(),
 });
 
 // Interaction Update Schema (PUT /api/interactions/{id})
