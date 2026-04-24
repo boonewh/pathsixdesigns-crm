@@ -79,7 +79,7 @@ export default function InteractionForm(props: InteractionFormProps) {
       )}
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Follow-up Status</label>
+        <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
         <select
           {...register("followup_status")}
           className="w-full border rounded px-2 py-1 text-sm"
