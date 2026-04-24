@@ -42,6 +42,7 @@ export default function InteractionForm(props: InteractionFormProps) {
       contact_person: "",
       email: "",
       phone: "",
+      followup_status: "pending",
       ...defaultValues,
     },
   });
@@ -78,11 +79,10 @@ export default function InteractionForm(props: InteractionFormProps) {
       )}
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
+        <label className="block text-sm font-medium text-gray-700 mb-1">Follow-up Status</label>
         <select
           {...register("followup_status")}
           className="w-full border rounded px-2 py-1 text-sm"
-          defaultValue="pending"
         >
           <option value="pending">Pending</option>
           <option value="contacted">Contacted</option>
