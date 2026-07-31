@@ -4,7 +4,7 @@ export const subscriptionCreateSchema = z.object({
   plan_name: z.string().min(1, "Plan name is required").max(255),
   price: z.coerce.number().min(0, "Price must be 0 or greater"),
   billing_cycle: z.enum(["monthly", "yearly"], {
-    errorMap: () => ({ message: "Select a billing cycle" }),
+    message: "Select a billing cycle",
   }),
   start_date: z.string().min(1, "Start date is required"),
   renewal_date: z

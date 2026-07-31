@@ -16,8 +16,7 @@ import {
   Upload,
   Trash,
   Archive,
-  HelpCircle,
-  Database
+  HelpCircle
 } from "lucide-react";
 
 const SHOW_REAL_ACCOUNTS_SECTION = false;

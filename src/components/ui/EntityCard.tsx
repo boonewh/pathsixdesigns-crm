@@ -23,8 +23,6 @@ const EntityCard: FC<EntityCardProps> = ({
   editForm,
   onEdit,
   onDelete,
-  onSave,
-  onCancel,
   extraMenuItems,
 }) => {
   function confirmDelete() {

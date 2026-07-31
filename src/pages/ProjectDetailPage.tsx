@@ -3,7 +3,6 @@ import { useParams } from "react-router-dom";
 import {
   Mail,
   Phone,
-  MapPin,
   User,
   CalendarDays,
   DollarSign,

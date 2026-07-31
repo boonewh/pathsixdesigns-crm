@@ -45,7 +45,7 @@ Sentry.init({
   environment: import.meta.env.MODE,
   
   // Before sending events, you can filter or modify them
-  beforeSend(event, hint) {
+  beforeSend(event) {
     // Don't send events for known non-critical errors
     if (event.exception) {
       const errorMessage = event.exception.values?.[0]?.value || '';

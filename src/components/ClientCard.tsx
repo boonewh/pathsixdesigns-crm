@@ -29,8 +29,6 @@ const ClientCard: FC<Props> = ({
   form,
   setForm,
   onEdit,
-  onCancel,
-  onSave,
   onDelete,
 }) => {
   const config = useCRMConfig();
