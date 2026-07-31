@@ -20,15 +20,22 @@ Working branch: `phase-0-safety-rails` (off `main`). Full plan lives in
       `Projects.tsx` (verified redundant — `handleCancel` already closes the modal).
 - [x] Add **CI** (`.github/workflows/ci.yml`): PRs gate on `typecheck` + `build`.
 
-## Backend (`pathsix-backend` — separate repo, next)
+## Backend (`pathsix-backend` — separate repo)
 
-- [ ] Branch off `main` there.
-- [ ] Archive obsolete docs out of repo root (`CRM_MIGRATION_GUIDE.md`,
+- [x] **Reconcile git with prod (main):** committed 3 interaction/search fixes that
+      were live in prod (`v78`, deployed May 14) but never committed — git was behind
+      production. Backend deploys from the working tree via `flyctl deploy`, so this
+      drift is easy to hit. Commit `8c7275a`.
+- [x] Branch off `main` (`phase-0-safety-rails`).
+- [x] Archive obsolete docs → `docs/archive/` (`CRM_MIGRATION_GUIDE.md`,
       `CRM_MIGRATION_SCRIPT_FOR_ASFI.md`, `migrate_from_old_crm.py`,
-      `wipe_tenant1_new_db.py`) → `docs/archive/`.
-- [ ] Delete dead code: `app/utils/security.py` (dead PyJWT module), redundant
-      `Message` model (verify unreferenced first).
-- [ ] Add a backend CI stub (pytest wired in Phase 4).
+      `wipe_tenant1_new_db.py`).
+- [x] Delete dead `app/utils/security.py` (unused PyJWT module) and the redundant
+      `Message` model (bare duplicate of `ChatMessage`, referenced nowhere; the
+      orphan `messages` table can be dropped later via a staged migration).
+      Note: `ChatMessage` is also currently unused — left for a possible future chat.
+- [x] gitignore `.codex/`; add `.github/workflows/ci.yml` (compile gate; pytest in P4).
+- Backend Phase 0 commit `b8319a7`.
 
 ## Fly housekeeping (user action)
 
