@@ -1,60 +1,56 @@
-# Plan: Safe development workflow for the production CRM frontend
+# Improvement 2 — Phase 0: Safety rails & housekeeping
 
-## Goal
-Resume active development on this frontend (and the separate `pathsix-backend`)
-without disrupting live customers or their data.
+Working branch: `phase-0-safety-rails` (off `main`). Full plan lives in
+`~/.claude/plans/in-this-project-is-functional-galaxy.md`.
 
-## Context (current setup)
-- Vite + React 19 SPA, deployed on **Vercel** via its Git integration (`vercel.json`).
-- Frontend talks to the backend through one env var: `VITE_API_BASE_URL` (`src/lib/api.ts`).
-- Local dev proxies `/api` → `http://localhost:8000` (`vite.config.ts`).
-- Backend lives in a **separate repo** (`pathsix-backend`).
-- No CI workflows exist today (`.github/workflows` is absent).
+## Frontend (this repo)
 
-## Decision: branch, not fork
-Use branches + PRs into `main`. A fork is for repos you don't own or upstream
-contributions; here it would only add friction and lose Vercel preview deploys.
+- [x] Create feature branch off `main` (`phase-0-safety-rails`).
+- [x] Fix the **ErrorBoundary route-reset bug** in `App.tsx` — added
+      `useLocation()` + `key={location.pathname}` so it remounts on navigation
+      (the original `todo.md` item, which was marked done but never applied).
+- [x] Delete dead frontend code: `components/Layout.tsx` (legacy shell),
+      unused `NetworkErrorPage`/`LoadingErrorPage` exports in `ErrorBoundary.tsx`.
+- [x] Fix ESLint: removed legacy `.eslintrc.json`, installed the missing flat-config
+      toolchain (pinned to era-matched majors: TS 5, ESLint 9), added `lint` +
+      `typecheck` npm scripts, bumped stale `ecmaVersion` 2020 → 2022.
+- [x] Get **typecheck green** (was 13 latent errors, never enforced because `build`
+      never ran `tsc`): removed unused imports/vars across 8 files; fixed a real
+      Zod-4 API break in `subscriptionSchemas.ts`; removed a dead `onClose` prop in
+      `Projects.tsx` (verified redundant — `handleCancel` already closes the modal).
+- [x] Add **CI** (`.github/workflows/ci.yml`): PRs gate on `typecheck` + `build`.
 
-## The branching model (the rule that keeps prod safe)
-- [ ] `main` = production, and is sacred. Vercel auto-deploys `main` to the live site.
-      Never commit directly to `main`.
-- [ ] All work happens on feature branches off `main`.
-- [ ] Every branch push gets its own isolated **Vercel preview URL** — verify the
-      change there before it can reach customers.
-- [ ] Merge to `main` (via PR) is the *only* path to production.
+## Backend (`pathsix-backend` — separate repo)
 
-## Where to do the work
-- [ ] **Full-stack / API-touching work → locally on the PC.** Run the backend on
-      `localhost:8000` + `npm run dev`, against a local/dev database. This is the
-      full request loop with zero risk to production data, and it's the only place
-      both repos can be built and tested against each other.
-- [ ] **Isolated frontend-only fixes → fine in the cloud** (UI tweaks, bugfixes that
-      don't change the API contract), because each push gets an isolated preview URL.
-- [ ] Note: cloud sessions here are scoped to the frontend repo only; the backend
-      repo is not accessible from this environment.
+- [x] **Reconcile git with prod (main):** committed 3 interaction/search fixes that
+      were live in prod (`v78`, deployed May 14) but never committed — git was behind
+      production. Backend deploys from the working tree via `flyctl deploy`, so this
+      drift is easy to hit. Commit `8c7275a`.
+- [x] Branch off `main` (`phase-0-safety-rails`).
+- [x] Archive obsolete docs → `docs/archive/` (`CRM_MIGRATION_GUIDE.md`,
+      `CRM_MIGRATION_SCRIPT_FOR_ASFI.md`, `migrate_from_old_crm.py`,
+      `wipe_tenant1_new_db.py`).
+- [x] Delete dead `app/utils/security.py` (unused PyJWT module) and the redundant
+      `Message` model (bare duplicate of `ChatMessage`, referenced nowhere; the
+      orphan `messages` table can be dropped later via a staged migration).
+      Note: `ChatMessage` is also currently unused — left for a possible future chat.
+- [x] gitignore `.codex/`; add `.github/workflows/ci.yml` (compile gate; pytest in P4).
+- Backend Phase 0 commit `b8319a7`.
 
-## Coordinating the two repos (avoid breaking live customers)
-- [ ] Keep frontend changes backward-compatible with the *currently deployed* backend.
-- [ ] Ship backend changes **additively first** (new/optional fields and endpoints),
-      deploy backend, then merge the frontend that depends on them.
-- [ ] Never merge a frontend that calls an endpoint which isn't live in prod yet.
+## Fly housekeeping (user action)
 
-## Data isolation for testing (decide when picking this up)
-Preview deploys inherit prod env vars by default, so a preview frontend hits the
-**production backend + real customer data**. Options:
-- [ ] **Option A — staging backend + DB:** stand up a staging copy of the backend
-      with its own database; set Vercel's *Preview* `VITE_API_BASE_URL` to point at it.
-      Full isolation; most setup. (Best long-term.)
-- [ ] **Option B — local-only writes:** preview deploys are view/UI testing only;
-      any write-heavy testing is done against the local backend. No new infra; relies
-      on discipline.
-- Working default: develop against local backend (Option B) now; revisit staging (A)
-  once the cadence of work justifies it.
+- [ ] After the observation window: `flyctl apps destroy pathsix-backend` and
+      `pathsix-db` (old apps, already stopped; snapshot taken).
 
-## Optional safety net: CI on PRs
-- [ ] Add a small GitHub Action that runs `tsc` + `vite build` (and the Playwright
-      test) on every PR, so a broken build can't be merged to production. Cheapest
-      insurance, since nothing enforces this today.
+## Not gating CI yet (deferred)
+
+- Lint currently reports 122 problems (mostly `no-explicit-any`) — config now works,
+  but the `any` cleanup is Phase 5. Lint is runnable locally; not a CI gate yet.
 
 ## Review
-*To be completed once the workflow is adopted.*
+
+*Frontend Phase 0 complete on branch `phase-0-safety-rails`; nothing committed yet
+(awaiting go-ahead). Typecheck + build both green. No behavior changes — only dead
+code removed, a broken Zod message fixed, the ErrorBoundary navigation bug fixed, and
+tooling/CI added. Backend Phase 0 items pending. Full review to be completed once the
+whole phase lands.*

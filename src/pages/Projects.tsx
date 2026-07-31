@@ -463,11 +463,6 @@ export default function Projects() {
               leads={leads}
               onSave={handleSave}
               onCancel={handleCancel}
-              onClose={() => {
-                setShowEditModal(false);
-                setEditingId(null);
-                handleCancel();
-              }}
             />
           )}
 

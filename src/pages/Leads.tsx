@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import EntityCard from "@/components/ui/EntityCard";
-import { Mail, Phone, MapPin, Flag, User, UserCheck, StickyNote, Wrench, LayoutGrid, List, Plus, Filter, ChevronDown, ChevronUp, Radio } from "lucide-react";
+import { Mail, Phone, MapPin, Flag, User, UserCheck, StickyNote, LayoutGrid, List, Plus, Filter, ChevronDown, ChevronUp, Radio } from "lucide-react";
 import { useAuth, userHasRole } from "@/authContext";
 import toast from "react-hot-toast";
 import { Link } from "react-router-dom";
@@ -71,7 +71,6 @@ export default function Leads() {
     sortField,
     sortDirection,
     handleSort,
-    getSortIcon,
     sortData,
     cardSortOptions,
     currentCardValue,
