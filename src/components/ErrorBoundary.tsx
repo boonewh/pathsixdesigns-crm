@@ -1,5 +1,6 @@
 // src/components/ErrorBoundary.tsx
 import React from 'react';
+import * as Sentry from '@sentry/react';
 import { RefreshCw, AlertTriangle, Home, MessageCircle } from 'lucide-react';
 
 interface Props {
@@ -37,9 +38,16 @@ export class ErrorBoundary extends React.Component<Props, State> {
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
     console.error('ErrorBoundary caught an error:', error, errorInfo);
-    
-    // Optional: Send to error reporting service
-    // logErrorToService(error, errorInfo, this.state.errorId);
+
+    // Report render errors to Sentry. This boundary catches them before Sentry's own
+    // ErrorBoundary would, so without this they never reached Sentry (the confirmed
+    // "render-error blind spot" — e.g. the staging Leads crash left no trace).
+    Sentry.captureException(error, {
+      extra: {
+        componentStack: errorInfo.componentStack,
+        errorId: this.state.errorId,
+      },
+    });
   }
 
   resetError = () => {

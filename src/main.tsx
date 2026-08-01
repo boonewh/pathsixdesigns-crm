@@ -19,27 +19,27 @@ Sentry.init({
       traceXHR: false,
     }),
     Sentry.replayIntegration({
-      maskAllText: false,
-      blockAllMedia: false,
+      maskAllText: true,    // mask customer data (PII) in session replays — this is a CRM
+      blockAllMedia: true,
     }),
   ],
 
-  // Performance Monitoring
-  tracesSampleRate: 1.0, // Capture 100% in dev, can reduce in production
+  // Performance Monitoring (10% is plenty for prod; 1.0 was a dev-grade default)
+  tracesSampleRate: 0.1,
   
   // Distributed tracing - connects frontend to backend traces
   tracePropagationTargets: [
     "localhost",
     /^http:\/\/localhost:8000\/api/,
-    /^https:\/\/pathsix-backend\.fly\.dev\/api/,
+    /^https:\/\/pathsixsolutions-backend\.fly\.dev\/api/,
   ],
 
   // Session Replay
   replaysSessionSampleRate: 0.1, // 10% of normal sessions
   replaysOnErrorSampleRate: 1.0, // 100% of error sessions
   
-  // Send default PII for better debugging
-  sendDefaultPii: true,
+  // Don't attach PII automatically (privacy — this app holds customer data)
+  sendDefaultPii: false,
   
   // Environment detection
   environment: import.meta.env.MODE,
