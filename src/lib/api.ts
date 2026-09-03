@@ -26,17 +26,21 @@ export async function apiFetch(path: string, options?: RequestInit) {
     // Handle other errors
     if (!res.ok && res.status !== 401) {
       let errorMessage = `Error: ${res.status}`;
+      // Inspect a clone so callers can still read the original response body.
+      // Reading `res` here caused "body stream already read" failures wherever
+      // callers subsequently used res.json().
+      const errorResponse = res.clone();
       
       try {
-        const contentType = res.headers.get('content-type');
+        const contentType = errorResponse.headers.get('content-type');
         
         if (contentType && contentType.includes('application/json')) {
           // It's JSON - parse the error message
-          const errorData = await res.json();
+          const errorData = await errorResponse.json();
           errorMessage = errorData.error || errorData.message || errorMessage;
         } else {
           // It's HTML or plain text - probably an error page
-          const text = await res.text();
+          const text = await errorResponse.text();
           
           if (text.includes('<!DOCTYPE') || text.includes('<html')) {
             // It's an HTML error page
@@ -46,7 +50,7 @@ export async function apiFetch(path: string, options?: RequestInit) {
             errorMessage = `Error: ${res.status} ${text}`;
           }
         }
-      } catch (parseError) {
+      } catch {
         // If we can't parse the error response at all
         errorMessage = `Error: ${res.status} - Unable to read error details`;
       }

@@ -6,7 +6,7 @@ import { Link } from "react-router-dom";
 import CompanyForm from "@/components/ui/CompanyForm";
 import PaginationControls from "@/components/ui/PaginationControls";
 import { Client } from "@/types";
-import { apiFetch } from "@/lib/api";
+import { apiFetch, apiFetchJson } from "@/lib/api";
 import { usePagination } from "@/hooks/usePreferences";
 import { useStatusFilter } from "@/hooks/useStatusFilter";
 import { useSorting, legacySortToUnified, unifiedToLegacySort } from "@/hooks/useSorting";
@@ -291,10 +291,9 @@ export default function Clients() {
     const fetchClients = async () => {
       setLoading(true);
       try {
-        const res = await apiFetch(`/clients/?page=${currentPage}&per_page=${perPage}&sort=${sortOrder}`, {
+        const data = await apiFetchJson(`/clients/?page=${currentPage}&per_page=${perPage}&sort=${sortOrder}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
-        const data = await res.json();
         setClients(data.clients);
         setTotal(data.total);
         setError(""); // Reset error on successful fetch
@@ -311,8 +310,12 @@ export default function Clients() {
       apiFetch("/users/", {
         headers: { Authorization: `Bearer ${token}` },
       })
-        .then((res) => res.json())
-        .then((data) => setAvailableUsers(data.filter((u: any) => u.is_active)));
+        .then(async (res) => {
+          if (!res.ok) return;
+          const data = await res.json();
+          setAvailableUsers(data.filter((u: any) => u.is_active));
+        })
+        .catch(() => setAvailableUsers([]));
     }
   }, [token, user, currentPage, perPage, sortOrder]);
 
