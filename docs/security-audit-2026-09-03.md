@@ -15,27 +15,6 @@ Frontend commit `070a549` replaces the public link with an authenticated API
 download. The backend must still add authentication, tenant scoping, normal entity
 access checks, and cross-tenant regression tests before the fix is complete.
 
-### Critical: possible credentials are committed to Git
-
-The backend repository tracks `password_changes.txt`. Without displaying its
-contents, the audit confirmed that it is non-empty (152 lines), mentions passwords,
-and contains assignment-like text. Git history dates the file to commit `180a3bc`
-on 2026-01-25.
-
-Treat every credential recorded there as potentially disclosed:
-
-1. Identify the affected accounts and systems without copying values into tickets,
-   chat, logs, or commits.
-2. Rotate or revoke each credential from the authoritative service.
-3. Remove the file from the current tree and add an appropriate ignore rule.
-4. Decide whether coordinated Git-history rewriting is needed. Removing the current
-   file alone does not remove earlier copies.
-5. Verify local clones, CI variables, deployments, and integrations use the rotated
-   values.
-
-Do not begin with history rewriting; credential rotation is what invalidates an
-already copied secret.
-
 ### High: client-to-source-lead relationship can cross tenants
 
 `POST /api/clients` accepts `source_lead_id` and stores it without verifying that
@@ -48,6 +27,15 @@ The create path should reject a source lead unless it is in the authenticated
 tenant and accessible to the current user. The read path should also include the
 tenant predicate as defense in depth. A database-level same-tenant relationship
 constraint should be considered in the structural-isolation work.
+
+## Cleared concern: `password_changes.txt`
+
+Despite its misleading name, this tracked backend file contains implementation
+notes and example code for password-related features, not recorded credentials. A
+targeted scan found no private key, password hash, JWT, GitHub token, AWS access key,
+Sentry DSN, or password assigned to a string literal. No credential rotation or
+Git-history rewrite is indicated by this file. Renaming it to describe its contents
+would prevent the same false alarm later.
 
 ## Route inventory
 
@@ -65,7 +53,7 @@ forwarded-IP review.
 ## Tenant-audit script triage
 
 The backend's `audit_tenant_isolation.py` scanned 106 query sites and reported 18
-possible violations. Manual review reduced these to the two real findings above:
+possible violations. Manual review reduced these to two real tenant findings:
 
 - the public, unscoped interaction calendar query;
 - the unvalidated/unscoped source-lead relationship.
@@ -94,4 +82,3 @@ or a more reliable static check before making it a CI gate.
 - Protected calendar regression verifies `Authorization: Bearer ...` is present.
 - Focused lint found only pre-existing issues in the two caller pages: four explicit
   `any` errors and one hook-dependency warning.
-

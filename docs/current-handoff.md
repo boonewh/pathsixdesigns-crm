@@ -119,11 +119,10 @@ The backend also accepts `source_lead_id` when creating a client without verifyi
 that the lead belongs to the authenticated tenant, and later follows that ID without
 a tenant predicate.
 
-The backend repository tracks a non-empty `password_changes.txt` that appears to
-contain credential assignments and has existed in Git history since January 2026.
-Affected credentials must be rotated before the file/history cleanup is considered
-complete. Details and safe remediation order are in
-`docs/security-audit-2026-09-03.md`.
+The tracked backend file `password_changes.txt` was inspected after its name raised
+a concern. It contains implementation notes and example code, not credentials; a
+targeted secret-pattern scan was negative. No rotation or history cleanup is needed
+for that file. Details are in `docs/security-audit-2026-09-03.md`.
 
 ## Operational unknowns
 
@@ -145,13 +144,11 @@ complete. Details and safe remediation order are in
 4. Perform a read-only inventory of production, staging, and legacy Fly resources.
 5. Verify deployment revisions, machine policies, secrets by name, database
    attachments, volumes, snapshots, and estimated cost.
-6. Rotate any credentials represented in the tracked backend
-   `password_changes.txt`, then remove it safely and plan history cleanup.
-7. Fix the unauthenticated calendar endpoint and cross-tenant source-lead linkage;
+6. Fix the unauthenticated calendar endpoint and cross-tenant source-lead linkage;
    add regression tests for both.
-8. Deploy the existing reliability fixes to staging and run the two-tenant test
+7. Deploy the existing reliability fixes to staging and run the two-tenant test
    matrix before considering production.
-9. Continue with `docs/mcp-readiness-roadmap.md`.
+8. Continue with `docs/mcp-readiness-roadmap.md`.
 
 ## Do not do without a fresh verification
 

@@ -50,8 +50,6 @@ can identify exactly which revision is running in each environment.
 - [ ] Authenticate and tenant-scope the interaction calendar endpoint.
 - [ ] Validate `source_lead_id` against the authenticated tenant on client creation
       and lookup; add cross-tenant relationship tests.
-- [ ] Rotate credentials represented in tracked `password_changes.txt`, remove the
-      file, add an ignore rule, and coordinate any required Git-history cleanup.
 - [ ] Remove password-reset links/tokens from application logs.
 - [ ] Enforce `Tenant.is_active` in the central authentication path.
 - [ ] Stop trusting token-embedded roles for authorization decisions.
