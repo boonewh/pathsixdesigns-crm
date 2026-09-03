@@ -102,6 +102,54 @@ export async function apiFetch(path: string, options?: RequestInit) {
   }
 }
 
+/**
+ * Download a protected API resource without putting credentials in the URL.
+ * apiFetch supplies the current Bearer token and handles HTTP/network errors.
+ */
+export async function apiDownload(path: string, filename: string): Promise<boolean> {
+  let res: Response;
+
+  try {
+    res = await apiFetch(path, {
+      headers: {
+        Accept: "text/calendar",
+      },
+    });
+  } catch {
+    return false;
+  }
+
+  if (!res.ok) {
+    return false;
+  }
+
+  try {
+    const blob = await res.blob();
+    const objectUrl = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+
+    link.href = objectUrl;
+    link.download = filename;
+    link.style.display = "none";
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.setTimeout(() => URL.revokeObjectURL(objectUrl), 0);
+
+    return true;
+  } catch (error) {
+    toast.error("Unable to download the calendar file. Please try again.");
+    Sentry.captureException(error, {
+      level: "error",
+      extra: {
+        url: `${API_BASE}${path}`,
+        context: "Protected file download failed",
+      },
+    });
+    return false;
+  }
+}
+
 // Helper function for when you expect JSON and want to handle the parsing gracefully
 export async function apiFetchJson(path: string, options?: RequestInit) {
   try {

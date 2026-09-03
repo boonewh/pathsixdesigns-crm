@@ -402,7 +402,8 @@ const [openMenuId, setOpenMenuId] = useState<number | null>(null);
                 : undefined
             }
             outlookLink={selectedInteraction.follow_up ? generateOutlookComUrl(selectedInteraction) : undefined}
-            icsLink={`${import.meta.env.VITE_API_BASE_URL}/interactions/${selectedInteraction.id}/calendar.ics`}
+            icsPath={`/interactions/${selectedInteraction.id}/calendar.ics`}
+            icsFilename={`interaction-${selectedInteraction.id}.ics`}
           />
         )}
       </div>

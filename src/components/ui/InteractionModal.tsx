@@ -1,4 +1,5 @@
 import { formatPhoneNumber } from "@/lib/phoneUtils";
+import { apiDownload } from "@/lib/api";
 
 interface InteractionModalProps {
   title: string;
@@ -16,7 +17,8 @@ interface InteractionModalProps {
   onClose: () => void;
   calendarLink?: string;
   outlookLink?: string;
-  icsLink?: string;
+  icsPath?: string;
+  icsFilename?: string;
   onMarkComplete?: () => void;
 }
 
@@ -36,7 +38,8 @@ export default function InteractionModal({
   onClose,
   calendarLink,
   outlookLink,
-  icsLink,
+  icsPath,
+  icsFilename,
   onMarkComplete,
 }: InteractionModalProps) {
   return (
@@ -120,13 +123,16 @@ export default function InteractionModal({
               Add to Outlook.com Calendar
             </a>
           )}
-          {icsLink && (
-            <a
-              href={icsLink}
+          {icsPath && (
+            <button
+              type="button"
+              onClick={() => {
+                void apiDownload(icsPath, icsFilename ?? "interaction.ics");
+              }}
               className="text-sm bg-gray-700 text-white px-3 py-1 rounded hover:bg-gray-800"
             >
               Apple / Outlook Manual Calendar Add
-            </a>
+            </button>
           )}
           {onMarkComplete && (
             <button

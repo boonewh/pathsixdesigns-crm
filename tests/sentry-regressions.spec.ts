@@ -25,6 +25,39 @@ test('apiFetch leaves an error response body available to callers', async ({ pag
 });
 
 
+test('protected calendar downloads include the current auth token', async ({ page }) => {
+  let authorizationHeader: string | undefined;
+
+  await page.addInitScript(() => {
+    localStorage.setItem('token', 'calendar-test-token');
+  });
+
+  await page.route('**/api/interactions/42/calendar.ics', route => {
+    authorizationHeader = route.request().headers().authorization;
+    return route.fulfill({
+      status: 200,
+      contentType: 'text/calendar',
+      body: 'BEGIN:VCALENDAR\r\nVERSION:2.0\r\nEND:VCALENDAR\r\n',
+    });
+  });
+
+  await page.goto('/login');
+
+  const [download, result] = await Promise.all([
+    page.waitForEvent('download'),
+    page.evaluate(async () => {
+      const modulePath = '/src/lib/api.ts';
+      const { apiDownload } = await import(/* @vite-ignore */ modulePath);
+      return apiDownload('/interactions/42/calendar.ics', 'interaction-42.ics');
+    }),
+  ]);
+
+  expect(result).toBe(true);
+  expect(authorizationHeader).toBe('Bearer calendar-test-token');
+  expect(download.suggestedFilename()).toBe('interaction-42.ics');
+});
+
+
 test('dashboard handles failed API responses without an unhandled page error', async ({ page }) => {
   const pageErrors: string[] = [];
   page.on('pageerror', error => pageErrors.push(error.message));
