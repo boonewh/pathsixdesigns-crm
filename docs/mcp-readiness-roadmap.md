@@ -32,9 +32,9 @@ Current MCP authorization reference:
 
 ## Gate 0 — recover operations and establish a clean baseline
 
-- [ ] Preserve this roadmap and the current handoff in Git.
+- [x] Preserve this roadmap and the current handoff in Git.
 - [ ] Commit the existing frontend and backend Sentry reliability fixes on feature
-      branches.
+      branches. (Frontend complete; backend still local and uncommitted.)
 - [ ] Restore Fly CLI and audit all six CRM-related Fly resources.
 - [ ] Confirm staging and production deployment revisions.
 - [ ] Confirm staging contains synthetic data only.
@@ -48,6 +48,10 @@ can identify exactly which revision is running in each environment.
 ## Gate 1 — close immediate application security gaps
 
 - [ ] Authenticate and tenant-scope the interaction calendar endpoint.
+- [ ] Validate `source_lead_id` against the authenticated tenant on client creation
+      and lookup; add cross-tenant relationship tests.
+- [ ] Rotate credentials represented in tracked `password_changes.txt`, remove the
+      file, add an ignore rule, and coordinate any required Git-history cleanup.
 - [ ] Remove password-reset links/tokens from application logs.
 - [ ] Enforce `Tenant.is_active` in the central authentication path.
 - [ ] Stop trusting token-embedded roles for authorization decisions.
@@ -192,4 +196,3 @@ search—into a tenant-bound service and proving it with two-tenant tests. Have 
 existing REST route call that service. Once several core services are proven, add a
 read-only MCP adapter that calls the same APIs. This prevents REST and MCP from
 developing separate authorization behavior.
-

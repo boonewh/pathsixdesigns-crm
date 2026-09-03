@@ -71,12 +71,17 @@ work. No later auth pull request or commit exists.
 ### Frontend
 
 - Branch: `codex/sentry-database-reliability`
-- Local commit: `e68970c Fix frontend handling of CRM API failures`
+- Local commits:
+  - `e68970c Fix frontend handling of CRM API failures`
+  - `6519d42 Document CRM recovery and MCP readiness roadmap`
+  - `070a549 Authenticate CRM calendar downloads`
 - Not pushed or deployed.
-- The commit preserves failed response bodies and handles client, dashboard, search,
+- The reliability commit preserves failed response bodies and handles client, dashboard, search,
   and unauthorized-request failures without unhandled browser errors.
-- Last verification before the commit: typecheck passed, production build passed,
-  and all three Playwright tests passed.
+- Calendar downloads now use the authenticated API client; the backend endpoint is
+  still public and must be fixed before this issue is closed.
+- Latest verification: typecheck passed, production build passed, and all four
+  Playwright tests passed.
 
 ### Backend
 
@@ -103,12 +108,22 @@ The latest CRM Sentry issues were a cascade:
 
 The frontend and backend fixes exist locally but are not deployed.
 
-## Security finding discovered during recovery
+## Security findings discovered during recovery
 
 `GET /api/interactions/<interaction_id>/calendar.ics` is currently unauthenticated
 and queries only by sequential interaction ID. Its calendar response can include CRM
 notes, email addresses, and phone numbers. This should be treated as the first
 backend security fix before MCP work or another production release.
+
+The backend also accepts `source_lead_id` when creating a client without verifying
+that the lead belongs to the authenticated tenant, and later follows that ID without
+a tenant predicate.
+
+The backend repository tracks a non-empty `password_changes.txt` that appears to
+contain credential assignments and has existed in Git history since January 2026.
+Affected credentials must be rotated before the file/history cleanup is considered
+complete. Details and safe remediation order are in
+`docs/security-audit-2026-09-03.md`.
 
 ## Operational unknowns
 
@@ -130,10 +145,13 @@ backend security fix before MCP work or another production release.
 4. Perform a read-only inventory of production, staging, and legacy Fly resources.
 5. Verify deployment revisions, machine policies, secrets by name, database
    attachments, volumes, snapshots, and estimated cost.
-6. Fix the unauthenticated calendar endpoint and add a regression test.
-7. Deploy the existing reliability fixes to staging and run the two-tenant test
+6. Rotate any credentials represented in the tracked backend
+   `password_changes.txt`, then remove it safely and plan history cleanup.
+7. Fix the unauthenticated calendar endpoint and cross-tenant source-lead linkage;
+   add regression tests for both.
+8. Deploy the existing reliability fixes to staging and run the two-tenant test
    matrix before considering production.
-8. Continue with `docs/mcp-readiness-roadmap.md`.
+9. Continue with `docs/mcp-readiness-roadmap.md`.
 
 ## Do not do without a fresh verification
 
@@ -142,4 +160,3 @@ backend security fix before MCP work or another production release.
 - Do not merge or deploy the current local fixes directly from `main`.
 - Do not expose a CRM MCP endpoint until tenant enforcement and delegated
   authorization gates are complete.
-
