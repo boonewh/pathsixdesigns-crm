@@ -35,7 +35,8 @@ Current MCP authorization reference:
 - [x] Preserve this roadmap and the current handoff in Git.
 - [ ] Commit the existing frontend and backend Sentry reliability fixes on feature
       branches. (Frontend complete; backend still local and uncommitted.)
-- [ ] Restore Fly CLI and audit all six CRM-related Fly resources.
+- [ ] Audit all six CRM-related Fly resources. (Fly CLI `v0.4.97` is installed;
+      authentication and the live read-only audit remain.)
 - [ ] Confirm staging and production deployment revisions.
 - [ ] Confirm staging contains synthetic data only.
 - [ ] Record the expected cost and sleep policy for the staging database.

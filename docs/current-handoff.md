@@ -75,6 +75,9 @@ work. No later auth pull request or commit exists.
   - `e68970c Fix frontend handling of CRM API failures`
   - `6519d42 Document CRM recovery and MCP readiness roadmap`
   - `070a549 Authenticate CRM calendar downloads`
+  - `ec57a0a Document CRM security audit findings`
+  - `5955d02 Clarify password notes contain no credentials`
+  - `38ffe12 Expand CRM tenant boundary audit`
 - Not pushed or deployed.
 - The reliability commit preserves failed response bodies and handles client, dashboard, search,
   and unauthorized-request failures without unhandled browser errors.
@@ -136,9 +139,11 @@ a concern. It contains implementation notes and example code, not credentials; a
 targeted secret-pattern scan was negative. No rotation or history cleanup is needed
 for that file. Details are in `docs/security-audit-2026-09-03.md`.
 
-## Operational unknowns
+## Local tooling and operational unknowns
 
-- Fly CLI is not installed on the reloaded Windows environment.
+- Fly CLI `v0.4.97` is installed and its binary was verified. A new terminal may be
+  needed for the `flyctl` alias to enter `PATH`. It has not been authenticated and
+  no live Fly resources were queried or changed.
 - The remote production/staging machine configuration and deployment versions have
   not been audited after recovery.
 - The staging database may have remained running continuously while development was
