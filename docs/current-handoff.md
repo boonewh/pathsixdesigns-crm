@@ -119,6 +119,18 @@ The backend also accepts `source_lead_id` when creating a client without verifyi
 that the lead belongs to the authenticated tenant, and later follows that ID without
 a tenant predicate.
 
+A deeper request-body audit found the same relationship-validation class in account
+create/update (`client_id`), contact create/update (`client_id`/`lead_id`), project
+create/update (`client_id`/`lead_id`), and interaction update
+(`client_id`/`lead_id`/`project_id`). The interaction create route already
+demonstrates the required tenant and record-access validation, but update does not.
+
+The actively registered database-backup API is a critical platform-boundary issue:
+any tenant `admin` token can reach global whole-database list/create/restore/delete
+operations even though the frontend page is hidden. Reports and lead import are also
+admin-only in the frontend but mostly require only a login in the backend, and
+client restore omits the ownership checks used by lead/project restore.
+
 The tracked backend file `password_changes.txt` was inspected after its name raised
 a concern. It contains implementation notes and example code, not credentials; a
 targeted secret-pattern scan was negative. No rotation or history cleanup is needed
@@ -144,11 +156,14 @@ for that file. Details are in `docs/security-audit-2026-09-03.md`.
 4. Perform a read-only inventory of production, staging, and legacy Fly resources.
 5. Verify deployment revisions, machine policies, secrets by name, database
    attachments, volumes, snapshots, and estimated cost.
-6. Fix the unauthenticated calendar endpoint and cross-tenant source-lead linkage;
-   add regression tests for both.
-7. Deploy the existing reliability fixes to staging and run the two-tenant test
+6. Disable or platform-restrict the global backup-management API; tenant admins must
+   never be able to invoke whole-database operations.
+7. Enforce backend authorization for Reports, Lead Import, and client restore.
+8. Fix the unauthenticated calendar endpoint and every unvalidated relationship ID
+   listed in `docs/security-audit-2026-09-03.md`; add two-tenant create/update tests.
+9. Deploy the existing reliability fixes to staging and run the two-tenant test
    matrix before considering production.
-8. Continue with `docs/mcp-readiness-roadmap.md`.
+10. Continue with `docs/mcp-readiness-roadmap.md`.
 
 ## Do not do without a fresh verification
 

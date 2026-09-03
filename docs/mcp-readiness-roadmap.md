@@ -47,9 +47,20 @@ can identify exactly which revision is running in each environment.
 
 ## Gate 1 — close immediate application security gaps
 
+- [ ] Disable the global backup-management API for tenant accounts or protect it
+      with a separate platform-operator boundary; never expose backup/restore via
+      MCP.
 - [ ] Authenticate and tenant-scope the interaction calendar endpoint.
-- [ ] Validate `source_lead_id` against the authenticated tenant on client creation
-      and lookup; add cross-tenant relationship tests.
+- [ ] Validate every request-body relationship ID against the authenticated tenant
+      and record-access policy. Current gaps include account `client_id`, contact
+      `client_id`/`lead_id`, project `client_id`/`lead_id`, interaction-update
+      parent IDs, and client `source_lead_id`.
+- [ ] Enforce exactly-one/allowed-parent invariants for contacts, projects, and
+      interactions on both create and update.
+- [ ] Decide and document whether accounts and contacts are tenant-shared or inherit
+      parent record permissions, then enforce the decision server-side.
+- [ ] Enforce backend—not merely frontend—admin authorization for Reports and Lead
+      Import, and align client restore with lead/project record-access checks.
 - [ ] Remove password-reset links/tokens from application logs.
 - [ ] Enforce `Tenant.is_active` in the central authentication path.
 - [ ] Stop trusting token-embedded roles for authorization decisions.
