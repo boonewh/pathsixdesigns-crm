@@ -10,17 +10,21 @@ export default function ForgotPasswordPage() {
     e.preventDefault();
     setError("");
 
-    const res = await fetch(`${API_BASE}/forgot-password`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email }),
-    });
+    try {
+      const res = await fetch(`${API_BASE}/forgot-password`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
 
-    if (res.ok) {
-      setSent(true);
-    } else {
-      const data = await res.json();
-      setError(data.error || "Something went wrong");
+      if (res.ok) {
+        setSent(true);
+      } else {
+        const data = await res.json();
+        setError(data.error || "Unable to send the reset email. Please try again.");
+      }
+    } catch {
+      setError("Unable to connect to the server. Please try again.");
     }
   };
 
