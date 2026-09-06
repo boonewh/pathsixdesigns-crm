@@ -1,3 +1,38 @@
+# Current reconciliation — 2026-09-06
+
+This section supersedes the September 3 reconstruction below. See the backend
+`G:\Projects\pathsix-backend\docs\reliability-security-2026-09-06.md` for implementation,
+validation results, staging revision and remaining roadmap boundaries.
+
+- Backend began on `codex/admin-password-reset` at `6bd505e`, with `31d65fe`
+  already implementing admin reset email delivery. The user confirmed Resend works;
+  that setup was preserved. It was not missing work.
+- All four uncommitted reliability files were preserved in `4401b02` on
+  `codex/crm-reliability-security`. Security/reliability fixes are committed in `7c4fd50`.
+- Frontend `540641b` includes the recovery work plus admin reset emails and request
+  progress. Typecheck/build and all six browser regressions passed September 6.
+- Backend local validation passed 56 tests, including two-tenant CRUD/relationship
+  checks, calendar auth, disabled users/tenants, current roles and public-route coverage.
+- Backup HTTP API registration is disabled. Reports/import require current admin
+  roles. Calendar, source leads, parent IDs, transfer, client restore and project
+  detail/update/delete now enforce access. Accounts/contacts inherit parent access.
+- JWT expiry is enforced. ORM relationship loads are tenant-scoped. Read retries
+  stop after a write begins; warmup closes failed sessions. No MCP endpoint was added.
+- Production was inspected read-only: healthy release v80, September 4, one running
+  machine in ord. No production deployment or configuration change was made.
+- Staging was v6 from August 1 with sleeping app machines, a healthy running DB,
+  synthetic tenant `staging`, test-domain users, two clients and two leads. Its DB
+  hostname is `pathsixsolutions-db-staging.flycast`.
+- Staging has no SMTP secrets; reset email behavior is tested with mocks. Working
+  production Resend credentials were not copied into staging.
+- Staging deployment/verification is in progress; consult the backend report for the
+  final result before promoting anything. Production remains explicitly prohibited.
+
+The historical observations below are retained for context; do not follow their
+stale branch/commit or Fly-authentication status as current instructions.
+
+---
+
 # PathSix CRM current handoff
 
 Last reconstructed: 2026-09-03

@@ -1,6 +1,9 @@
 # PathSix CRM MCP readiness roadmap
 
-Last reconstructed: 2026-09-03
+Last reconciled: 2026-09-06
+
+Immediate REST fixes and tests: see backend `docs/reliability-security-2026-09-06.md`.
+Staging verification is in progress. This does not mean all MCP gates are complete.
 
 ## Goal
 
@@ -33,42 +36,46 @@ Current MCP authorization reference:
 ## Gate 0 — recover operations and establish a clean baseline
 
 - [x] Preserve this roadmap and the current handoff in Git.
-- [ ] Commit the existing frontend and backend Sentry reliability fixes on feature
-      branches. (Frontend complete; backend still local and uncommitted.)
-- [ ] Audit all six CRM-related Fly resources. (Fly CLI `v0.4.97` is installed;
-      authentication and the live read-only audit remain.)
+- [x] Commit the existing frontend and backend Sentry reliability fixes on feature
+      branches. (Backend baseline preserved in `4401b02`; fixes in `7c4fd50`.)
+- [ ] Audit all six CRM-related Fly resources. (Fly authentication works; current app/staging DB checks complete,
+      full six-resource inventory remains.)
 - [ ] Confirm staging and production deployment revisions.
-- [ ] Confirm staging contains synthetic data only.
+- [x] Confirm staging contains synthetic data only.
 - [ ] Record the expected cost and sleep policy for the staging database.
 - [ ] Verify backup creation and restore procedures without restoring production.
-- [ ] Make backend dependency installation plus `pytest` a CI gate.
+- [x] Make backend dependency installation plus `pytest` a CI gate.
 
 Exit criterion: both repositories are clean, staging is reproducible, and the team
 can identify exactly which revision is running in each environment.
 
 ## Gate 1 — close immediate application security gaps
 
-- [ ] Disable the global backup-management API for tenant accounts or protect it
+- [x] Disable the global backup-management API for tenant accounts or protect it
       with a separate platform-operator boundary; never expose backup/restore via
       MCP.
-- [ ] Authenticate and tenant-scope the interaction calendar endpoint.
-- [ ] Validate every request-body relationship ID against the authenticated tenant
+- [x] Authenticate and tenant-scope the interaction calendar endpoint.
+- [x] Validate every request-body relationship ID against the authenticated tenant
       and record-access policy. Current gaps include account `client_id`, contact
       `client_id`/`lead_id`, project `client_id`/`lead_id`, interaction-update
       parent IDs, and client `source_lead_id`.
-- [ ] Enforce exactly-one/allowed-parent invariants for contacts, projects, and
+- [x] Enforce exactly-one/allowed-parent invariants for contacts, projects, and
       interactions on both create and update.
-- [ ] Decide and document whether accounts and contacts are tenant-shared or inherit
+- [x] Decide and document whether accounts and contacts are tenant-shared or inherit
       parent record permissions, then enforce the decision server-side.
-- [ ] Enforce backend—not merely frontend—admin authorization for Reports and Lead
+- [x] Enforce backend—not merely frontend—admin authorization for Reports and Lead
       Import, and align client restore with lead/project record-access checks.
-- [ ] Remove password-reset links/tokens from application logs.
-- [ ] Enforce `Tenant.is_active` in the central authentication path.
-- [ ] Stop trusting token-embedded roles for authorization decisions.
-- [ ] Inventory every public route and document why it is public.
-- [ ] Replace the current regex tenant-audit script with structural tests or a more
+- [x] Remove password-reset links/tokens from application logs.
+- [x] Enforce `Tenant.is_active` in the central authentication path.
+- [x] Stop trusting token-embedded roles for authorization decisions.
+- [x] Inventory every public route and document why it is public.
+- [x] Replace the current regex tenant-audit script with structural tests or a more
       reliable static check.
-- [ ] Review forwarded-IP handling before relying on it for rate limiting.
+- [x] Review forwarded-IP handling before relying on it for rate limiting.
+
+Account/contact policy: inherit client/lead access. Standalone projects remain valid;
+contacts/interactions require exactly one parent. Forwarded headers are ignored
+until trusted ingress is configured, so proxy clients may share a rate-limit bucket.
 
 Exit criterion: no known route can return tenant data without authenticated,
 tenant-scoped authorization.
