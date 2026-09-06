@@ -25,8 +25,14 @@ validation results, staging revision and remaining roadmap boundaries.
   hostname is `pathsixsolutions-db-staging.flycast`.
 - Staging has no SMTP secrets; reset email behavior is tested with mocks. Working
   production Resend credentials were not copied into staging.
-- Staging deployment/verification is in progress; consult the backend report for the
-  final result before promoting anything. Production remains explicitly prohibited.
+- Staging is verified: backend release **v8** at `186e6c9`, frontend `cdab5ed` at
+  https://pathsixdesigns-crm-staging.vercel.app. All 56 backend tests passed against
+  staging PostgreSQL; live synthetic login/dashboard and 22 read endpoints passed.
+  Zero temporary test schemas remain; demo-data counts are unchanged.
+- The frontend staging checkout is `G:\Projects\pathsixdesigns-crm-staging`, branch
+  `codex/crm-staging-validation`. Only remote `staging` was promoted. Backend changes
+  remain on `codex/crm-reliability-security`; final documentation follows the deployed
+  application/test revision. Production remains explicitly prohibited.
 
 The historical observations below are retained for context; do not follow their
 stale branch/commit or Fly-authentication status as current instructions.

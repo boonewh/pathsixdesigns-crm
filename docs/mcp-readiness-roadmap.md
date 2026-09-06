@@ -3,7 +3,8 @@
 Last reconciled: 2026-09-06
 
 Immediate REST fixes and tests: see backend `docs/reliability-security-2026-09-06.md`.
-Staging verification is in progress. This does not mean all MCP gates are complete.
+Staging verification passed: backend v8 (`186e6c9`), frontend `cdab5ed`; 56 tests
+passed against PostgreSQL. This does not mean all MCP gates are complete.
 
 ## Goal
 
