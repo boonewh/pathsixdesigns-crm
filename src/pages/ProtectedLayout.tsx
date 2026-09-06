@@ -2,7 +2,7 @@ import { Outlet, Navigate, Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/authContext";
 import { useState, useEffect, useRef } from "react";
 import SidebarNav from "@/components/SidebarNav";
-import { apiFetch } from "@/lib/api";
+import { apiFetchJson } from "@/lib/api";
 
 export default function ProtectedLayout() {
   const { isAuthenticated, logout, token } = useAuth();
@@ -28,13 +28,16 @@ export default function ProtectedLayout() {
         return;
       }
 
-      apiFetch(`/search/?q=${encodeURIComponent(search)}`, {
+      apiFetchJson(`/search/?q=${encodeURIComponent(search)}`, {
         headers: { Authorization: `Bearer ${token}` },
       })
-        .then((res) => res.json())
         .then((data) => {
           setResults(data);
           setShowResults(true);
+        })
+        .catch(() => {
+          setResults([]);
+          setShowResults(false);
         });
     }, 300);
 

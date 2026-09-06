@@ -26,17 +26,21 @@ export async function apiFetch(path: string, options?: RequestInit) {
     // Handle other errors
     if (!res.ok && res.status !== 401) {
       let errorMessage = `Error: ${res.status}`;
+      // Inspect a clone so callers can still read the original response body.
+      // Reading `res` here caused "body stream already read" failures wherever
+      // callers subsequently used res.json().
+      const errorResponse = res.clone();
       
       try {
-        const contentType = res.headers.get('content-type');
+        const contentType = errorResponse.headers.get('content-type');
         
         if (contentType && contentType.includes('application/json')) {
           // It's JSON - parse the error message
-          const errorData = await res.json();
+          const errorData = await errorResponse.json();
           errorMessage = errorData.error || errorData.message || errorMessage;
         } else {
           // It's HTML or plain text - probably an error page
-          const text = await res.text();
+          const text = await errorResponse.text();
           
           if (text.includes('<!DOCTYPE') || text.includes('<html')) {
             // It's an HTML error page
@@ -46,7 +50,7 @@ export async function apiFetch(path: string, options?: RequestInit) {
             errorMessage = `Error: ${res.status} ${text}`;
           }
         }
-      } catch (parseError) {
+      } catch {
         // If we can't parse the error response at all
         errorMessage = `Error: ${res.status} - Unable to read error details`;
       }
@@ -95,6 +99,54 @@ export async function apiFetch(path: string, options?: RequestInit) {
     
     // Re-throw so the calling code knows something went wrong
     throw networkError;
+  }
+}
+
+/**
+ * Download a protected API resource without putting credentials in the URL.
+ * apiFetch supplies the current Bearer token and handles HTTP/network errors.
+ */
+export async function apiDownload(path: string, filename: string): Promise<boolean> {
+  let res: Response;
+
+  try {
+    res = await apiFetch(path, {
+      headers: {
+        Accept: "text/calendar",
+      },
+    });
+  } catch {
+    return false;
+  }
+
+  if (!res.ok) {
+    return false;
+  }
+
+  try {
+    const blob = await res.blob();
+    const objectUrl = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+
+    link.href = objectUrl;
+    link.download = filename;
+    link.style.display = "none";
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.setTimeout(() => URL.revokeObjectURL(objectUrl), 0);
+
+    return true;
+  } catch (error) {
+    toast.error("Unable to download the calendar file. Please try again.");
+    Sentry.captureException(error, {
+      level: "error",
+      extra: {
+        url: `${API_BASE}${path}`,
+        context: "Protected file download failed",
+      },
+    });
+    return false;
   }
 }
 

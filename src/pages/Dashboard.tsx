@@ -4,7 +4,7 @@ import { Interaction } from "@/types";
 import { addDays, isBefore, isToday, isWithinInterval, parseISO, formatDistanceToNow } from "date-fns";
 import InteractionModal from "@/components/ui/InteractionModal";
 import CompleteInteractionModal from "@/components/ui/CompleteInteractionModal";
-import { apiFetch } from "@/lib/api";
+import { apiFetchJson } from "@/lib/api";
 import { useCRMConfig } from "@/config/crmConfig";
 
 export default function Dashboard() {
@@ -25,21 +25,21 @@ export default function Dashboard() {
   const [recentActivity, setRecentActivity] = useState<ActivityEntry[]>([]);
 
   useEffect(() => {
-    apiFetch("/interactions/", {
+    apiFetchJson("/interactions/", {
       headers: { Authorization: `Bearer ${token}` },
     })
-      .then((res) => res.json())
       .then((data) => {
         setInteractions(data.interactions || data); // Handle both paginated and direct array responses
-      });
+      })
+      .catch(() => setInteractions([]));
   }, [token]);
 
   useEffect(() => {
-    apiFetch("/activity/recent", {
+    apiFetchJson("/activity/recent", {
       headers: { Authorization: `Bearer ${token}` },
     })
-      .then((res) => res.json())
-      .then(setRecentActivity);
+      .then(setRecentActivity)
+      .catch(() => setRecentActivity([]));
   }, [token]);
 
   const now = new Date();

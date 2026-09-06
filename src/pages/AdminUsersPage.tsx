@@ -2,6 +2,7 @@ import { useEffect, useState, useRef } from "react";
 import { useAuth } from "@/authContext";
 import { MoreVertical } from "lucide-react";
 import { apiFetch } from "@/lib/api";
+import toast from "react-hot-toast";
 
 interface User {
   id: number;
@@ -23,6 +24,7 @@ export default function AdminUsersPage() {
   const menuRefs = useRef<{ [key: number]: HTMLDivElement | null }>({});
   const [editingUserId, setEditingUserId] = useState<number | null>(null);
   const [editedEmail, setEditedEmail] = useState<string>("");
+  const [sendingResetFor, setSendingResetFor] = useState<number | null>(null);
 
   useEffect(() => {
     apiFetch("/users/", {
@@ -178,6 +180,26 @@ export default function AdminUsersPage() {
     }
   };
 
+  const handleSendPasswordReset = async (user: User) => {
+    setSendingResetFor(user.id);
+
+    try {
+      const res = await apiFetch(`/users/${user.id}/send-password-reset`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (res.ok) {
+        toast.success(`Password reset email sent to ${user.email}`);
+        setOpenMenuId(null);
+      }
+    } catch {
+      // apiFetch already reports network failures to the user.
+    } finally {
+      setSendingResetFor(null);
+    }
+  };
+
   const activeUsers = users.filter((u) => u.is_active);
   const inactiveUsers = users.filter((u) => !u.is_active);
 
@@ -279,6 +301,7 @@ export default function AdminUsersPage() {
               }}
             >
               <button
+                aria-label={`Actions for ${user.email}`}
                 onClick={() =>
                   setOpenMenuId((prev) => (prev === user.id ? null : user.id))
                 }
@@ -321,6 +344,14 @@ export default function AdminUsersPage() {
                       Revoke File Uploads
                     </button>
                   )}
+
+                  <button
+                    onClick={() => handleSendPasswordReset(user)}
+                    className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100 text-indigo-600 disabled:cursor-wait disabled:opacity-60"
+                    disabled={sendingResetFor === user.id}
+                  >
+                    {sendingResetFor === user.id ? "Sending..." : "Send Password Reset"}
+                  </button>
 
                   <button
                     onClick={() => handleToggleActive(user.id)}
@@ -390,6 +421,7 @@ export default function AdminUsersPage() {
                   }}
                 >
                   <button
+                    aria-label={`Actions for ${user.email}`}
                     onClick={() =>
                       setOpenMenuId((prev) => (prev === user.id ? null : user.id))
                     }
@@ -398,7 +430,14 @@ export default function AdminUsersPage() {
                     <MoreVertical size={20} />
                   </button>
                   {openMenuId === user.id && (
-                    <div className="absolute right-0 mt-2 w-32 bg-white border rounded shadow-md z-10">
+                    <div className="absolute right-0 mt-2 w-48 bg-white border rounded shadow-md z-10">
+                      <button
+                        onClick={() => handleSendPasswordReset(user)}
+                        className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100 text-indigo-600 disabled:cursor-wait disabled:opacity-60"
+                        disabled={sendingResetFor === user.id}
+                      >
+                        {sendingResetFor === user.id ? "Sending..." : "Send Password Reset"}
+                      </button>
                       <button
                         onClick={() => handleToggleActive(user.id)}
                         className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100 text-green-600"

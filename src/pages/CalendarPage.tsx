@@ -288,7 +288,8 @@ export default function CalendarPage() {
           profile_link={selectedEvent.extendedProps.profile_link}
           onClose={() => setSelectedEvent(null)}
           calendarLink={generateGoogleCalendarUrl(selectedEvent)}
-          icsLink={`${import.meta.env.VITE_API_BASE_URL}/interactions/${selectedEvent.id}/calendar.ics`}
+          icsPath={`/interactions/${selectedEvent.id}/calendar.ics`}
+          icsFilename={`interaction-${selectedEvent.id}.ics`}
         />
       )}
     </div>
