@@ -6,7 +6,10 @@ Immediate REST fixes and tests: see backend `docs/reliability-security-2026-09-0
 Previous staging verification passed: backend v10 (`64dfe15`), frontend `cdab5ed`; 68 tests
 passed against PostgreSQL. This does not mean all MCP gates are complete.
 
-Current staging: **v13 / e311c19**. The backend now uses a restricted runtime
+Current staging: **v14 / fd629f5**, with **85 PostgreSQL tests passed**.
+Direct tenant foreign keys and full tenant indexes now cover all eleven tables
+with tenant_id; legacy Alembic heads are merged. See backend
+docs/tenant-membership-migration.md. The prior login milestone follows. The backend now uses a restricted runtime
 DB login; live client lifecycle and browser checks pass. See backend
 docs/staging-database-role.md for final tests and recovery procedure.
 Production remains unchanged.
@@ -90,10 +93,10 @@ tenant-scoped authorization.
 
 Next completed slice: client create/detail/update/delete/restore are behind a
 tenant-bound service sharing client/lead SQL access predicates with search.
-Read-only staging schema audit is complete; index drift, missing composite FKs
-must be addressed before claiming DB isolation. The staging superuser application
+The direct tenant index/FK drift is repaired. Missing composite FKs and RLS
+must still be addressed before claiming DB isolation. The staging superuser application
 login has been replaced with a restricted runtime role; tenant RLS remains pending.
-See backend `docs/client-service-and-schema-audit.md`. No schema migration was applied.
+See backend docs/tenant-membership-migration.md for the applied staging migration.
 
 Started: global search uses a tenant-bound service and a fresh immutable web
 principal from authenticated database state. Its tests also run without HTTP
@@ -108,7 +111,8 @@ are not migrated yet. A model/table inventory is recorded in backend
 - [ ] Require a tenant context when constructing every tenant-owned query.
 - [ ] Inventory all tenant-owned tables, including subscriptions, files, logs,
       preferences, imports, and backup metadata.
-- [ ] Add missing tenant foreign keys and indexes.
+- [x] Add missing direct tenant foreign keys and full tenant indexes (v14).
+      Historical compound performance indexes remain a separate tuning review.
 - [ ] Add constraints that prevent relationships from crossing tenant boundaries.
 - [ ] Evaluate and preferably implement PostgreSQL row-level security as a database
       backstop using transaction-local tenant context.

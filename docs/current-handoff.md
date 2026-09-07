@@ -1,5 +1,18 @@
 # Current reconciliation — 2026-09-06
 
+Latest staging is **v14 / fd629f5**, with **85 PostgreSQL tests passed**.
+Migration tenant_membership_indexes merged the three legacy Alembic heads and
+added/validated direct tenant foreign keys and full tenant indexes across all
+eleven tables with tenant_id. The rolled-back rehearsal and actual migration
+passed; rows were preserved. Live login, reads, search, reports, clients page and
+full client lifecycle passed with no browser errors; the test client was removed.
+Zero temporary test schemas remain. Runtime DB privileges remain restricted.
+See backend docs/tenant-membership-migration.md. Composite tenant foreign keys,
+remaining services and RLS are next. Production and frontend deployment unchanged.
+
+The prior restricted-login milestone follows.
+
+
 Current staging is now **v13 / e311c19**, using dedicated restricted database login
 pathsix_crm_staging_runtime on both backend machines. Production remains unchanged.
 The initial role suite passed 76 PostgreSQL tests; final expanded verification is
