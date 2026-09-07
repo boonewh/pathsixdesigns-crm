@@ -3,7 +3,7 @@
 Last reconciled: 2026-09-06
 
 Immediate REST fixes and tests: see backend `docs/reliability-security-2026-09-06.md`.
-Staging verification passed: backend v9 (`c88ce35`), frontend `cdab5ed`; 61 tests
+Staging verification passed: backend v10 (`64dfe15`), frontend `cdab5ed`; 68 tests
 passed against PostgreSQL. This does not mean all MCP gates are complete.
 
 ## Goal
@@ -82,6 +82,12 @@ Exit criterion: no known route can return tenant data without authenticated,
 tenant-scoped authorization.
 
 ## Gate 2 — make tenant isolation structural
+
+Next completed slice: client create/detail/update/delete/restore are behind a
+tenant-bound service sharing client/lead SQL access predicates with search.
+Read-only staging schema audit is complete; index drift, missing composite FKs
+and the superuser application role must be addressed before claiming DB isolation.
+See backend `docs/client-service-and-schema-audit.md`. No schema migration was applied.
 
 Started: global search uses a tenant-bound service and a fresh immutable web
 principal from authenticated database state. Its tests also run without HTTP

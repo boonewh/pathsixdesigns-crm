@@ -1,5 +1,14 @@
 # Current reconciliation — 2026-09-06
 
+Current staging: **v10 / `64dfe15`**, with **68 tests passed** locally and on
+PostgreSQL. Client create/detail/update/delete/restore now use a tenant-bound
+service. Live client page checks passed; zero temporary schemas remain. Read-only
+schema audit found no invalid staging relationships, but missing tenant indexes,
+no composite tenant foreign keys/RLS, and a superuser application DB role. All
+three migration heads are recorded in staging despite the missing indexes. See
+backend `docs/client-service-and-schema-audit.md` for the next migration plan.
+Production and frontend deployment remain unchanged. Earlier milestones follow.
+
 Latest milestone: tenant-bound search service deployed to backend staging **v9**
 (`c88ce35`); **61 tests passed** locally and on staging PostgreSQL, with live search
 and dashboard checks passing and zero test schemas left. See backend
