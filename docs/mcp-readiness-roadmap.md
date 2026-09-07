@@ -1,11 +1,18 @@
 # PathSix CRM MCP readiness roadmap
 
-Last reconciled: 2026-09-06
+Last reconciled: 2026-09-07
 
 Immediate REST fixes and tests: see backend `docs/reliability-security-2026-09-06.md`.
 Previous staging verification passed: backend v10 (`64dfe15`), frontend `cdab5ed`; 68 tests
 passed against PostgreSQL. This does not mean all MCP gates are complete.
 
+Latest staging: **v18 / 000de69**, **98 PostgreSQL tests passed with RLS**.
+Fourteen tables enforce transaction-local tenant policies, including narrow
+authentication bootstrap. Live CRM checks and actual unscoped-read denial passed.
+See backend docs/tenant-row-security.md for rollout and rollback requirements.
+CRM_RLS_ENABLED=1 must remain on while policies are active. Production unchanged.
+
+Previous relationship milestone:
 Latest staging: **v16 / 9c72c29**, migration tenant_relationships. Thirty declared
 record/user relationships now have same-tenant composite FKs. PostgreSQL checks
 and live CRM checks passed; see backend docs/tenant-relationship-migration.md for
@@ -121,8 +128,8 @@ are not migrated yet. A model/table inventory is recorded in backend
       Historical compound performance indexes remain a separate tuning review.
 - [x] Add same-tenant composite FKs for all 30 declared tenant-owned relationships.
       Polymorphic activity entity IDs and parent-cardinality constraints remain.
-- [ ] Evaluate and preferably implement PostgreSQL row-level security as a database
-      backstop using transaction-local tenant context.
+- [x] Implement PostgreSQL RLS on 14 tables using transaction-local tenant context
+      and narrow auth bootstrap (staging v18).
 - [ ] Ensure background jobs, imports, backups, and restore jobs use explicit tenant
       context rather than bypassing the boundary.
 

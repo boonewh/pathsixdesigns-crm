@@ -1,4 +1,21 @@
-# Current reconciliation — 2026-09-06
+# Current reconciliation — 2026-09-07
+
+Latest staging is **v18 / 000de69**, Alembic head **tenant_row_security**, with
+**98 PostgreSQL tests passed** under RLS. Fourteen tables have row security enabled
+and forced. Transaction-local identity denies unscoped reads/writes and clears on
+commit/rollback; login/reset use a narrow identity-only bootstrap. Live login,
+thirteen protected read endpoints and full client lifecycle passed. Independent
+runtime queries with no identity returned zero clients/leads/users/tenants.
+Original two clients/two leads remain; zero test schemas. Production, frontend
+deployment and Fly resource sizes/count are unchanged.
+
+IMPORTANT: CRM_RLS_ENABLED=1 must remain set on staging while policies are active.
+A pre-RLS application rollback alone is incompatible. Operator maintenance requires
+operator credentials or explicit trusted principal context; unscoped runtime reads
+now intentionally return no data. See backend docs/tenant-row-security.md.
+
+Previous relationship milestone follows.
+
 
 Latest staging is **v16 / 9c72c29**, with migration **tenant_relationships**.
 Thirty composite foreign keys now prevent declared record/user relationships from
