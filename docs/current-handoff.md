@@ -1,5 +1,18 @@
 # Current reconciliation — 2026-09-06
 
+Latest staging is **v16 / 9c72c29**, with migration **tenant_relationships**.
+Thirty composite foreign keys now prevent declared record/user relationships from
+crossing company boundaries. The rehearsal, migration and independent validation
+passed. PostgreSQL testing: 90 passed in the suite, plus the corrected new HTTP
+contract test passed on targeted rerun. Live CRM reads and full client lifecycle
+passed without browser errors. Zero test schemas remain; original two clients/two
+leads remain; runtime role stays restricted. Production, frontend deployment and
+Fly machine sizes/count are unchanged. See backend docs/tenant-relationship-migration.md.
+RLS, parent-cardinality/polymorphic constraints and remaining service work are next.
+
+Previous membership milestone follows.
+
+
 Latest staging is **v14 / fd629f5**, with **85 PostgreSQL tests passed**.
 Migration tenant_membership_indexes merged the three legacy Alembic heads and
 added/validated direct tenant foreign keys and full tenant indexes across all

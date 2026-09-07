@@ -6,6 +6,12 @@ Immediate REST fixes and tests: see backend `docs/reliability-security-2026-09-0
 Previous staging verification passed: backend v10 (`64dfe15`), frontend `cdab5ed`; 68 tests
 passed against PostgreSQL. This does not mean all MCP gates are complete.
 
+Latest staging: **v16 / 9c72c29**, migration tenant_relationships. Thirty declared
+record/user relationships now have same-tenant composite FKs. PostgreSQL checks
+and live CRM checks passed; see backend docs/tenant-relationship-migration.md for
+the precise test results. Production and resource sizes/count remain unchanged.
+
+Previous milestone:
 Current staging: **v14 / fd629f5**, with **85 PostgreSQL tests passed**.
 Direct tenant foreign keys and full tenant indexes now cover all eleven tables
 with tenant_id; legacy Alembic heads are merged. See backend
@@ -113,7 +119,8 @@ are not migrated yet. A model/table inventory is recorded in backend
       preferences, imports, and backup metadata.
 - [x] Add missing direct tenant foreign keys and full tenant indexes (v14).
       Historical compound performance indexes remain a separate tuning review.
-- [ ] Add constraints that prevent relationships from crossing tenant boundaries.
+- [x] Add same-tenant composite FKs for all 30 declared tenant-owned relationships.
+      Polymorphic activity entity IDs and parent-cardinality constraints remain.
 - [ ] Evaluate and preferably implement PostgreSQL row-level security as a database
       backstop using transaction-local tenant context.
 - [ ] Ensure background jobs, imports, backups, and restore jobs use explicit tenant
