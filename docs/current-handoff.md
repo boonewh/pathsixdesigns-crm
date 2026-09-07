@@ -1,5 +1,17 @@
 # Current reconciliation — 2026-09-06
 
+Current staging is now **v13 / e311c19**, using dedicated restricted database login
+pathsix_crm_staging_runtime on both backend machines. Production remains unchanged.
+The initial role suite passed 76 PostgreSQL tests; final expanded verification is
+recorded in backend docs/staging-database-role.md. Live login, search, reports,
+clients page and complete client lifecycle passed. The live purge check exposed
+an unnecessary chat-table load and rollback logging bug; both are fixed without
+broadening database privileges. Synthetic test clients were removed. Operator
+recovery credentials are encrypted outside Git; no additional administrator secret
+was left in the app. RLS, tenant constraints/indexes and remaining services are
+still outstanding. The preceding superuser observation below is historical.
+
+
 Current staging: **v10 / `64dfe15`**, with **68 tests passed** locally and on
 PostgreSQL. Client create/detail/update/delete/restore now use a tenant-bound
 service. Live client page checks passed; zero temporary schemas remain. Read-only

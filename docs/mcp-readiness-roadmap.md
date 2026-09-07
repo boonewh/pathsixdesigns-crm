@@ -3,8 +3,13 @@
 Last reconciled: 2026-09-06
 
 Immediate REST fixes and tests: see backend `docs/reliability-security-2026-09-06.md`.
-Staging verification passed: backend v10 (`64dfe15`), frontend `cdab5ed`; 68 tests
+Previous staging verification passed: backend v10 (`64dfe15`), frontend `cdab5ed`; 68 tests
 passed against PostgreSQL. This does not mean all MCP gates are complete.
+
+Current staging: **v13 / e311c19**. The backend now uses a restricted runtime
+DB login; live client lifecycle and browser checks pass. See backend
+docs/staging-database-role.md for final tests and recovery procedure.
+Production remains unchanged.
 
 ## Goal
 
@@ -86,7 +91,8 @@ tenant-scoped authorization.
 Next completed slice: client create/detail/update/delete/restore are behind a
 tenant-bound service sharing client/lead SQL access predicates with search.
 Read-only staging schema audit is complete; index drift, missing composite FKs
-and the superuser application role must be addressed before claiming DB isolation.
+must be addressed before claiming DB isolation. The staging superuser application
+login has been replaced with a restricted runtime role; tenant RLS remains pending.
 See backend `docs/client-service-and-schema-audit.md`. No schema migration was applied.
 
 Started: global search uses a tenant-bound service and a fresh immutable web
