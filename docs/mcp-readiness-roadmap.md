@@ -3,7 +3,7 @@
 Last reconciled: 2026-09-06
 
 Immediate REST fixes and tests: see backend `docs/reliability-security-2026-09-06.md`.
-Staging verification passed: backend v8 (`186e6c9`), frontend `cdab5ed`; 56 tests
+Staging verification passed: backend v9 (`c88ce35`), frontend `cdab5ed`; 61 tests
 passed against PostgreSQL. This does not mean all MCP gates are complete.
 
 ## Goal
@@ -82,6 +82,12 @@ Exit criterion: no known route can return tenant data without authenticated,
 tenant-scoped authorization.
 
 ## Gate 2 — make tenant isolation structural
+
+Started: global search uses a tenant-bound service and a fresh immutable web
+principal from authenticated database state. Its tests also run without HTTP
+middleware. Remaining routes, delegated connection identity, and database backstops
+are not migrated yet. A model/table inventory is recorded in backend
+`docs/tenant-service-foundation.md`; live constraints/indexes still need comparison.
 
 - [ ] Create a request-scoped principal containing `user_id`, `tenant_id`, current
       roles/permissions, and connection identity.

@@ -1,5 +1,12 @@
 # Current reconciliation — 2026-09-06
 
+Latest milestone: tenant-bound search service deployed to backend staging **v9**
+(`c88ce35`); **61 tests passed** locally and on staging PostgreSQL, with live search
+and dashboard checks passing and zero test schemas left. See backend
+`docs/tenant-service-foundation.md` for scope, table inventory, and next steps.
+Frontend remains on staging `cdab5ed`; production remains unchanged.
+The preceding v8 milestone is documented below.
+
 This section supersedes the September 3 reconstruction below. See the backend
 `G:\Projects\pathsix-backend\docs\reliability-security-2026-09-06.md` for implementation,
 validation results, staging revision and remaining roadmap boundaries.
