@@ -6,6 +6,12 @@ Immediate REST fixes and tests: see backend `docs/reliability-security-2026-09-0
 Previous staging verification passed: backend v10 (`64dfe15`), frontend `cdab5ed`; 68 tests
 passed against PostgreSQL. This does not mean all MCP gates are complete.
 
+Latest staging: **v21 / 1b32d82**, **109 PostgreSQL tests passed**. Lead
+create/detail/update/soft-delete/restore now use a tenant-bound service. Live CRM
+checks and cleanup passed; see backend docs/lead-service.md. Database protections
+remain active at parent_link_rules. Production and resource configuration unchanged.
+
+Previous parent-link milestone:
 Latest staging: **v20 / 322f057**, migration **parent_link_rules**. Three validated
 parent-count CHECK constraints protect contacts, interactions and projects. Related
 records prevent permanent deletion with HTTP 409; client/lead single and bulk purge
@@ -113,8 +119,8 @@ tenant-scoped authorization.
 
 ## Gate 2 — make tenant isolation structural
 
-Client create/detail/update/delete/restore and global search use tenant-bound
-services and current immutable web principals. Staging now has a restricted runtime
+Client and lead create/detail/update/soft-delete/restore and global search use
+tenant-bound services and current immutable web principals. Staging now has a restricted runtime
 login, repaired tenant indexes/direct FKs, thirty same-tenant composite FKs,
 fourteen forced RLS tables, and three parent-count CHECK constraints. See backend
 docs/parent-link-rules.md and docs/tenant-row-security.md for verified state and

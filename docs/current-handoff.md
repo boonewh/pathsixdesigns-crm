@@ -1,5 +1,21 @@
 # Current reconciliation — 2026-09-08
 
+Latest staging is **v21 / 1b32d82**, with **109 PostgreSQL tests passed**.
+Lead create/detail/update/soft-delete/restore now use a tenant-bound service with
+caller-owned transactions and a pure detail read. The web route records views
+explicitly. Cross-tenant and record-access denial, rollback, contact filtering,
+conversion timestamps and HTTP behavior are tested. Live login, thirteen protected
+reads and the full lead/contact lifecycle passed with no browser errors. Cleanup
+left the original two clients/two leads and zero test schemas. The database head
+remains parent_link_rules; all fourteen RLS tables remain forced and unscoped reads
+return zero rows. Production, frontend deployments and Fly resource configuration
+are unchanged. See backend docs/lead-service.md.
+
+Next service work includes lists, assignment/email delivery, bulk operations and
+remaining entities. Delegated AI authorization and MCP are still outstanding.
+
+Previous parent-link milestone follows.
+
 Latest staging is **v20 / 322f057**, Alembic head **parent_link_rules**.
 Three validated database CHECK constraints now enforce exactly one parent for
 contacts/interactions and at most one for projects. Permanent deletion with
