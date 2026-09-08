@@ -6,6 +6,13 @@ Immediate REST fixes and tests: see backend `docs/reliability-security-2026-09-0
 Previous staging verification passed: backend v10 (`64dfe15`), frontend `cdab5ed`; 68 tests
 passed against PostgreSQL. This does not mean all MCP gates are complete.
 
+Latest staging: **v22 / 8f1aa06**, **116 PostgreSQL tests passed**. Lead lists,
+trash, bulk soft deletion and permanent purge now use the tenant-bound service,
+including service-level admin checks. Live bulk rollback and cleanup passed.
+See backend docs/lead-service.md. Lead assignment/email remains to extract.
+Production and Fly resource configuration unchanged.
+
+Previous lead lifecycle milestone:
 Latest staging: **v21 / 1b32d82**, **109 PostgreSQL tests passed**. Lead
 create/detail/update/soft-delete/restore now use a tenant-bound service. Live CRM
 checks and cleanup passed; see backend docs/lead-service.md. Database protections
@@ -126,7 +133,8 @@ fourteen forced RLS tables, and three parent-count CHECK constraints. See backen
 docs/parent-link-rules.md and docs/tenant-row-security.md for verified state and
 rollout requirements. Database protections remain migration-managed.
 
-Remaining work includes extracting the other routes into shared services, delegated
+Lead lists and bulk/purge operations are also in the shared service (v22).
+Remaining work includes assignment/email and other entity services, delegated
 connection identity, explicit job context, and polymorphic activity relationships.
 The model/table inventory is in backend docs/tenant-service-foundation.md; it does
 not by itself complete the broader operational inventory or every query boundary.

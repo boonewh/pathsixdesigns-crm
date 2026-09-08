@@ -1,5 +1,21 @@
 # Current reconciliation — 2026-09-08
 
+Latest staging is **v22 / 8f1aa06**, with **116 PostgreSQL tests passed**.
+Lead personal/admin/assigned/trash lists, bulk soft deletion, bulk purge and single
+purge now use the tenant-bound service. Admin checks run inside the service as well
+as HTTP; personal-list and trash visibility are preserved. Pagination and bulk IDs
+are validated, and display emails use a tenant-scoped batch. Local tests: 87 passed,
+29 PostgreSQL-only skipped; two focused serialization checks also passed.
+Live login/list/CRM reads and two-lead bulk conflict/rollback/cleanup passed without
+browser errors. Original two clients/two leads remain; zero test schemas. Fourteen
+forced RLS tables and parent_link_rules remain active. Production, frontend and Fly
+resource sizes/count unchanged. See backend docs/lead-service.md.
+
+Next: lead assignment/email delivery and remaining entity services; delegated AI
+authorization/MCP is still outstanding.
+
+Previous lead lifecycle milestone follows.
+
 Latest staging is **v21 / 1b32d82**, with **109 PostgreSQL tests passed**.
 Lead create/detail/update/soft-delete/restore now use a tenant-bound service with
 caller-owned transactions and a pure detail read. The web route records views
