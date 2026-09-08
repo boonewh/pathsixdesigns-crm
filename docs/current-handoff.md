@@ -1,5 +1,28 @@
 # Current reconciliation — 2026-09-08
 
+Latest staging is **v23 / c23b53b**. Lead assignment now uses the shared service,
+with admin/tenant/active-assignee checks. Notification is attempted only after a
+successful commit; failed commits cannot send mail, and mail failure does not undo
+assignment. All database work in app/routes/leads.py now uses LeadService. Separate
+imports/conversion workflows and other entities still need service review.
+
+Local: 90 passed, 29 PostgreSQL-only skipped. All 119 PostgreSQL cases passed across
+initial and targeted runs, NOT a clean uninterrupted suite: 88 first-run passes,
+31 setup errors, then 3 assignment passes, 27 recovery passes and one final pass.
+Captured failure: database connection closed during test schema reflection. Root
+cause is unconfirmed; subsequent Fly DB health checks passed. Investigate this
+staging connection interruption before treating reliability as finished. An orphan
+test schema was removed and zero remain. See backend docs/lead-service.md.
+Live login, lead lists/detail and invalid-assignment rejection passed without page
+errors. Notification integration tests used stubs; no test email was sent. Original
+staging records remain, fourteen forced RLS tables remain active and unscoped runtime
+reads return zero rows. Production/frontend deployments and Fly resources unchanged.
+
+Next: staging connection reliability investigation, then remaining entity services
+and delegated AI authorization/MCP.
+
+Previous lead list milestone follows.
+
 Latest staging is **v22 / 8f1aa06**, with **116 PostgreSQL tests passed**.
 Lead personal/admin/assigned/trash lists, bulk soft deletion, bulk purge and single
 purge now use the tenant-bound service. Admin checks run inside the service as well
