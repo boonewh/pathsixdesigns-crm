@@ -1,4 +1,24 @@
-# Current reconciliation — 2026-09-07
+# Current reconciliation — 2026-09-08
+
+Latest staging is **v20 / 322f057**, Alembic head **parent_link_rules**.
+Three validated database CHECK constraints now enforce exactly one parent for
+contacts/interactions and at most one for projects. Permanent deletion with
+related records returns HTTP 409 and rolls back the whole operation, including
+bulk purge. Client and lead purge work with the restricted database login.
+
+Validation: 74 local tests passed (28 PostgreSQL-only skipped); full PostgreSQL
+suite passed 102 tests, followed by three focused passes after the final lead
+purge fix. Rehearsal, migration, live login, thirteen protected reads and both
+client/contact and lead/contact conflict/restore/cleanup workflows passed.
+Independent inspection confirms all three constraints, fourteen forced RLS tables,
+zero unscoped runtime reads and zero test schemas. Original two clients/two leads
+remain, with contacts/interactions/projects empty. Production and frontend
+deployments, Fly machine count/sizes and auto-stop settings are unchanged.
+See backend docs/parent-link-rules.md. Next: remaining tenant-bound services and
+polymorphic activity relationships, followed by delegated AI authorization/MCP.
+CRM_RLS_ENABLED=1 must remain enabled while RLS policies are active.
+
+Previous row-security milestone follows.
 
 Latest staging is **v18 / 000de69**, Alembic head **tenant_row_security**, with
 **98 PostgreSQL tests passed** under RLS. Fourteen tables have row security enabled

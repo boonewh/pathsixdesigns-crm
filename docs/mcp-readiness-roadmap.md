@@ -1,11 +1,20 @@
 # PathSix CRM MCP readiness roadmap
 
-Last reconciled: 2026-09-07
+Last reconciled: 2026-09-08
 
 Immediate REST fixes and tests: see backend `docs/reliability-security-2026-09-06.md`.
 Previous staging verification passed: backend v10 (`64dfe15`), frontend `cdab5ed`; 68 tests
 passed against PostgreSQL. This does not mean all MCP gates are complete.
 
+Latest staging: **v20 / 322f057**, migration **parent_link_rules**. Three validated
+parent-count CHECK constraints protect contacts, interactions and projects. Related
+records prevent permanent deletion with HTTP 409; client/lead single and bulk purge
+rollback and recovery are tested. Full PostgreSQL suite: 102 passed, followed by
+three focused passes after the final lead purge fix. Live checks and cleanup passed.
+See backend docs/parent-link-rules.md. Production and Fly resource sizes/count remain
+unchanged.
+
+Previous row-security milestone:
 Latest staging: **v18 / 000de69**, **98 PostgreSQL tests passed with RLS**.
 Fourteen tables enforce transaction-local tenant policies, including narrow
 authentication bootstrap. Live CRM checks and actual unscoped-read denial passed.
@@ -104,18 +113,17 @@ tenant-scoped authorization.
 
 ## Gate 2 — make tenant isolation structural
 
-Next completed slice: client create/detail/update/delete/restore are behind a
-tenant-bound service sharing client/lead SQL access predicates with search.
-The direct tenant index/FK drift is repaired. Missing composite FKs and RLS
-must still be addressed before claiming DB isolation. The staging superuser application
-login has been replaced with a restricted runtime role; tenant RLS remains pending.
-See backend docs/tenant-membership-migration.md for the applied staging migration.
+Client create/detail/update/delete/restore and global search use tenant-bound
+services and current immutable web principals. Staging now has a restricted runtime
+login, repaired tenant indexes/direct FKs, thirty same-tenant composite FKs,
+fourteen forced RLS tables, and three parent-count CHECK constraints. See backend
+docs/parent-link-rules.md and docs/tenant-row-security.md for verified state and
+rollout requirements. Database protections remain migration-managed.
 
-Started: global search uses a tenant-bound service and a fresh immutable web
-principal from authenticated database state. Its tests also run without HTTP
-middleware. Remaining routes, delegated connection identity, and database backstops
-are not migrated yet. A model/table inventory is recorded in backend
-`docs/tenant-service-foundation.md`; live constraints/indexes still need comparison.
+Remaining work includes extracting the other routes into shared services, delegated
+connection identity, explicit job context, and polymorphic activity relationships.
+The model/table inventory is in backend docs/tenant-service-foundation.md; it does
+not by itself complete the broader operational inventory or every query boundary.
 
 - [ ] Create a request-scoped principal containing `user_id`, `tenant_id`, current
       roles/permissions, and connection identity.
@@ -127,7 +135,8 @@ are not migrated yet. A model/table inventory is recorded in backend
 - [x] Add missing direct tenant foreign keys and full tenant indexes (v14).
       Historical compound performance indexes remain a separate tuning review.
 - [x] Add same-tenant composite FKs for all 30 declared tenant-owned relationships.
-      Polymorphic activity entity IDs and parent-cardinality constraints remain.
+      Polymorphic activity entity IDs remain.
+- [x] Enforce parent cardinality with validated database CHECK constraints (v20).
 - [x] Implement PostgreSQL RLS on 14 tables using transaction-local tenant context
       and narrow auth bootstrap (staging v18).
 - [ ] Ensure background jobs, imports, backups, and restore jobs use explicit tenant
