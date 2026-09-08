@@ -6,6 +6,12 @@ Immediate REST fixes and tests: see backend `docs/reliability-security-2026-09-0
 Previous staging verification passed: backend v10 (`64dfe15`), frontend `cdab5ed`; 68 tests
 passed against PostgreSQL. This does not mean all MCP gates are complete.
 
+Staging connection investigation: continuous PostgreSQL uptime since July 31,
+no idle timeouts and low current connection use. Bounded read-only probes passed;
+root cause remains unresolved. Capture correlated diagnostics at the next necessary
+validation, and improve failed-setup fixture cleanup. See backend
+docs/staging-connection-investigation.md. No resources or configuration changed.
+
 Latest staging: **v23 / c23b53b**. Lead assignment is centralized and notification
 runs after commit. All 119 PostgreSQL cases passed across initial/targeted runs;
 this was not a clean uninterrupted suite. Database setup connections were interrupted,

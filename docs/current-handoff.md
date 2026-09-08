@@ -1,5 +1,16 @@
 # Current reconciliation — 2026-09-08
 
+Connection investigation update: PostgreSQL and its staging machine have remained
+up since July 31, with no retained OOM kill evidence and no PostgreSQL idle timeout.
+Current connection use is low. Twelve read-only reflection checks through each of
+Flycast and .internal passed. Later Fly proxy broken-pipe logs are not proven to
+match the original failure. Root cause is still unresolved; no resource resize or
+connection-URL change was made. See backend docs/staging-connection-investigation.md.
+Next necessary PostgreSQL run should capture timestamped diagnostics and filtered
+Fly logs, run serially and stop at the first setup disconnect. Register fixture
+cleanup before setup as a separate harness improvement. Do not rerun the full suite
+blindly or claim this small healthy probe resolves the prior issue.
+
 Latest staging is **v23 / c23b53b**. Lead assignment now uses the shared service,
 with admin/tenant/active-assignee checks. Notification is attempted only after a
 successful commit; failed commits cannot send mail, and mail failure does not undo
