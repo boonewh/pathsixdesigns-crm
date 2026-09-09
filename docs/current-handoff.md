@@ -1,5 +1,22 @@
 # Current reconciliation — 2026-09-08
 
+Latest staging is **v24 / 6681740**. Contact list/create/update/delete now use
+ContactService, with explicit tenant and inherited current/destination parent
+permissions. Local suite: 96 passed, 29 PostgreSQL-only skipped. Focused PostgreSQL
+validation: 17 passed in 15.47 seconds with diagnostics and fail-fast, not a full
+suite. Live create/list/atomic client-to-lead transfer/delete and cleanup passed.
+Original two clients/two leads remain, zero test schemas, fourteen forced RLS tables,
+parent_link_rules head and zero unscoped runtime reads. No new matching connection
+errors appeared in the filtered log stream; the prior intermittent cause remains
+unresolved. See backend docs/contact-service.md. A protected local pytest output
+folder was excluded from build context without deleting files. Production/frontend
+and Fly resource sizes/count remain unchanged.
+
+Next shared services: projects and interactions, then remaining entity/import/
+conversion workflows. Continue safe diagnostics on necessary staging checks.
+
+Previous harness milestone follows.
+
 Test-harness follow-up **7c48a07** is verified: cleanup is registered before
 schema creation, and opt-in UTC phase diagnostics exclude exception messages/SQL.
 Five focused tests passed locally and on PostgreSQL (4.81 seconds), including an

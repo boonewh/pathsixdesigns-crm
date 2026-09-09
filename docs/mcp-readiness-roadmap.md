@@ -6,6 +6,13 @@ Immediate REST fixes and tests: see backend `docs/reliability-security-2026-09-0
 Previous staging verification passed: backend v10 (`64dfe15`), frontend `cdab5ed`; 68 tests
 passed against PostgreSQL. This does not mean all MCP gates are complete.
 
+Latest staging: **v24 / 6681740**. Contact operations are tenant-bound with
+inherited current/destination parent authorization. Local: 96 passed; focused
+PostgreSQL: 17 passed with diagnostics, not a full suite. Live transfer and cleanup
+passed; no new matching connection events in the filtered run. Earlier intermittent
+cause remains unresolved. See backend docs/contact-service.md. Projects/interactions
+and remaining workflows are next. Production/resource configuration unchanged.
+
 Test-harness follow-up 7c48a07: pre-setup cleanup and credential-safe UTC phase
 diagnostics are verified by five focused local/PostgreSQL tests. No test schemas
 remain. Use diagnostics, fail-fast and no traceback on the next necessary serial
