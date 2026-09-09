@@ -1,5 +1,18 @@
 # Current reconciliation — 2026-09-08
 
+Test-harness follow-up **7c48a07** is verified: cleanup is registered before
+schema creation, and opt-in UTC phase diagnostics exclude exception messages/SQL.
+Five focused tests passed locally and on PostgreSQL (4.81 seconds), including an
+intentional setup failure whose schema was removed. Zero test schemas remained;
+no new matching connection errors appeared in the concurrent filtered Fly stream.
+The original intermittent disconnect remains unresolved. Use CRM_TEST_DIAGNOSTICS=1,
+-x and --tb=no for the next necessary serial PostgreSQL validation. See backend
+docs/staging-connection-investigation.md for evidence and limits. Only temporary
+test files were uploaded; application staging remains v23 / c23b53b. No deployment,
+configuration/resource change or production access occurred.
+
+Previous investigation notes follow (fixture cleanup improvement is now complete).
+
 Connection investigation update: PostgreSQL and its staging machine have remained
 up since July 31, with no retained OOM kill evidence and no PostgreSQL idle timeout.
 Current connection use is low. Twelve read-only reflection checks through each of
