@@ -1,9 +1,12 @@
 import toast from "react-hot-toast";
 import * as Sentry from "@sentry/react";
+import { beginRead } from "./requestActivity";
 
 export const API_BASE = import.meta.env.VITE_API_BASE_URL || "/api";
 
 export async function apiFetch(path: string, options?: RequestInit) {
+  const finishRead = ["GET", "HEAD"].includes((options?.method || "GET").toUpperCase())
+    ? beginRead() : () => {};
   try {
     const token = localStorage.getItem("token");
     const res = await fetch(`${API_BASE}${path}`, {
@@ -32,11 +35,11 @@ export async function apiFetch(path: string, options?: RequestInit) {
         
         if (contentType && contentType.includes('application/json')) {
           // It's JSON - parse the error message
-          const errorData = await res.json();
+          const errorData = await res.clone().json();
           errorMessage = errorData.error || errorData.message || errorMessage;
         } else {
           // It's HTML or plain text - probably an error page
-          const text = await res.text();
+          const text = await res.clone().text();
           
           if (text.includes('<!DOCTYPE') || text.includes('<html')) {
             // It's an HTML error page
@@ -69,6 +72,8 @@ export async function apiFetch(path: string, options?: RequestInit) {
     return res;
 
   } catch (networkError) {
+    // Navigation/filter changes intentionally cancel outdated requests.
+    if (networkError instanceof DOMException && networkError.name === "AbortError") throw networkError;
     // Handle network errors (fetch failed completely)
     if (networkError instanceof TypeError && networkError.message.includes('fetch')) {
       toast.error("Unable to connect to server. Please check your internet connection.");
@@ -95,6 +100,8 @@ export async function apiFetch(path: string, options?: RequestInit) {
     
     // Re-throw so the calling code knows something went wrong
     throw networkError;
+  } finally {
+    finishRead();
   }
 }
 
