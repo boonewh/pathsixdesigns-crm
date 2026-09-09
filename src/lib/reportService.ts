@@ -193,6 +193,9 @@ export interface ReportFilters {
 
 // ── Service ───────────────────────────────────────────────────────────────────
 class ReportService {
+  async getSalesActivity(filters: ReportFilters, page = 1): Promise<SalesActivityResponse> {
+    return this.fetchReport<SalesActivityResponse>(`sales-activity?page=${page}`, filters);
+  }
   private async fetchReport<T>(endpoint: string, filters: ReportFilters = {}): Promise<T> {
     const params = new URLSearchParams();
 
@@ -204,7 +207,7 @@ class ReportService {
     if (filters.days) params.append("days", filters.days.toString());
 
     const queryString = params.toString();
-    const url = queryString ? `/reports/${endpoint}?${queryString}` : `/reports/${endpoint}`;
+    const url = queryString ? `/reports/${endpoint}${endpoint.includes("?") ? "&" : "?"}${queryString}` : `/reports/${endpoint}`;
 
     const response = await apiFetch(url, {
       headers: {
@@ -265,3 +268,16 @@ class ReportService {
 }
 
 export const reportService = new ReportService();
+
+export interface SalesActivityUser {
+  user_id: number; email: string; is_active: boolean;
+  leads_created: number; clients_created: number; projects_created: number;
+  interactions: number; edits: number; deletions: number; views: number; total: number;
+}
+export interface SalesActivityResponse {
+  users: SalesActivityUser[];
+  events: { source: string; event_id: number; user_id: number | null; email: string;
+    occurred_at: string | null; action: string; entity_type: string; entity_id: number;
+    record_name: string | null }[];
+  total: number; page: number; per_page: number; unattributed_total: number; timezone: string;
+}

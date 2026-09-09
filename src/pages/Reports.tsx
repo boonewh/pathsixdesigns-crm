@@ -4,7 +4,7 @@ import { PipelineReport } from "@/components/reports/PipelineReport";
 import { LeadSourceReport } from "@/components/reports/LeadSourceReport";
 import { ConversionRateReport } from "@/components/reports/ConversionRateReport";
 import { RevenueReports } from "@/components/reports/RevenueReports";
-import { ActivityReports } from "@/components/reports/ActivityReports";
+import { ActivityReports } from "@/components/reports/SalesActivity";
 import { DateRangePicker } from "@/components/ui/DateRangePicker";
 import ReportHelpModal from "@/components/reports/ReportHelpModal";
 import { reportGuides } from "@/lib/reportGuideData";
@@ -41,9 +41,9 @@ export default function Reports() {
         endDate={endDate}
         onStartDateChange={setStartDate}
         onEndDateChange={setEndDate}
-        onApply={() => {
-          setAppliedStart(startDate);
-          setAppliedEnd(endDate);
+        onApply={(start, end) => {
+          setAppliedStart(start);
+          setAppliedEnd(end);
         }}
       />
 
