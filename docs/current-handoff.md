@@ -1,5 +1,28 @@
 # Current reconciliation — 2026-09-12
 
+Latest staging is **v26 / d07e3ca**. Account list/detail/create/update/delete
+and view audit now use AccountService. Services enforce tenant and active-client
+access, check both clients on moves, and leave commits to the caller. Validated
+inputs reject malformed dates/IDs/null required fields before writes; offset dates
+normalize to UTC. No migration or frontend deployment was needed.
+
+Local: 138 passed, 29 PostgreSQL-only skipped. Focused PostgreSQL: 20 passed,
+90 deselected in 26.84 seconds, not a full suite. Live staging: 18 HTTP checks
+passed, including login, create/detail, invalid edit rollback, client move, status
+update, delete and cleanup. Original two clients/two leads remain; zero accounts,
+contacts/projects/interactions and test schemas. Fourteen forced RLS tables,
+parent_link_rules head, CRM_RLS_ENABLED=1 and zero unscoped runtime reads verified.
+Connections were 15 before/after; no new matching errors in filtered Fly logs.
+The earlier intermittent disconnect cause remains unresolved.
+
+See backend docs/account-service.md. Next: remaining entity/import/conversion
+services and explicit job context, then delegated AI authorization/MCP. Review
+existing global account-number uniqueness for a tenant-scoped migration separately.
+No AI connection enabled. Production/frontend deployments and Fly resource sizes,
+counts and auto-stop settings remain unchanged.
+
+## Previous Project and Interaction milestone
+
 Latest staging is **v25 / ab4cee2**. All database operations in Project and
 Interaction routes now use tenant-bound services with shared authorization also
 used by search. HTTP adapters commit; services flush without committing. Project
