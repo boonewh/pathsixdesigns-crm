@@ -1,10 +1,36 @@
 # PathSix CRM MCP readiness roadmap
 
-Last reconciled: 2026-09-08
+Last reconciled: 2026-09-12
 
 Immediate REST fixes and tests: see backend `docs/reliability-security-2026-09-06.md`.
 Previous staging verification passed: backend v10 (`64dfe15`), frontend `cdab5ed`; 68 tests
 passed against PostgreSQL. This does not mean all MCP gates are complete.
+
+Latest staging is **v25 / ab4cee2**. All database operations in Project and
+Interaction routes now use tenant-bound services with shared authorization also
+used by search. HTTP adapters commit; services flush without committing. Project
+assignment notifications run after commit. Parent moves validate current and final
+access; direct project assignment is respected consistently in related lists.
+
+Validation: broad local run 118 passed / 29 PostgreSQL-only skipped, followed by
+25 focused local passes and one additional local transaction test. Focused
+PostgreSQL: 49 passed (101 deselected, 42.33 seconds), not a full suite. The final
+additional transaction test is local-only; temporary pytest was cleared by staging
+auto-stop before its attempted PostgreSQL run. Live login and 33 API checks passed
+without browser page errors, including calendar, completion, transfer, purge
+conflict, restore, bulk purge and cleanup. Original two clients/two leads remain;
+zero test schemas, fourteen forced RLS tables, parent_link_rules head and zero
+unscoped runtime reads were independently verified. No new matching database
+connection events appeared in the filtered validation log stream; the original
+intermittent disconnect cause remains unresolved.
+
+See backend docs/project-interaction-services.md for intentional permission
+corrections and precise coverage. Remaining work: other entity services, imports,
+conversion and job context, then delegated AI authorization/MCP. No AI connection is
+enabled yet. Production/frontend deployments and Fly machine sizes/count/auto-stop
+settings are unchanged.
+
+## Previous contact-service milestone
 
 Latest staging: **v24 / 6681740**. Contact operations are tenant-bound with
 inherited current/destination parent authorization. Local: 96 passed; focused
@@ -162,6 +188,9 @@ rollout requirements. Database protections remain migration-managed.
 
 Lead lists and bulk/purge operations are also in the shared service (v22).
 Lead assignment also uses the service, with post-commit notification (v23).
+Contact operations also use their shared service (v24). All Project and Interaction
+route database operations now use tenant-bound services (v25), with shared access
+predicates used by search and authorization enforced outside HTTP.
 Remaining work includes other entity/import/conversion services, delegated
 connection identity, explicit job context, and polymorphic activity relationships.
 The model/table inventory is in backend docs/tenant-service-foundation.md; it does

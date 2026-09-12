@@ -1,4 +1,30 @@
-# Current reconciliation — 2026-09-08
+# Current reconciliation — 2026-09-12
+
+Latest staging is **v25 / ab4cee2**. All database operations in Project and
+Interaction routes now use tenant-bound services with shared authorization also
+used by search. HTTP adapters commit; services flush without committing. Project
+assignment notifications run after commit. Parent moves validate current and final
+access; direct project assignment is respected consistently in related lists.
+
+Validation: broad local run 118 passed / 29 PostgreSQL-only skipped, followed by
+25 focused local passes and one additional local transaction test. Focused
+PostgreSQL: 49 passed (101 deselected, 42.33 seconds), not a full suite. The final
+additional transaction test is local-only; temporary pytest was cleared by staging
+auto-stop before its attempted PostgreSQL run. Live login and 33 API checks passed
+without browser page errors, including calendar, completion, transfer, purge
+conflict, restore, bulk purge and cleanup. Original two clients/two leads remain;
+zero test schemas, fourteen forced RLS tables, parent_link_rules head and zero
+unscoped runtime reads were independently verified. No new matching database
+connection events appeared in the filtered validation log stream; the original
+intermittent disconnect cause remains unresolved.
+
+See backend docs/project-interaction-services.md for intentional permission
+corrections and precise coverage. Remaining work: other entity services, imports,
+conversion and job context, then delegated AI authorization/MCP. No AI connection is
+enabled yet. Production/frontend deployments and Fly machine sizes/count/auto-stop
+settings are unchanged.
+
+## Previous contact-service milestone — 2026-09-08
 
 Latest staging is **v24 / 6681740**. Contact list/create/update/delete now use
 ContactService, with explicit tenant and inherited current/destination parent
