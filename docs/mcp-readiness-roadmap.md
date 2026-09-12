@@ -6,6 +6,36 @@ Immediate REST fixes and tests: see backend `docs/reliability-security-2026-09-0
 Previous staging verification passed: backend v10 (`64dfe15`), frontend `cdab5ed`; 68 tests
 passed against PostgreSQL. This does not mean all MCP gates are complete.
 
+Latest staging is **v28 / de3f468**. Subscription deployment is now complete;
+the earlier builder stall is historical. Recent Activity is centralized and checks
+current client/lead/project/account access before returning names or links. Historic
+logs do not grant access; deleted/foreign/malformed records are hidden.
+
+Local: 172 passed, 29 PostgreSQL-only skipped. Live subscription lifecycle: 16 HTTP
+checks passed; live Activity: 19 HTTP checks passed, including deletion visibility
+and cleanup. All 34 focused PostgreSQL cases eventually passed across interrupted
+and targeted runs, NOT an uninterrupted suite. Two .flycast connection failures
+interrupted subscription setup/cleanup; a seven-case recovery passed three before
+another interruption. Two exact orphan schemas were identified and removed. Final
+four cases passed via .internal (5.90 seconds). App DATABASE_URL remains .flycast.
+Both fresh address probes later worked; PostgreSQL uptime remained July 31. Root
+cause is unresolved despite no matching captured filtered-log events.
+
+Final verification: original two clients/two leads; zero accounts, contacts,
+projects, interactions, subscriptions and test schemas; fourteen forced RLS tables,
+parent_link_rules head, CRM_RLS_ENABLED=1 and zero unscoped runtime reads (checked
+through .internal). See backend docs/activity-service.md and
+ docs/staging-connection-investigation.md for evidence and limitations.
+
+NEXT PRIORITY: investigate recurring staging connection and cleanup failures using
+durable redacted diagnostics; do not blindly rerun broad suites. Then continue
+remaining reports/user/storage/import/conversion services and explicit job context,
+followed by delegated AI authorization/MCP. Production/frontend deployments, Fly
+resource sizes/count and app connection configuration are unchanged. No AI access
+has been enabled.
+
+## Previous subscription validation and builder blocker (historical)
+
 Subscription service source **fe59185** is implemented and tested, but NOT
 DEPLOYED. All subscription route DB operations now use SubscriptionService and
 inherited active-client authorization. This closes the ordinary-user mismatch where
@@ -242,9 +272,10 @@ predicates used by search and authorization enforced outside HTTP.
 All account operations now use AccountService with inherited active-client access
 and caller-owned commits (v26). Existing global account-number uniqueness still
 needs a separate tenant-scoped migration review.
-Subscription operations are centralized in fe59185 and verified locally/in isolated
-staging PostgreSQL tests; deployment/live smoke are pending a stalled Fly builder.
-Recent Activity current-record authorization is the next service after that rollout.
+Subscription operations and Recent Activity current-record authorization are
+deployed and live-verified on v28 / de3f468. Repeated staging connection/setup/cleanup
+failures are the next priority; all 34 focused cases passed only across multiple
+attempts, including a final direct-address run. See the latest reconciliation above.
 Remaining work includes other entity/import/conversion services, delegated
 connection identity, explicit job context, and polymorphic activity relationships.
 The model/table inventory is in backend docs/tenant-service-foundation.md; it does

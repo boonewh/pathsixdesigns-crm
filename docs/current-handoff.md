@@ -1,5 +1,35 @@
 # Current reconciliation — 2026-09-12
 
+Latest staging is **v28 / de3f468**. Subscription deployment is now complete;
+the earlier builder stall is historical. Recent Activity is centralized and checks
+current client/lead/project/account access before returning names or links. Historic
+logs do not grant access; deleted/foreign/malformed records are hidden.
+
+Local: 172 passed, 29 PostgreSQL-only skipped. Live subscription lifecycle: 16 HTTP
+checks passed; live Activity: 19 HTTP checks passed, including deletion visibility
+and cleanup. All 34 focused PostgreSQL cases eventually passed across interrupted
+and targeted runs, NOT an uninterrupted suite. Two .flycast connection failures
+interrupted subscription setup/cleanup; a seven-case recovery passed three before
+another interruption. Two exact orphan schemas were identified and removed. Final
+four cases passed via .internal (5.90 seconds). App DATABASE_URL remains .flycast.
+Both fresh address probes later worked; PostgreSQL uptime remained July 31. Root
+cause is unresolved despite no matching captured filtered-log events.
+
+Final verification: original two clients/two leads; zero accounts, contacts,
+projects, interactions, subscriptions and test schemas; fourteen forced RLS tables,
+parent_link_rules head, CRM_RLS_ENABLED=1 and zero unscoped runtime reads (checked
+through .internal). See backend docs/activity-service.md and
+ docs/staging-connection-investigation.md for evidence and limitations.
+
+NEXT PRIORITY: investigate recurring staging connection and cleanup failures using
+durable redacted diagnostics; do not blindly rerun broad suites. Then continue
+remaining reports/user/storage/import/conversion services and explicit job context,
+followed by delegated AI authorization/MCP. Production/frontend deployments, Fly
+resource sizes/count and app connection configuration are unchanged. No AI access
+has been enabled.
+
+## Previous subscription validation and builder blocker (historical)
+
 Subscription service source **fe59185** is implemented and tested, but NOT
 DEPLOYED. All subscription route DB operations now use SubscriptionService and
 inherited active-client authorization. This closes the ordinary-user mismatch where
