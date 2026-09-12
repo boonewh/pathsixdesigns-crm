@@ -1,5 +1,30 @@
 # Current reconciliation — 2026-09-12
 
+Subscription service source **fe59185** is implemented and tested, but NOT
+DEPLOYED. All subscription route DB operations now use SubscriptionService and
+inherited active-client authorization. This closes the ordinary-user mismatch where
+lists restricted access but detail/create/edit/delete/renew checked only tenant.
+Inputs reject invalid/null required data; date offsets normalize to UTC. Existing
+renewal/cancellation behavior is retained. No migration or AI connection is added.
+
+Local: 162 passed, 29 PostgreSQL-only skipped. Focused PostgreSQL: 24 passed in
+26.72 seconds using a temporary checkout on the existing staging machine, isolated
+schemas and runtime-role/RLS HTTP fixtures. Zero test schemas/public subscriptions
+and 15 connections before/after. No new matching database connection errors in the
+filtered stream; earlier intermittent cause remains unresolved.
+
+Both staging deploy attempts stalled at "Waiting for depot builder" before image
+build output; both local deploy processes were stopped. No alternative builder or
+additional machine was created. Live staging remains **v26 / d07e3ca**, confirmed
+by releases and APP_REVISION. No live endpoint smoke of the new code has passed yet.
+See backend docs/subscription-service.md. Next: retry staging deployment when its
+build worker is available, then live subscription lifecycle and cleanup checks.
+After that, centralize Recent Activity with current record-access checks, followed
+by remaining reports/user/storage/import/conversion and explicit job context.
+Production/frontend deployments and Fly machine sizes/count remain unchanged.
+
+## Previous account-service milestone
+
 Latest staging is **v26 / d07e3ca**. Account list/detail/create/update/delete
 and view audit now use AccountService. Services enforce tenant and active-client
 access, check both clients on moves, and leave commits to the caller. Validated
