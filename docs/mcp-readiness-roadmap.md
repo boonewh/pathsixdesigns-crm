@@ -6,6 +6,28 @@ Immediate REST fixes and tests: see backend `docs/reliability-security-2026-09-0
 Previous staging verification passed: backend v10 (`64dfe15`), frontend `cdab5ed`; 68 tests
 passed against PostgreSQL. This does not mean all MCP gates are complete.
 
+Read-only diagnosis now correlates the September 12 connection failures with
+VM resource stalls and HAProxy health timeouts. Retained Fly logs show resource-limit
+health failures at 23:35 and 23:38 UTC, followed by all database proxy targets DOWN
+and "no server available". This is why connections, including cleanup, were cut
+without a PostgreSQL restart. The previous live-log filter missed these messages.
+
+Historical metrics: CPU throttling zero and ample CPU burst balance; 84–93% sampled
+CPU time waiting on I/O during failures; vda outstanding I/O 49–61; available RAM
+fell to 23–28 MiB. The 256 MB VM has no swap. Data volume capacity and connection
+counts were not near their limits. Memory/cache pressure driving I/O stalls is the
+leading trigger hypothesis; RAM alone is not yet proven to explain the latency.
+.internal:5432 still traverses HAProxy, so changing the hostname is not a proven fix.
+
+NEXT: a controlled staging-only 256→512 MB database memory experiment, then bounded
+serial validation with durable diagnostics and resource/health metrics. This has
+NOT been performed; it changes cost and restarts staging DB. No runtime changes,
+test suites, migrations, deployments, resizes or production operations were made
+in this diagnostic task. Staging remains v28 / de3f468. See backend
+ docs/staging-connection-investigation.md and docs/diagnostics/ for saved evidence.
+
+## Previous rollout and connection recurrence
+
 Latest staging is **v28 / de3f468**. Subscription deployment is now complete;
 the earlier builder stall is historical. Recent Activity is centralized and checks
 current client/lead/project/account access before returning names or links. Historic
