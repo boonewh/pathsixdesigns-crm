@@ -4,7 +4,7 @@ import { beginRead } from "./requestActivity";
 
 export const API_BASE = import.meta.env.VITE_API_BASE_URL || "/api";
 
-export async function apiFetch(path: string, options?: RequestInit) {
+export async function apiFetch(path: string, options?: RequestInit, feedback: { showErrorToast?: boolean } = {}) {
   const finishRead = ["GET", "HEAD"].includes((options?.method || "GET").toUpperCase())
     ? beginRead() : () => {};
   try {
@@ -21,7 +21,7 @@ export async function apiFetch(path: string, options?: RequestInit) {
 
     // Handle 401 as before
     if (res.status === 401) {
-      toast.error("Unauthorized Activity. Please log in again.");
+      if (feedback.showErrorToast !== false) toast.error("Unauthorized Activity. Please log in again.");
       window.dispatchEvent(new Event("unauthorized"));
       return res; // Return the response so caller can handle it
     }
@@ -54,7 +54,7 @@ export async function apiFetch(path: string, options?: RequestInit) {
         errorMessage = `Error: ${res.status} - Unable to read error details`;
       }
 
-      toast.error(errorMessage);
+      if (feedback.showErrorToast !== false) toast.error(errorMessage);
       
       // Send significant API errors to Sentry (but not auth errors)
       if (res.status >= 500) {
@@ -76,7 +76,7 @@ export async function apiFetch(path: string, options?: RequestInit) {
     if (networkError instanceof DOMException && networkError.name === "AbortError") throw networkError;
     // Handle network errors (fetch failed completely)
     if (networkError instanceof TypeError && networkError.message.includes('fetch')) {
-      toast.error("Unable to connect to server. Please check your internet connection.");
+      if (feedback.showErrorToast !== false) toast.error("Unable to connect to server. Please check your internet connection.");
       
       // Track network failures in Sentry
       Sentry.captureException(networkError, {
@@ -87,7 +87,7 @@ export async function apiFetch(path: string, options?: RequestInit) {
         },
       });
     } else {
-      toast.error("An unexpected error occurred. Please try again.");
+      if (feedback.showErrorToast !== false) toast.error("An unexpected error occurred. Please try again.");
       
       // Track unexpected errors
       Sentry.captureException(networkError, {
