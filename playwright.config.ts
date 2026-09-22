@@ -10,5 +10,6 @@ export default defineConfig({
     port: 5173,
     timeout: 120 * 1000,
     reuseExistingServer: !process.env.CI,
+    env: { ...process.env, VITE_SENTRY_DSN: '' },
   },
 });
