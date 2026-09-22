@@ -21,3 +21,9 @@ jobs:
       - run: npm ci
       - run: npm run typecheck
       - run: npm run build
+      - run: npx playwright install --with-deps chromium
+      - name: Lead editing regression tests
+        run: npx playwright test tests/lead-options.spec.ts --workers=1
+        env:
+          VITE_API_BASE_URL: /api
+          VITE_SENTRY_DSN: ''

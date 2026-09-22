@@ -6,7 +6,7 @@ import { Lead } from "@/types";
 import PhoneInput from "@/components/ui/PhoneInput";
 import { useForm, type SubmitHandler, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { getLeadCreateSchema, getLeadUpdateSchema, getLeadStatuses, getTypeOptions, getLeadSourceOptions, type LeadCreateInput, type LeadUpdateInput } from "@/schemas/leadSchemas";
+import { canonicalLeadOption, getDefaultLeadType, getLeadCreateSchema, getLeadUpdateSchema, getLeadStatuses, getTypeOptions, getLeadSourceOptions, type LeadCreateInput, type LeadUpdateInput } from "@/schemas/leadSchemas";
 
 interface LeadFormProps {
   form: Partial<Lead>;
@@ -21,15 +21,22 @@ export default function LeadForm({ form, setForm, onSave, onCancel, isEditing = 
   const SHOW_LEAD_TEMPERATURE = false;
   const SHOW_LEAD_SCORE = false;
 
-  // Lead status options - loaded lazily from tenant config
-  const LEAD_STATUS_OPTIONS = getLeadStatuses().map((status) => ({
-    value: status,
-    label: status.replace('_', ' ').replace(/\b\w/g, (char: string) => char.toUpperCase()),
+  // Capture the edit baseline once; preserve unchanged historical values.
+  const [initialOptions] = React.useState(() => ({
+    lead_status: isEditing ? canonicalLeadOption(form.lead_status, getLeadStatuses()) : getLeadStatuses()[0],
+    type: isEditing ? canonicalLeadOption(form.type, getTypeOptions()) : getDefaultLeadType(),
+    lead_source: form.lead_source || '',
   }));
-
-  // Type and source options - loaded lazily from tenant config
-  const typeOptions = getTypeOptions();
-  const leadSourceOptions = getLeadSourceOptions();
+  const withExisting = (choices: readonly string[], value: string) =>
+    choices.includes(value) ? [...choices] : [value, ...choices];
+  const LEAD_STATUS_OPTIONS = withExisting(getLeadStatuses(), initialOptions.lead_status).map(status => ({
+    value: status,
+    label: !status ? 'Not set (existing)' : getLeadStatuses().includes(status)
+      ? status.replace('_', ' ').replace(/\b\w/g, char => char.toUpperCase())
+      : `${status} (existing)`,
+  }));
+  const typeOptions = withExisting(getTypeOptions(), initialOptions.type);
+  const leadSourceOptions = withExisting(getLeadSourceOptions(), initialOptions.lead_source).filter(Boolean);
 
   // Determine which schema to use based on editing mode
   const schema = isEditing ? getLeadUpdateSchema() : getLeadCreateSchema();
@@ -40,7 +47,7 @@ export default function LeadForm({ form, setForm, onSave, onCancel, isEditing = 
     handleSubmit,
     setValue,
     watch,
-    formState: { errors, isSubmitting },
+    formState: { errors, isSubmitting, dirtyFields },
     reset,
   } = useForm<LeadCreateInput | LeadUpdateInput>({
     resolver: zodResolver(schema) as Resolver<LeadCreateInput | LeadUpdateInput>,
@@ -57,24 +64,24 @@ export default function LeadForm({ form, setForm, onSave, onCancel, isEditing = 
       city: form.city || "",
       state: form.state || "",
       zip: form.zip || "",
-      lead_status: form.lead_status || "new",
+      lead_status: initialOptions.lead_status,
       notes: form.notes || "",
-      type: form.type || "None",
-      lead_source: form.lead_source || null,
+      type: initialOptions.type,
+      lead_source: initialOptions.lead_source,
     },
   });
 
-  // Watch all form values to sync with parent component state
-  const watchedValues = watch();
-
-  // Sync form state with parent component
-  React.useEffect(() => {
-    setForm(watchedValues as Partial<Lead>);
-  }, [watchedValues, setForm]);
-
   // Handle form submission with validation
   const onSubmit = (data: LeadCreateInput | LeadUpdateInput) => {
-    onSave(data);
+    const payload = { ...data };
+    if (isEditing) {
+      // Merely opening and saving an old lead must not reclassify it.
+      if (!dirtyFields.type) delete payload.type;
+      if (!dirtyFields.lead_status) delete payload.lead_status;
+      if (!dirtyFields.lead_source) delete payload.lead_source;
+      else if (!payload.lead_source) payload.lead_source = null;
+    }
+    onSave(payload);
   };
 
   // Handle form reset
@@ -132,7 +139,7 @@ export default function LeadForm({ form, setForm, onSave, onCancel, isEditing = 
           >
             {typeOptions.map((type) => (
               <option key={type} value={type}>
-                {type}
+                {type || "Not set (existing)"}{type && !getTypeOptions().includes(type) && type !== getDefaultLeadType() ? " (existing)" : ""}
               </option>
             ))}
           </select>

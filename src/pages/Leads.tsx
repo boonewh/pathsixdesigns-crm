@@ -105,7 +105,7 @@ export default function Leads() {
     city: "",
     state: "",
     zip: "",
-    lead_status: config.leads.statuses[0] || "new",
+    lead_status: config.leads.statuses[0] || "open",
     notes: "",
     type: "None",
     lead_source: undefined,
@@ -243,7 +243,7 @@ export default function Leads() {
       city: "",
       state: "",
       zip: "",
-      lead_status: config.leads.statuses[0] || "new",
+      lead_status: config.leads.statuses[0] || "open",
       notes: "",
       type: "None",
       lead_source: undefined,
@@ -299,7 +299,7 @@ export default function Leads() {
                 city: "",
                 state: "",
                 zip: "",
-                lead_status: config.leads.statuses[0] || "new",
+                lead_status: config.leads.statuses[0] || "open",
                 notes: "",
                 type: "None",
                 lead_source: undefined,
@@ -489,19 +489,9 @@ export default function Leads() {
                     </Link>
                   }
                   typeLabel={lead.type || "None"}
-                  editing={editingId === lead.id}
                   onEdit={() => handleTableEdit(lead)}
                   onCancel={handleCancel}
                   onDelete={() => handleDelete(lead.id)}
-                  editForm={
-                    <LeadForm
-                      form={form}
-                      setForm={setForm}
-                      onSave={handleSave}
-                      onCancel={handleCancel}
-                      isEditing={true}
-                    />
-                  }
                   details={
                     <ul className="text-sm text-gray-600 space-y-2">
                       {lead.lead_status && (
