@@ -3,6 +3,7 @@ import { apiFetch } from "@/lib/api";
 import { useAuth } from "@/authContext";
 import { formatDistanceToNow } from "date-fns";
 import { Button } from "@/components/ui/button";
+import PurgeDialog, { type PurgeResource, type PurgeItem } from "@/components/PurgeDialog";
 
 interface TrashItem {
   id: number;
@@ -18,6 +19,8 @@ export default function TrashPage() {
   const [projects, setProjects] = useState<TrashItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [notice, setNotice] = useState("");
+  const [purge, setPurge] = useState<{ resource: PurgeResource; items: PurgeItem[] } | null>(null);
 
   // selections
   const [selectedClientIds, setSelectedClientIds] = useState<Set<number>>(new Set());
@@ -28,7 +31,8 @@ export default function TrashPage() {
   const toggleClient = (id: number) =>
     setSelectedClientIds(prev => {
       const next = new Set(prev);
-      next.has(id) ? next.delete(id) : next.add(id);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
       return next;
     });
   const toggleAllClients = () =>
@@ -48,70 +52,54 @@ export default function TrashPage() {
     setSelectedProjectIds(prev => (prev.length === projects.length ? [] : projects.map(p => p.id)));
   const clearProjectSelection = () => setSelectedProjectIds([]);
 
-  // --- bulk purges ---
-  const bulkPurgeClients = async () => {
-    if (selectedClientIds.size === 0) return;
-    if (!confirm(`Permanently delete ${selectedClientIds.size} selected account(s)? This cannot be undone.`)) return;
+  // Capture the selection while the confirmation dialog is open.
+  function openPurge(resource: PurgeResource, ids: number[]) {
+    const rows = resource === "clients" ? clients : resource === "leads" ? leads : projects;
+    const items = rows.filter(item => ids.includes(item.id));
+    if (items.length) { setNotice(""); setPurge({ resource, items }); }
+  }
+  const bulkPurgeClients = () => openPurge("clients", Array.from(selectedClientIds));
+  const handleBulkPurgeLeads = () => openPurge("leads", selectedLeadIds);
+  const handleBulkPurgeProjects = () => openPurge("projects", selectedProjectIds);
 
-    const res = await apiFetch("/clients/bulk-purge", {
-      method: "POST",
-      headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ client_ids: Array.from(selectedClientIds) }),
-    });
-
-    if (res.ok) {
-      const ids = new Set(selectedClientIds);
-      setClients(prev => prev.filter(c => !ids.has(c.id)));
-      setSelectedClientIds(new Set());
+  function completePurge(ids: number[]) {
+    if (!purge) return;
+    if (purge.resource === "clients") {
+      setClients(rows => rows.filter(row => !ids.includes(row.id)));
+      setSelectedClientIds(selected => new Set([...selected].filter(id => !ids.includes(id))));
+    } else if (purge.resource === "leads") {
+      setLeads(rows => rows.filter(row => !ids.includes(row.id)));
+      setSelectedLeadIds(selected => selected.filter(id => !ids.includes(id)));
     } else {
-      alert("Failed to permanently delete selected accounts.");
+      setProjects(rows => rows.filter(row => !ids.includes(row.id)));
+      setSelectedProjectIds(selected => selected.filter(id => !ids.includes(id)));
     }
-  };
-
-  const handleBulkPurgeLeads = async () => {
-    if (selectedLeadIds.length === 0) return;
-    if (!confirm(`Permanently delete ${selectedLeadIds.length} lead(s)? This cannot be undone.`)) return;
-
-    const results = await Promise.all(
-      selectedLeadIds.map(id =>
-        apiFetch(`/leads/${id}/purge`, { method: "DELETE", headers: { Authorization: `Bearer ${token}` } })
-      )
-    );
-    const failures = results.filter(r => !r.ok).length;
-    setLeads(prev => prev.filter(l => !selectedLeadIds.includes(l.id)));
-    clearLeadSelection();
-    if (failures > 0) alert(`Some deletions failed (${failures}).`);
-  };
-
-  const handleBulkPurgeProjects = async () => {
-    if (selectedProjectIds.length === 0) return;
-    if (!confirm(`Permanently delete ${selectedProjectIds.length} project(s)? This cannot be undone.`)) return;
-
-    const results = await Promise.all(
-      selectedProjectIds.map(id =>
-        apiFetch(`/projects/${id}/purge`, { method: "DELETE", headers: { Authorization: `Bearer ${token}` } })
-      )
-    );
-    const failures = results.filter(r => !r.ok).length;
-    setProjects(prev => prev.filter(p => !selectedProjectIds.includes(p.id)));
-    clearProjectSelection();
-    if (failures > 0) alert(`Some deletions failed (${failures}).`);
-  };
+    setNotice(ids.length ? `${ids.length} record(s) permanently deleted.`
+      : "No selected records were eligible for deletion. Refresh Trash to see the current list.");
+  }
 
   // --- fetch ---
   const fetchTrash = async () => {
     setLoading(true);
+    setError("");
     try {
       const [clientRes, leadRes, projectRes] = await Promise.all([
         apiFetch("/clients/trash", { headers: { Authorization: `Bearer ${token}` } }),
         apiFetch("/leads/trash", { headers: { Authorization: `Bearer ${token}` } }),
         apiFetch("/projects/trash", { headers: { Authorization: `Bearer ${token}` } }),
       ]);
-      setClients(await clientRes.json());
-      setLeads(await leadRes.json());
-      setProjects(await projectRes.json());
-    } catch {
-      setError("Failed to load trash.");
+      if (![clientRes, leadRes, projectRes].every(response => response.ok)) {
+        throw new Error("Trash request failed");
+      }
+      const rows = await Promise.all([clientRes.json(), leadRes.json(), projectRes.json()]);
+      if (!rows.every(Array.isArray)) throw new Error("Invalid Trash response");
+      setClients(rows[0]); setLeads(rows[1]); setProjects(rows[2]);
+      setSelectedClientIds(selected => new Set([...selected].filter(id => rows[0].some((item: TrashItem) => item.id === id))));
+      setSelectedLeadIds(selected => selected.filter(id => rows[1].some((item: TrashItem) => item.id === id)));
+      setSelectedProjectIds(selected => selected.filter(id => rows[2].some((item: TrashItem) => item.id === id)));
+    } catch (cause) {
+      setError("Trash couldn’t be refreshed. The displayed records may be out of date.");
+      throw cause;
     } finally {
       setLoading(false);
     }
@@ -129,20 +117,12 @@ export default function TrashPage() {
     else setProjects(prev => prev.filter(p => p.id !== id));
   };
 
-  const handlePurge = async (type: "client" | "lead" | "project", id: number) => {
-    if (!confirm("Are you sure you want to permanently delete this item? This cannot be undone.")) return;
-    const res = await apiFetch(`/${type}s/${id}/purge`, {
-      method: "DELETE",
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    if (!res.ok) return alert("Failed to permanently delete.");
-    if (type === "client") setClients(prev => prev.filter(c => c.id !== id));
-    else if (type === "lead") setLeads(prev => prev.filter(l => l.id !== id));
-    else setProjects(prev => prev.filter(p => p.id !== id));
+  const handlePurge = (type: "client" | "lead" | "project", id: number) => {
+    openPurge(`${type}s` as PurgeResource, [id]);
   };
 
   useEffect(() => {
-    fetchTrash();
+    void fetchTrash().catch(() => {});
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token]);
 
@@ -226,7 +206,12 @@ export default function TrashPage() {
     <div className="p-6">
       <h1 className="text-2xl font-bold mb-4">Trash</h1>
 
-      {error && <p className="text-red-500 mb-4">{error}</p>}
+      {notice && <p role="status" className="mb-4 text-green-700">{notice}</p>}
+      {error && <div role="alert" className="mb-4 text-red-700">{error}
+        <Button variant="outline" className="ml-2" onClick={() => { void fetchTrash().catch(() => {}); }}>Refresh Trash</Button>
+      </div>}
+      {purge && <PurgeDialog resource={purge.resource} items={purge.items}
+        onClose={() => setPurge(null)} onDeleted={completePurge} onRefresh={fetchTrash} />}
       {loading ? (
         <p>Loading deleted items...</p>
       ) : (

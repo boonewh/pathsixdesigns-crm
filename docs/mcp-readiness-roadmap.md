@@ -1,9 +1,206 @@
 # PathSix CRM MCP readiness roadmap
 
-Last reconciled: 2026-09-06
+Last reconciled: 2026-09-12
 
 Immediate REST fixes and tests: see backend `docs/reliability-security-2026-09-06.md`.
-Staging verification is in progress. This does not mean all MCP gates are complete.
+Previous staging verification passed: backend v10 (`64dfe15`), frontend `cdab5ed`; 68 tests
+passed against PostgreSQL. This does not mean all MCP gates are complete.
+
+Read-only diagnosis now correlates the September 12 connection failures with
+VM resource stalls and HAProxy health timeouts. Retained Fly logs show resource-limit
+health failures at 23:35 and 23:38 UTC, followed by all database proxy targets DOWN
+and "no server available". This is why connections, including cleanup, were cut
+without a PostgreSQL restart. The previous live-log filter missed these messages.
+
+Historical metrics: CPU throttling zero and ample CPU burst balance; 84–93% sampled
+CPU time waiting on I/O during failures; vda outstanding I/O 49–61; available RAM
+fell to 23–28 MiB. The 256 MB VM has no swap. Data volume capacity and connection
+counts were not near their limits. Memory/cache pressure driving I/O stalls is the
+leading trigger hypothesis; RAM alone is not yet proven to explain the latency.
+.internal:5432 still traverses HAProxy, so changing the hostname is not a proven fix.
+
+NEXT: a controlled staging-only 256→512 MB database memory experiment, then bounded
+serial validation with durable diagnostics and resource/health metrics. This has
+NOT been performed; it changes cost and restarts staging DB. No runtime changes,
+test suites, migrations, deployments, resizes or production operations were made
+in this diagnostic task. Staging remains v28 / de3f468. See backend
+ docs/staging-connection-investigation.md and docs/diagnostics/ for saved evidence.
+
+## Previous rollout and connection recurrence
+
+Latest staging is **v28 / de3f468**. Subscription deployment is now complete;
+the earlier builder stall is historical. Recent Activity is centralized and checks
+current client/lead/project/account access before returning names or links. Historic
+logs do not grant access; deleted/foreign/malformed records are hidden.
+
+Local: 172 passed, 29 PostgreSQL-only skipped. Live subscription lifecycle: 16 HTTP
+checks passed; live Activity: 19 HTTP checks passed, including deletion visibility
+and cleanup. All 34 focused PostgreSQL cases eventually passed across interrupted
+and targeted runs, NOT an uninterrupted suite. Two .flycast connection failures
+interrupted subscription setup/cleanup; a seven-case recovery passed three before
+another interruption. Two exact orphan schemas were identified and removed. Final
+four cases passed via .internal (5.90 seconds). App DATABASE_URL remains .flycast.
+Both fresh address probes later worked; PostgreSQL uptime remained July 31. Root
+cause is unresolved despite no matching captured filtered-log events.
+
+Final verification: original two clients/two leads; zero accounts, contacts,
+projects, interactions, subscriptions and test schemas; fourteen forced RLS tables,
+parent_link_rules head, CRM_RLS_ENABLED=1 and zero unscoped runtime reads (checked
+through .internal). See backend docs/activity-service.md and
+ docs/staging-connection-investigation.md for evidence and limitations.
+
+NEXT PRIORITY: investigate recurring staging connection and cleanup failures using
+durable redacted diagnostics; do not blindly rerun broad suites. Then continue
+remaining reports/user/storage/import/conversion services and explicit job context,
+followed by delegated AI authorization/MCP. Production/frontend deployments, Fly
+resource sizes/count and app connection configuration are unchanged. No AI access
+has been enabled.
+
+## Previous subscription validation and builder blocker (historical)
+
+Subscription service source **fe59185** is implemented and tested, but NOT
+DEPLOYED. All subscription route DB operations now use SubscriptionService and
+inherited active-client authorization. This closes the ordinary-user mismatch where
+lists restricted access but detail/create/edit/delete/renew checked only tenant.
+Inputs reject invalid/null required data; date offsets normalize to UTC. Existing
+renewal/cancellation behavior is retained. No migration or AI connection is added.
+
+Local: 162 passed, 29 PostgreSQL-only skipped. Focused PostgreSQL: 24 passed in
+26.72 seconds using a temporary checkout on the existing staging machine, isolated
+schemas and runtime-role/RLS HTTP fixtures. Zero test schemas/public subscriptions
+and 15 connections before/after. No new matching database connection errors in the
+filtered stream; earlier intermittent cause remains unresolved.
+
+Both staging deploy attempts stalled at "Waiting for depot builder" before image
+build output; both local deploy processes were stopped. No alternative builder or
+additional machine was created. Live staging remains **v26 / d07e3ca**, confirmed
+by releases and APP_REVISION. No live endpoint smoke of the new code has passed yet.
+See backend docs/subscription-service.md. Next: retry staging deployment when its
+build worker is available, then live subscription lifecycle and cleanup checks.
+After that, centralize Recent Activity with current record-access checks, followed
+by remaining reports/user/storage/import/conversion and explicit job context.
+Production/frontend deployments and Fly machine sizes/count remain unchanged.
+
+## Previous account-service milestone
+
+Latest staging is **v26 / d07e3ca**. Account list/detail/create/update/delete
+and view audit now use AccountService. Services enforce tenant and active-client
+access, check both clients on moves, and leave commits to the caller. Validated
+inputs reject malformed dates/IDs/null required fields before writes; offset dates
+normalize to UTC. No migration or frontend deployment was needed.
+
+Local: 138 passed, 29 PostgreSQL-only skipped. Focused PostgreSQL: 20 passed,
+90 deselected in 26.84 seconds, not a full suite. Live staging: 18 HTTP checks
+passed, including login, create/detail, invalid edit rollback, client move, status
+update, delete and cleanup. Original two clients/two leads remain; zero accounts,
+contacts/projects/interactions and test schemas. Fourteen forced RLS tables,
+parent_link_rules head, CRM_RLS_ENABLED=1 and zero unscoped runtime reads verified.
+Connections were 15 before/after; no new matching errors in filtered Fly logs.
+The earlier intermittent disconnect cause remains unresolved.
+
+See backend docs/account-service.md. Next: remaining entity/import/conversion
+services and explicit job context, then delegated AI authorization/MCP. Review
+existing global account-number uniqueness for a tenant-scoped migration separately.
+No AI connection enabled. Production/frontend deployments and Fly resource sizes,
+counts and auto-stop settings remain unchanged.
+
+## Previous Project and Interaction milestone
+
+Latest staging is **v25 / ab4cee2**. All database operations in Project and
+Interaction routes now use tenant-bound services with shared authorization also
+used by search. HTTP adapters commit; services flush without committing. Project
+assignment notifications run after commit. Parent moves validate current and final
+access; direct project assignment is respected consistently in related lists.
+
+Validation: broad local run 118 passed / 29 PostgreSQL-only skipped, followed by
+25 focused local passes and one additional local transaction test. Focused
+PostgreSQL: 49 passed (101 deselected, 42.33 seconds), not a full suite. The final
+additional transaction test is local-only; temporary pytest was cleared by staging
+auto-stop before its attempted PostgreSQL run. Live login and 33 API checks passed
+without browser page errors, including calendar, completion, transfer, purge
+conflict, restore, bulk purge and cleanup. Original two clients/two leads remain;
+zero test schemas, fourteen forced RLS tables, parent_link_rules head and zero
+unscoped runtime reads were independently verified. No new matching database
+connection events appeared in the filtered validation log stream; the original
+intermittent disconnect cause remains unresolved.
+
+See backend docs/project-interaction-services.md for intentional permission
+corrections and precise coverage. Remaining work: other entity services, imports,
+conversion and job context, then delegated AI authorization/MCP. No AI connection is
+enabled yet. Production/frontend deployments and Fly machine sizes/count/auto-stop
+settings are unchanged.
+
+## Previous contact-service milestone
+
+Latest staging: **v24 / 6681740**. Contact operations are tenant-bound with
+inherited current/destination parent authorization. Local: 96 passed; focused
+PostgreSQL: 17 passed with diagnostics, not a full suite. Live transfer and cleanup
+passed; no new matching connection events in the filtered run. Earlier intermittent
+cause remains unresolved. See backend docs/contact-service.md. Projects/interactions
+and remaining workflows are next. Production/resource configuration unchanged.
+
+Test-harness follow-up 7c48a07: pre-setup cleanup and credential-safe UTC phase
+diagnostics are verified by five focused local/PostgreSQL tests. No test schemas
+remain. Use diagnostics, fail-fast and no traceback on the next necessary serial
+validation. Application remains v23; no app/resource changes. Original intermittent
+connection cause remains unresolved. See backend docs/staging-connection-investigation.md.
+
+Staging connection investigation: continuous PostgreSQL uptime since July 31,
+no idle timeouts and low current connection use. Bounded read-only probes passed;
+root cause remains unresolved. Capture correlated diagnostics at the next necessary
+validation; failed-setup cleanup is now improved as recorded above. See backend
+docs/staging-connection-investigation.md. No resources or configuration changed.
+
+Latest staging: **v23 / c23b53b**. Lead assignment is centralized and notification
+runs after commit. All 119 PostgreSQL cases passed across initial/targeted runs;
+this was not a clean uninterrupted suite. Database setup connections were interrupted,
+and the cause remains unconfirmed despite passing subsequent Fly health checks.
+See backend docs/lead-service.md for exact test outcomes and cleanup. Prioritize this
+staging reliability follow-up. Production and resource configuration unchanged.
+
+Previous lead list milestone:
+Latest staging: **v22 / 8f1aa06**, **116 PostgreSQL tests passed**. Lead lists,
+trash, bulk soft deletion and permanent purge now use the tenant-bound service,
+including service-level admin checks. Live bulk rollback and cleanup passed.
+See backend docs/lead-service.md. Lead assignment/email remains to extract.
+Production and Fly resource configuration unchanged.
+
+Previous lead lifecycle milestone:
+Latest staging: **v21 / 1b32d82**, **109 PostgreSQL tests passed**. Lead
+create/detail/update/soft-delete/restore now use a tenant-bound service. Live CRM
+checks and cleanup passed; see backend docs/lead-service.md. Database protections
+remain active at parent_link_rules. Production and resource configuration unchanged.
+
+Previous parent-link milestone:
+Latest staging: **v20 / 322f057**, migration **parent_link_rules**. Three validated
+parent-count CHECK constraints protect contacts, interactions and projects. Related
+records prevent permanent deletion with HTTP 409; client/lead single and bulk purge
+rollback and recovery are tested. Full PostgreSQL suite: 102 passed, followed by
+three focused passes after the final lead purge fix. Live checks and cleanup passed.
+See backend docs/parent-link-rules.md. Production and Fly resource sizes/count remain
+unchanged.
+
+Previous row-security milestone:
+Latest staging: **v18 / 000de69**, **98 PostgreSQL tests passed with RLS**.
+Fourteen tables enforce transaction-local tenant policies, including narrow
+authentication bootstrap. Live CRM checks and actual unscoped-read denial passed.
+See backend docs/tenant-row-security.md for rollout and rollback requirements.
+CRM_RLS_ENABLED=1 must remain on while policies are active. Production unchanged.
+
+Previous relationship milestone:
+Latest staging: **v16 / 9c72c29**, migration tenant_relationships. Thirty declared
+record/user relationships now have same-tenant composite FKs. PostgreSQL checks
+and live CRM checks passed; see backend docs/tenant-relationship-migration.md for
+the precise test results. Production and resource sizes/count remain unchanged.
+
+Previous milestone:
+Current staging: **v14 / fd629f5**, with **85 PostgreSQL tests passed**.
+Direct tenant foreign keys and full tenant indexes now cover all eleven tables
+with tenant_id; legacy Alembic heads are merged. See backend
+docs/tenant-membership-migration.md. The prior login milestone follows. The backend now uses a restricted runtime
+DB login; live client lifecycle and browser checks pass. See backend
+docs/staging-database-role.md for final tests and recovery procedure.
+Production remains unchanged.
 
 ## Goal
 
@@ -82,6 +279,30 @@ tenant-scoped authorization.
 
 ## Gate 2 — make tenant isolation structural
 
+Client and lead create/detail/update/soft-delete/restore and global search use
+tenant-bound services and current immutable web principals. Staging now has a restricted runtime
+login, repaired tenant indexes/direct FKs, thirty same-tenant composite FKs,
+fourteen forced RLS tables, and three parent-count CHECK constraints. See backend
+docs/parent-link-rules.md and docs/tenant-row-security.md for verified state and
+rollout requirements. Database protections remain migration-managed.
+
+Lead lists and bulk/purge operations are also in the shared service (v22).
+Lead assignment also uses the service, with post-commit notification (v23).
+Contact operations also use their shared service (v24). All Project and Interaction
+route database operations now use tenant-bound services (v25), with shared access
+predicates used by search and authorization enforced outside HTTP.
+All account operations now use AccountService with inherited active-client access
+and caller-owned commits (v26). Existing global account-number uniqueness still
+needs a separate tenant-scoped migration review.
+Subscription operations and Recent Activity current-record authorization are
+deployed and live-verified on v28 / de3f468. Repeated staging connection/setup/cleanup
+failures are the next priority; all 34 focused cases passed only across multiple
+attempts, including a final direct-address run. See the latest reconciliation above.
+Remaining work includes other entity/import/conversion services, delegated
+connection identity, explicit job context, and polymorphic activity relationships.
+The model/table inventory is in backend docs/tenant-service-foundation.md; it does
+not by itself complete the broader operational inventory or every query boundary.
+
 - [ ] Create a request-scoped principal containing `user_id`, `tenant_id`, current
       roles/permissions, and connection identity.
 - [ ] Move database access from route functions into tenant-bound service/repository
@@ -89,10 +310,13 @@ tenant-scoped authorization.
 - [ ] Require a tenant context when constructing every tenant-owned query.
 - [ ] Inventory all tenant-owned tables, including subscriptions, files, logs,
       preferences, imports, and backup metadata.
-- [ ] Add missing tenant foreign keys and indexes.
-- [ ] Add constraints that prevent relationships from crossing tenant boundaries.
-- [ ] Evaluate and preferably implement PostgreSQL row-level security as a database
-      backstop using transaction-local tenant context.
+- [x] Add missing direct tenant foreign keys and full tenant indexes (v14).
+      Historical compound performance indexes remain a separate tuning review.
+- [x] Add same-tenant composite FKs for all 30 declared tenant-owned relationships.
+      Polymorphic activity entity IDs remain.
+- [x] Enforce parent cardinality with validated database CHECK constraints (v20).
+- [x] Implement PostgreSQL RLS on 14 tables using transaction-local tenant context
+      and narrow auth bootstrap (staging v18).
 - [ ] Ensure background jobs, imports, backups, and restore jobs use explicit tenant
       context rather than bypassing the boundary.
 
