@@ -130,31 +130,31 @@ export const reportGuides: Record<string, ReportGuide> = {
     id: "activity",
     title: "Activity Reports",
     whatItShows: [
-      "How engaged each team member is with the CRM",
-      "Tasks and follow-ups that are past due",
-      "Clients with no recent contact (going cold)",
-      "Scheduled meetings and upcoming tasks"
+      "Leads, clients and projects entered by each salesperson",
+      "Interactions entered, edits, deletions and record views",
+      "A dated list of the records and actions behind the totals",
+      "Historical activity for active and inactive team members"
     ],
-    howItWorks: "The system tracks interactions, assignments, and scheduled follow-ups. It flags overdue items and identifies contacts that haven't had interaction in 30+ days. It also shows upcoming tasks for planning purposes.",
+    howItWorks: "Activity is credited to the person who performed it, not the current assignee. Apply a date range or Last 7 days, then select a salesperson to inspect their work. All report dates use UTC and include the entire end date. Clear returns to all recorded history.",
     dataUsed: [
-      "Interaction records created by each user",
-      "Lead and client assignments",
-      "Scheduled follow-up dates",
-      "Last interaction date for clients and leads"
+      "Record creators and creation timestamps",
+      "Saved activity logs with the person who performed each action",
+      "Latest historical edits where a complete log is unavailable",
+      "Legacy interactions shown without attribution when the author was not recorded"
     ],
     bestUsedFor: [
-      "Daily task management",
-      "Preventing leads from going cold",
-      "Ensuring CRM adoption across the team",
-      "Workload balancing"
+      "Reviewing work performed during a week",
+      "Seeing which records a salesperson entered or changed",
+      "Following up on team activity",
+      "Preparing sales coaching conversations"
     ],
     whatToWatchFor: [
-      "Long lists of overdue items (need to catch up)",
-      "Valuable clients appearing in the inactive list",
-      "Zero or very low activity (not using the system)",
-      "Extreme imbalances in workload distribution"
+      "Older interactions may have no recorded author",
+      "Older edits may show only the latest saved edit, not a complete history",
+      "Record views are shown separately from entries and changes",
+      "Activity counts reflect recorded CRM work, not all work performed outside the CRM"
     ],
-    proTip: "Check this report every morning. Set aside time to handle overdue items first, then reach out to at-risk contacts.",
+    proTip: "Choose Last 7 days and a salesperson, then review the activity details alongside their totals. Private chat messages are not included.",
     adminOnly: true
   },
 

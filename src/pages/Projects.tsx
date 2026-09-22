@@ -100,6 +100,8 @@ export default function Projects() {
   const [clients, setClients] = useState<{ id: number; name: string }[]>([]);
   const [leads, setLeads] = useState<{ id: number; name: string }[]>([]);
   const [error, setError] = useState("");
+  const [loadError, setLoadError] = useState("");
+  const [reload, setReload] = useState(0);
 
   // Update filter visibility on window resize
   useEffect(() => {
@@ -118,17 +120,24 @@ export default function Projects() {
   }, [showFilters]);
 
   useEffect(() => {
+    const controller = new AbortController();
     const fetchAll = async () => {
       setLoading(true);
-      setError("");
+      setLoadError("");
       try {
-        const [projRes, clientRes, leadRes] = await Promise.all([
+        const results = await Promise.allSettled([
           apiFetch(`/projects/?page=${currentPage}&per_page=${perPage}&sort=${sortOrder}`, { 
+            signal: controller.signal,
             headers: { Authorization: `Bearer ${token}` } 
           }),
-          apiFetch("/clients/", { headers: { Authorization: `Bearer ${token}` } }),
-          apiFetch("/leads/", { headers: { Authorization: `Bearer ${token}` } }),
+          apiFetch("/clients/", { signal: controller.signal, headers: { Authorization: `Bearer ${token}` } }),
+          apiFetch("/leads/", { signal: controller.signal, headers: { Authorization: `Bearer ${token}` } }),
         ]);
+        const [projRes, clientRes, leadRes] = results.map(result => {
+          if (result.status === "rejected") throw result.reason;
+          if (!result.value.ok) throw new Error(`HTTP ${result.value.status}`);
+          return result.value;
+        });
 
         const projectsData = await projRes.json();
         const clients = await clientRes.json();
@@ -136,20 +145,25 @@ export default function Projects() {
 
         const leadsArray = leads.leads || leads;
         const clientsArray = clients.clients || clients;
+        if (!Array.isArray(projectsData.projects) || !Array.isArray(clientsArray) || !Array.isArray(leadsArray)) {
+          throw new Error("Unexpected response format");
+        }
+        if (controller.signal.aborted) return;
 
         setProjects(projectsData.projects);
         setTotal(projectsData.total);
         setClients(clientsArray.map((c: any) => ({ id: c.id, name: c.name })));
         setLeads(leadsArray.map((l: any) => ({ id: l.id, name: l.name })));
       } catch (err: any) {
-        setError("Failed to load data");
+        if (!controller.signal.aborted) setLoadError("We couldn't load projects and their related data. Please try again.");
       } finally {
-        setLoading(false);
+        if (!controller.signal.aborted) setLoading(false);
       }
     };
 
     fetchAll();
-  }, [token, currentPage, perPage, sortOrder]);
+    return () => controller.abort();
+  }, [token, currentPage, perPage, sortOrder, reload]);
 
   // Filter projects by status
   const filteredProjects = projects.filter(project => {
@@ -278,11 +292,12 @@ export default function Projects() {
 
           {/* New Project Button */}
           <button
+            disabled={loading || !!loadError}
             onClick={() => {
               setCreating(true);
               setForm({});
             }}
-            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 whitespace-nowrap"
+            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <Plus size={16} />
             <span className="hidden sm:inline">New Project</span>
@@ -332,12 +347,12 @@ export default function Projects() {
                 onChange={(e) => setStatusFilter(e.target.value)}
                 className="border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white shadow-sm min-w-32"
               >
-                <option value="all">All ({total})</option>
+                <option value="all">{loading || loadError ? "All" : `All (${total})`}</option>
                 {PROJECT_STATUS_OPTIONS.map(status => {
                   const count = projects.filter(p => p.project_status === status).length;
                   return (
                     <option key={status} value={status}>
-                      {status.charAt(0).toUpperCase() + status.slice(1)} ({count})
+                      {status.charAt(0).toUpperCase() + status.slice(1)}{!loading && !loadError && ` (${count})`}
                     </option>
                   );
                 })}
@@ -395,6 +410,7 @@ export default function Projects() {
       )}
 
       {/* Results Summary */}
+      {!loading && !loadError && (
       <div className="mb-4 text-sm text-gray-600">
         {statusFilter !== 'all' ? (
           <span>
@@ -407,8 +423,9 @@ export default function Projects() {
           </span>
         )}
       </div>
+      )}
 
-      {total > perPage && (
+      {!loading && !loadError && total > perPage && (
         <PaginationControls
           currentPage={currentPage}
           perPage={perPage}
@@ -425,11 +442,19 @@ export default function Projects() {
 
       {/* Content */}
       {loading ? (
-        <div className="flex items-center justify-center py-12">
+        <div role="status" className="flex items-center justify-center py-12">
           <div className="text-center">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-2"></div>
             <p className="text-gray-500">Loading projects...</p>
           </div>
+        </div>
+      ) : loadError ? (
+        <div role="alert" className="rounded-md border border-red-200 bg-red-50 p-6 text-center">
+          <p className="text-red-800">{loadError}</p>
+          <button type="button" className="mt-4 rounded-md bg-primary px-4 py-2 text-primary-foreground" onClick={() => {
+            setLoading(true);
+            setReload(value => value + 1);
+          }}>Try again</button>
         </div>
       ) : (
         <div className="space-y-4">

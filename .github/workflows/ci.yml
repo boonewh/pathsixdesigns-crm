@@ -4,9 +4,9 @@ name: CI
 # (main auto-deploys to production via Vercel).
 on:
   pull_request:
-    branches: [main]
+    branches: [main, staging]
   push:
-    branches: [main]
+    branches: [main, staging]
 
 jobs:
   frontend:
@@ -21,3 +21,9 @@ jobs:
       - run: npm ci
       - run: npm run typecheck
       - run: npm run build
+      - run: npx playwright install --with-deps chromium
+      - name: Combined staging regression tests
+        run: npx playwright test --workers=1
+        env:
+          VITE_API_BASE_URL: /api
+          VITE_SENTRY_DSN: ''

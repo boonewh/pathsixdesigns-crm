@@ -3,6 +3,7 @@ import { useAuth } from "@/authContext";
 import { useState, useEffect, useRef } from "react";
 import SidebarNav from "@/components/SidebarNav";
 import { apiFetchJson } from "@/lib/api";
+import RequestActivity from "@/components/RequestActivity";
 
 export default function ProtectedLayout() {
   const { isAuthenticated, logout, token } = useAuth();
@@ -107,6 +108,7 @@ export default function ProtectedLayout() {
           <span className="text-lg font-bold tracking-tight whitespace-nowrap">
             PathSix CRM
           </span>
+          <RequestActivity />
 
           <div className="relative w-full max-w-sm flex-1" ref={searchRef}>
             <input
