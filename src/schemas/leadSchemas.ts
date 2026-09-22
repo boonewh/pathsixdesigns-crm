@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { getStoredConfig } from '@/config/crmConfig'
+import { DEFAULT_CONFIG, getStoredConfig } from '@/config/crmConfig'
 
 // Phone label options (must match backend PHONE_LABELS)
 export const phoneLabels = ['work', 'mobile', 'home', 'fax', 'other'] as const
@@ -7,15 +7,22 @@ export const phoneLabels = ['work', 'mobile', 'home', 'fax', 'other'] as const
 // Helper to get current config options lazily
 // Uses stored tenant config if available, falls back to defaults
 const getConfig = () => getStoredConfig()
+const options = (values: readonly string[] | undefined, fallback: readonly string[]) => {
+  const cleaned = Array.isArray(values) ? values.filter(value => typeof value === 'string' && value.trim()).map(value => value.trim()) : []
+  return [...new Set(cleaned.length ? cleaned : fallback)] as [string, ...string[]]
+}
+export const canonicalLeadOption = (value: string | null | undefined, choices: readonly string[]) =>
+  choices.find(choice => choice.toLowerCase() === value?.trim().toLowerCase()) ?? value ?? ''
+export const getDefaultLeadType = () => canonicalLeadOption('None', getTypeOptions())
 
 // Lead status options - loaded lazily from tenant config
-export const getLeadStatuses = () => getConfig().leads.statuses as unknown as readonly [string, ...string[]]
+export const getLeadStatuses = () => options(getConfig().leads?.statuses, DEFAULT_CONFIG.leads.statuses)
 
 // Type options - loaded lazily from tenant config (businessTypes)
-export const getTypeOptions = () => getConfig().businessTypes as unknown as readonly [string, ...string[]]
+export const getTypeOptions = () => options(getConfig().businessTypes, DEFAULT_CONFIG.businessTypes)
 
 // Lead source options - loaded lazily from tenant config
-export const getLeadSourceOptions = () => getConfig().leads.sources as unknown as readonly [string, ...string[]]
+export const getLeadSourceOptions = () => options(getConfig().leads?.sources, DEFAULT_CONFIG.leads.sources)
 
 // Helper: Transform empty strings to undefined (for optional fields)
 const emptyToUndefined = (val: unknown) => (val === '' ? undefined : val)
@@ -51,9 +58,9 @@ export const getLeadCreateSchema = () => z.object({
   state: optionalString(100),
   zip: optionalString(20),
   notes: optionalString(),
-  type: z.enum(getTypeOptions()).default('None'),
-  lead_status: z.enum(getLeadStatuses()).default('new'),
-  lead_source: z.enum(getLeadSourceOptions()).optional().nullable()
+  type: z.enum(options([...getTypeOptions(), getDefaultLeadType()], ['None'])).default(getDefaultLeadType()),
+  lead_status: z.enum(getLeadStatuses()).default(getLeadStatuses()[0]),
+  lead_source: z.preprocess(emptyToUndefined, z.enum(getLeadSourceOptions()).optional().nullable())
 })
 
 // Lead Update Schema (PUT /api/leads/{id})
@@ -71,9 +78,9 @@ export const getLeadUpdateSchema = () => z.object({
   state: optionalString(100),
   zip: optionalString(20),
   notes: optionalString(),
-  type: z.enum(getTypeOptions()).optional(),
-  lead_status: z.enum(getLeadStatuses()).optional(),
-  lead_source: z.enum(getLeadSourceOptions()).optional().nullable()
+  type: z.string().optional(),
+  lead_status: z.string().optional(),
+  lead_source: optionalString(50)
 })
 
 // Lead Assign Schema (PUT /api/leads/{id}/assign)
