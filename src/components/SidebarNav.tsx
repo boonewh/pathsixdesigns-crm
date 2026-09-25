@@ -86,7 +86,7 @@ function SidebarContent({
             items: [
               { label: "Users", path: "/admin/users", icon: Users },
               { label: "Leads Overview", path: "/admin/leads", icon: UserPlus },
-              { label: "Accounts Overview", path: "/admin/clients", icon: Briefcase },
+              { label: `${clientLabel}s Overview`, path: "/admin/clients", icon: Briefcase },
               { label: "Interactions Overview", path: "/admin/interactions", icon: FileText },
               { label: "Projects Overview", path: "/admin/projects", icon: FolderKanban },
               { label: "Data Import", path: "/admin/import", icon: Upload },

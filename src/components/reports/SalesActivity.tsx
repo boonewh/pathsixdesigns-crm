@@ -1,18 +1,21 @@
+import { useCRMConfig } from "@/config/crmConfig";
 import { useEffect, useState } from "react";
 import { reportService, SalesActivityResponse, SalesActivityUser } from "@/lib/reportService";
 
 type Props = { startDate?: string; endDate?: string };
-const columns = [
-  ["leads_created", "Leads entered"], ["clients_created", "Clients entered"],
-  ["projects_created", "Projects entered"], ["interactions", "Interactions entered"],
-  ["edits", "Edits"], ["deletions", "Deletions"], ["views", "Record views"], ["total", "Total recorded"],
-] as const;
 
 export function ActivityReports(props: Props) {
   return <SalesActivity key={`${props.startDate}:${props.endDate}`} {...props} />;
 }
 
 function SalesActivity({ startDate, endDate }: Props) {
+  const config = useCRMConfig();
+  const entityLabel = (type: string) => type === "client" ? config.labels.client : type;
+  const columns = [
+    ["leads_created", "Leads entered"], ["clients_created", `${config.labels.client}s entered`],
+    ["projects_created", "Projects entered"], ["interactions", "Interactions entered"],
+    ["edits", "Edits"], ["deletions", "Deletions"], ["views", "Record views"], ["total", "Total recorded"],
+  ] as const;
   const [data, setData] = useState<SalesActivityResponse | null>(null);
   const [users, setUsers] = useState<SalesActivityUser[]>([]);
   const [userId, setUserId] = useState("");
@@ -78,8 +81,8 @@ function SalesActivity({ startDate, endDate }: Props) {
               <td className="p-3 whitespace-nowrap">{event.occurred_at ? new Date(event.occurred_at).toLocaleString(undefined, { timeZone: "UTC" }) : "Date not recorded"}</td>
               <td className="p-3">{event.email}</td>
               <td className="p-3 capitalize">{event.action}{event.source === "latest_edit" && <span className="block text-xs text-gray-500">Latest historical edit only</span>}</td>
-              <td className="p-3 capitalize">{event.entity_type}</td>
-              <td className="p-3">{event.record_name || `${event.entity_type} #${event.entity_id}`}<span className="block text-xs text-gray-500">#{event.entity_id}</span></td>
+              <td className="p-3 capitalize">{entityLabel(event.entity_type)}</td>
+              <td className="p-3">{event.record_name || `${entityLabel(event.entity_type)} #${event.entity_id}`}<span className="block text-xs text-gray-500">#{event.entity_id}</span></td>
             </tr>)}</tbody>
           </table></div>
           {data.total === 0 && <p className="p-6 text-center text-gray-500">No recorded activity in this date range.</p>}

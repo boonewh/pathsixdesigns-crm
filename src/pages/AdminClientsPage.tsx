@@ -1,3 +1,4 @@
+import { useCRMConfig } from "@/config/crmConfig";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/authContext";
 import { apiFetch } from "@/lib/api";
@@ -28,6 +29,7 @@ interface User {
 }
 
 export default function AdminClientsPage() {
+  const config = useCRMConfig();
   const { token } = useAuth();
   const [clients, setClients] = useState<AdminClient[]>([]);
   const [total, setTotal] = useState(0);
@@ -92,7 +94,7 @@ export default function AdminClientsPage() {
         setTotal(clientsData.total);
         setError("");
       } catch {
-        setError("Failed to load clients");
+        setError(`Failed to load ${config.labels.client.toLowerCase()}s`);
         setClients([]);
         setTotal(0);
       } finally {
@@ -101,7 +103,7 @@ export default function AdminClientsPage() {
     };
 
     fetchClients();
-  }, [token, selectedEmail, currentPage, perPage, sortOrder]);
+  }, [token, selectedEmail, currentPage, perPage, sortOrder, config.labels.client]);
 
   // Reset to page 1 when user selection changes
   useEffect(() => {
@@ -115,7 +117,7 @@ export default function AdminClientsPage() {
 
   return (
     <div className="p-6 space-y-6">
-      <h1 className="text-2xl font-bold text-blue-800">Admin: Accounts Overview</h1>
+      <h1 className="text-2xl font-bold text-blue-800">Admin: {config.labels.client}s Overview</h1>
       {error && <p className="text-red-500">{error}</p>}
 
       <div className="max-w-sm">
@@ -148,7 +150,7 @@ export default function AdminClientsPage() {
             onPageChange={setCurrentPage}
             onPerPageChange={updatePerPage}
             onSortOrderChange={updateSortOrder}
-            entityName="accounts"
+            entityName={`${config.labels.client.toLowerCase()}s`}
             className="border-b pb-4"
           />
 
@@ -207,7 +209,7 @@ export default function AdminClientsPage() {
                             setShowEditModal(true);
                           }}
                           className="text-blue-600 hover:underline"
-                          title="Edit Client"
+                          title={`Edit ${config.labels.client}`}
                         >
                           <Wrench size={16} />
                         </button>
@@ -217,7 +219,7 @@ export default function AdminClientsPage() {
                   {clients.length === 0 && !loading && (
                     <tr>
                       <td colSpan={7} className="px-4 py-4 text-center text-gray-500">
-                        No accounts found for this user.
+                        No {config.labels.client.toLowerCase()}s found for this user.
                       </td>
                     </tr>
                   )}
@@ -236,7 +238,7 @@ export default function AdminClientsPage() {
               onPageChange={setCurrentPage}
               onPerPageChange={updatePerPage}
               onSortOrderChange={updateSortOrder}
-              entityName="accounts"
+              entityName={`${config.labels.client.toLowerCase()}s`}
               className="border-t pt-4"
             />
           )}
@@ -247,7 +249,7 @@ export default function AdminClientsPage() {
           <div className="bg-white rounded-lg shadow-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
             <div className="p-6">
               <div className="flex justify-between items-center mb-4">
-                <h2 className="text-lg font-semibold">Edit Client</h2>
+                <h2 className="text-lg font-semibold">Edit {config.labels.client}</h2>
                 <button
                   onClick={() => {
                     setShowEditModal(false);
@@ -289,10 +291,10 @@ export default function AdminClientsPage() {
                       const updated = await clientRes.json();
                       setClients(updated.clients);
                     } else {
-                      alert("Failed to update client");
+                      alert(`Failed to update ${config.labels.client.toLowerCase()}`);
                     }
                   } catch {
-                    alert("Failed to update client");
+                    alert(`Failed to update ${config.labels.client.toLowerCase()}`);
                   }
                 }}
                 onCancel={() => {

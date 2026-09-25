@@ -138,7 +138,7 @@ export function RevenueReports({ startDate, endDate }: Props) {
               <table className="min-w-full text-sm">
                 <thead className="bg-gray-50">
                   <tr>
-                    <th className="px-4 py-2 text-left font-medium text-gray-500">Client</th>
+                    <th className="px-4 py-2 text-left font-medium text-gray-500">{config.labels.client}</th>
                     <th className="px-4 py-2 text-right font-medium text-gray-500">Subscriptions</th>
                     <th className="px-4 py-2 text-right font-medium text-gray-500">Monthly</th>
                     <th className="px-4 py-2 text-right font-medium text-gray-500">Annual</th>
@@ -188,7 +188,7 @@ export function RevenueReports({ startDate, endDate }: Props) {
                 }`}
               >
                 <div>
-                  <div className="font-medium text-sm">{r.client_name || "Unknown client"}</div>
+                  <div className="font-medium text-sm">{r.client_name || `Unknown ${config.labels.client.toLowerCase()}`}</div>
                   <div className="text-xs text-gray-500">{r.plan_name}</div>
                 </div>
                 <div className="text-right">
@@ -218,7 +218,7 @@ export function RevenueReports({ startDate, endDate }: Props) {
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
               <DollarSign className="h-5 w-5 text-blue-600" />
-              <h2 className="text-lg font-semibold">Revenue by Client (Top 10)</h2>
+              <h2 className="text-lg font-semibold">Revenue by {config.labels.client} (Top 10)</h2>
             </div>
             <div className="text-right">
               <div className="text-xs text-gray-500">Total Won</div>
@@ -245,7 +245,7 @@ export function RevenueReports({ startDate, endDate }: Props) {
             <table className="min-w-full text-sm">
               <thead className="bg-gray-50">
                 <tr>
-                  <th className="px-4 py-2 text-left font-medium text-gray-500">Client</th>
+                  <th className="px-4 py-2 text-left font-medium text-gray-500">{config.labels.client}</th>
                   <th className="px-4 py-2 text-right font-medium text-gray-500">Won</th>
                   <th className="px-4 py-2 text-right font-medium text-gray-500">Pending</th>
                   {revenueData.some((c) => Object.keys(c.value_type_breakdown || {}).length > 0) && (

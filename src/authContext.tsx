@@ -84,6 +84,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const isAuthenticated = !!token;
 
+  // Cached sessions also need current tenant labels and settings after a reload.
+  // A temporary refresh failure must not discard a working cached session.
+  useEffect(() => {
+    if (!token || !user) return;
+    const controller = new AbortController();
+    fetch(`${API_BASE}/me`, {
+      headers: { Authorization: `Bearer ${token}` },
+      signal: controller.signal,
+    }).then(async (response) => {
+      if (!response.ok) return;
+      const data = await response.json();
+      if (!controller.signal.aborted && data.tenant?.id === user.tenant_id && data.tenant.config) {
+        setTenant(data.tenant);
+        localStorage.setItem("authTenant", JSON.stringify(data.tenant));
+      }
+    }).catch(() => {
+      // Keep the cached configuration until the next successful refresh/login.
+    });
+    return () => controller.abort();
+  }, [token, user]);
+
   // Auto-logout on expiration
   useEffect(() => {
     const interval = setInterval(() => {

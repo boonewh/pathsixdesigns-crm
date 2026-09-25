@@ -1,3 +1,4 @@
+import { useCRMConfig } from "@/config/crmConfig";
 import { useEffect, useState } from "react";
 import { CreditCard, MoreVertical, RefreshCw } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -43,6 +44,7 @@ function formatDate(dateStr: string | null): string {
 }
 
 export default function CompanySubscriptions({ token, clientId }: Props) {
+  const config = useCRMConfig();
   const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
@@ -296,7 +298,7 @@ export default function CompanySubscriptions({ token, clientId }: Props) {
         )}
 
         {subscriptions.length === 0 && !showForm && (
-          <p className="text-sm text-gray-500">No subscriptions recorded for this client.</p>
+          <p className="text-sm text-gray-500">No subscriptions recorded for this {config.labels.client.toLowerCase()}.</p>
         )}
 
         <ul className="space-y-3">

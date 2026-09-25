@@ -42,6 +42,15 @@ async function setup(page: Page, resource: Resource, mode = 'blocked') {
     }
     return route.fulfill({ json: {} });
   });
+  await page.goto('/login');
+  await page.evaluate(async () => {
+    // Model ASFI's saved terminology rather than the generic tenant defaults.
+    // @ts-expect-error Vite resolves the source module in the browser.
+    const { DEFAULT_CONFIG } = await import('/src/config/crmConfig.ts');
+    localStorage.setItem('authTenant', JSON.stringify({ id: 1, name: 'ASFI', slug: 'asfi', config: {
+      ...DEFAULT_CONFIG, labels: { ...DEFAULT_CONFIG.labels, client: 'Account' },
+    } }));
+  });
   await page.goto('/trash');
   const section = page.locator('section').filter({ has: page.getByRole('heading', { name: resource === 'clients' ? 'Deleted Accounts' : `Deleted ${resource[0].toUpperCase() + resource.slice(1)}` }) });
   await expect(section.locator("tbody tr")).toHaveCount(2);

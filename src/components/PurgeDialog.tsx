@@ -1,3 +1,4 @@
+import { useCRMConfig } from "@/config/crmConfig";
 import { useRef, useState } from "react";
 import { Dialog, DialogPanel, DialogTitle, Description } from "@headlessui/react";
 import { useNavigate } from "react-router-dom";
@@ -7,7 +8,6 @@ import { Button } from "@/components/ui/button";
 export type PurgeResource = "clients" | "leads" | "projects";
 export type PurgeItem = { id: number; name: string };
 type BlockedItem = PurgeItem & { dependencies: { kind: string; count: number }[] };
-const labels = { clients: "accounts", leads: "leads", projects: "projects" };
 
 export default function PurgeDialog({ resource, items, onClose, onDeleted, onRefresh }: {
   resource: PurgeResource;
@@ -16,6 +16,8 @@ export default function PurgeDialog({ resource, items, onClose, onDeleted, onRef
   onDeleted: (ids: number[]) => void;
   onRefresh: () => Promise<void>;
 }) {
+  const config = useCRMConfig();
+  const labels = { clients: `${config.labels.client.toLowerCase()}s`, leads: "leads", projects: "projects" };
   const navigate = useNavigate();
   const cancelRef = useRef<HTMLButtonElement>(null);
   const inFlight = useRef(false);

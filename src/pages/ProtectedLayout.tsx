@@ -4,8 +4,10 @@ import { useState, useEffect, useRef } from "react";
 import SidebarNav from "@/components/SidebarNav";
 import { apiFetch } from "@/lib/api";
 import RequestActivity from "@/components/RequestActivity";
+import { useCRMConfig } from "@/config/crmConfig";
 
 export default function ProtectedLayout() {
+  const config = useCRMConfig();
   const { isAuthenticated, logout, token } = useAuth();
   const location = useLocation();
   const mainRef = useRef<HTMLElement>(null);
@@ -126,7 +128,7 @@ export default function ProtectedLayout() {
                 ).map(([type, entries]) => (
                   <div key={type}>
                     <div className="px-4 py-2 font-semibold text-gray-500 uppercase text-xs border-b bg-gray-50">
-                      {type}s
+                      {type === "client" ? config.labels.client : type}s
                     </div>
                     {entries.map((r) =>
                       r.link ? (

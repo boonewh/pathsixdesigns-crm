@@ -1,3 +1,4 @@
+import { useCRMConfig } from "@/config/crmConfig";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
@@ -15,6 +16,7 @@ interface AccountFormProps {
 }
 
 export default function AccountForm({ form, setForm, clients }: AccountFormProps) {
+  const config = useCRMConfig();
   if (!form) return null;
 
   return (
@@ -61,7 +63,7 @@ export default function AccountForm({ form, setForm, clients }: AccountFormProps
       </div>
 
       <div className="grid gap-2">
-        <Label htmlFor="client_id">Client</Label>
+        <Label htmlFor="client_id">{config.labels.client}</Label>
         <select
           id="client_id"
           value={form.client_id || ""}
@@ -73,7 +75,7 @@ export default function AccountForm({ form, setForm, clients }: AccountFormProps
           }
           className="border rounded px-2 py-1 text-sm"
         >
-          <option value="">-- Select Client --</option>
+          <option value="">-- Select {config.labels.client} --</option>
           {clients.map((c) => (
             <option key={c.id} value={c.id}>
               {c.name}

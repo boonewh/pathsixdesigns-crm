@@ -47,13 +47,13 @@ export default function ClientDetailPage() {
         const res = await apiFetch(`/clients/${id}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
-        if (!res.ok) throw new Error("Client not found");
+        if (!res.ok) throw new Error(`${config.labels.client} not found`);
         const data = await res.json();
         setClient(data);
         setNewTitle(data.contact_title || "");
         setAccounts(data.accounts || []);
       } catch (err: any) {
-        setLoadError(err.message || "Failed to load account");
+        setLoadError(err.message || `Failed to load ${config.labels.client.toLowerCase()}`);
       }
     };
 
@@ -87,7 +87,7 @@ export default function ClientDetailPage() {
           console.error("Error loading users:", err);
         });
     }
-  }, [id, token]);
+  }, [id, token, config.labels.client]);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -297,7 +297,7 @@ export default function ClientDetailPage() {
           <div className="p-4 space-y-4">
             {projects.length === 0 ? (
               <p className="text-sm text-gray-500">
-                No projects found for this account. Create new projects on the{" "}
+                No projects found for this {config.labels.client.toLowerCase()}. Create new projects on the{" "}
                 <Link to="/projects" className="text-blue-600 hover:underline">
                   Projects page
                 </Link>.
@@ -348,7 +348,7 @@ export default function ClientDetailPage() {
             onClick={() => setShowAssignModal(true)}
             className="bg-yellow-600 text-white px-4 py-2 rounded hover:bg-yellow-700"
           >
-            Assign Account
+            Assign {config.labels.client}
           </button>
         )}
       </div>
@@ -356,7 +356,7 @@ export default function ClientDetailPage() {
       {showAssignModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-white p-6 rounded shadow-md max-w-md w-full">
-            <h2 className="text-lg font-semibold mb-4">Assign Account</h2>
+            <h2 className="text-lg font-semibold mb-4">Assign {config.labels.client}</h2>
 
             <select
               value={selectedUserId || ""}
@@ -395,7 +395,7 @@ export default function ClientDetailPage() {
                     setShowAssignModal(false);
                     window.location.reload();
                   } else {
-                    alert("Failed to assign account.");
+                    alert(`Failed to assign ${config.labels.client.toLowerCase()}.`);
                   }
                   setIsAssigning(false);
                 }}

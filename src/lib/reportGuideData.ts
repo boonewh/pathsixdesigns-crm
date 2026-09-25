@@ -10,7 +10,9 @@ export interface ReportGuide {
   adminOnly?: boolean;
 }
 
-export const reportGuides: Record<string, ReportGuide> = {
+export function getReportGuides(clientLabel: string): Record<string, ReportGuide> {
+  const client = clientLabel.toLowerCase();
+  return {
   pipeline: {
     id: "pipeline",
     title: "Sales Pipeline Report",
@@ -74,7 +76,7 @@ export const reportGuides: Record<string, ReportGuide> = {
       "How long it typically takes to close a deal",
       "Individual team member performance (admin view)"
     ],
-    howItWorks: "The system counts all leads created in your selected time period, then calculates what percentage reached 'won' status — either manually or by using the Convert to Client button. It also tracks the average number of days between lead creation and conversion. Leads that were converted to clients are included in this count even after they are removed from the leads list.",
+    howItWorks: `The system counts all leads created in your selected time period, then calculates what percentage reached 'won' status — either manually or by using the Convert to ${clientLabel} button. It also tracks the average number of days between lead creation and conversion. Leads that were converted to ${client}s are included in this count even after they are removed from the leads list.`,
     dataUsed: [
       "Total leads created",
       "Number of converted leads",
@@ -99,14 +101,14 @@ export const reportGuides: Record<string, ReportGuide> = {
     id: "revenue",
     title: "Revenue Reports",
     whatItShows: [
-      "Your top clients by total project value",
+      `Your top ${client}s by total project value`,
       "Split between completed revenue and active (in-progress) opportunities",
       "Predicted future revenue based on your current pipeline",
       "Monthly and annual recurring revenue from subscriptions (if enabled)"
     ],
-    howItWorks: "Revenue is tracked in two separate buckets that are never double-counted. Project revenue comes from projects linked to clients — completed projects count as earned, active projects count as pipeline. Subscription revenue (if your plan includes it) comes from recurring billing records on client accounts and shows MRR and ARR separately. For forecasting, probability weights are applied by status: active projects at 30%, completed at 100%, lost at 0%.",
+    howItWorks: `Revenue is tracked in two separate buckets that are never double-counted. Project revenue comes from projects linked to ${client}s — completed projects count as earned, active projects count as pipeline. Subscription revenue (if your plan includes it) comes from recurring billing records on ${client}s and shows MRR and ARR separately. For forecasting, probability weights are applied by status: active projects at 30%, completed at 100%, lost at 0%.`,
     dataUsed: [
-      "All projects linked to each client",
+      `All projects linked to each ${client}`,
       "Project values, statuses, and billing types (one-time, monthly, yearly)",
       "Subscription records (if subscriptions are enabled)",
       "Optional date range filters"
@@ -118,9 +120,9 @@ export const reportGuides: Record<string, ReportGuide> = {
       "Identifying upsell and cross-sell opportunities"
     ],
     whatToWatchFor: [
-      "Clients with large active project values (need attention to close)",
-      "One-project clients with no subscription (upsell opportunity)",
-      "High-value clients with no recent activity (retention risk)",
+      `${clientLabel}s with large active project values (need attention to close)`,
+      `One-project ${client}s with no subscription (upsell opportunity)`,
+      `High-value ${client}s with no recent activity (retention risk)`,
       "Heavy dependence on a few large one-time deals (revenue volatility)"
     ],
     proTip: "If your business model is subscription-first (you build first, then charge monthly), keep projects at $0 and track all recurring income through subscriptions. Your MRR and ARR are then your real business health metrics. If you charge for both project work and subscriptions, both will appear as separate line items — they are never combined."
@@ -130,7 +132,7 @@ export const reportGuides: Record<string, ReportGuide> = {
     id: "activity",
     title: "Activity Reports",
     whatItShows: [
-      "Leads, clients and projects entered by each salesperson",
+      `Leads, ${client}s and projects entered by each salesperson`,
       "Interactions entered, edits, deletions and record views",
       "A dated list of the records and actions behind the totals",
       "Historical activity for active and inactive team members"
@@ -186,7 +188,11 @@ export const reportGuides: Record<string, ReportGuide> = {
   }
 };
 
-export const generalTips = {
+}
+
+export function getGeneralTips(clientLabel: string) {
+  const client = clientLabel.toLowerCase();
+  return {
   dateRanges: {
     title: "Using Date Ranges",
     tips: [
@@ -209,10 +215,12 @@ export const generalTips = {
     title: "Data Quality Matters",
     points: [
       "Keep lead sources up to date",
-      "Log all client interactions",
+      `Log all ${client} interactions`,
       "Update project statuses promptly",
       "Schedule follow-ups consistently",
       "Assign ownership clearly"
     ]
   }
 };
+
+}
