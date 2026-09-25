@@ -93,7 +93,7 @@ export default function ProtectedLayout() {
 
       {/* Main content */}
       <div
-        className={`flex-1 flex flex-col transition-all duration-300 ${
+        className={`min-w-0 flex-1 flex flex-col transition-all duration-300 ${
           collapsed ? "lg:ml-20" : "lg:ml-64"
         }`}
       >

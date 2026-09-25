@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { reportService, LeadSourceData } from "@/lib/reportService";
-import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from "recharts";
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
 import { Target } from "lucide-react";
 
 const COLORS = ["#3b82f6", "#8b5cf6", "#10b981", "#f59e0b", "#ef4444", "#06b6d4"];
@@ -52,6 +52,7 @@ export function LeadSourceReport({ startDate, endDate }: Props) {
     name: item.source,
     value: item.total_leads,
   }));
+  const totalLeads = data.reduce((total, item) => total + item.total_leads, 0);
 
   return (
     <div className="bg-white rounded-lg shadow p-6">
@@ -60,15 +61,18 @@ export function LeadSourceReport({ startDate, endDate }: Props) {
         <h2 className="text-lg font-semibold">Lead Sources</h2>
       </div>
 
-      <div className="grid md:grid-cols-2 gap-6">
-        <ResponsiveContainer width="100%" height={300}>
+      <p className="mb-4 text-sm text-gray-600">
+        {totalLeads.toLocaleString()} {totalLeads === 1 ? "lead" : "leads"} total
+      </p>
+
+      <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,18rem),1fr))] items-start gap-6">
+        <ResponsiveContainer width="100%" height={240}>
           <PieChart>
             <Pie
               data={chartData}
               cx="50%"
               cy="50%"
               labelLine={false}
-              label={({ name, percent }) => `${name}: ${((percent || 0) * 100).toFixed(0)}%`}
               outerRadius={80}
               fill="#8884d8"
               dataKey="value"
@@ -78,29 +82,36 @@ export function LeadSourceReport({ startDate, endDate }: Props) {
               ))}
             </Pie>
             <Tooltip />
-            <Legend />
           </PieChart>
         </ResponsiveContainer>
 
-        <div className="space-y-3">
-          {data.map((item, index) => (
-            <div key={item.source} className="flex items-center justify-between p-3 bg-gray-50 rounded">
-              <div className="flex items-center gap-3">
-                <div
-                  className="w-4 h-4 rounded"
-                  style={{ backgroundColor: COLORS[index % COLORS.length] }}
-                />
-                <span className="font-medium">{item.source}</span>
-              </div>
-              <div className="text-right">
-                <div className="font-semibold">{item.total_leads} leads</div>
-                <div className="text-sm text-gray-600">
-                  {item.conversion_rate.toFixed(1)}% conversion
+        <ul className="min-w-0 space-y-3" aria-label="Lead source breakdown">
+          {data.map((item, index) => {
+            const share = totalLeads > 0 ? (item.total_leads / totalLeads) * 100 : 0;
+            const shareLabel = share > 0 && share < 0.1 ? "<0.1" : share.toFixed(1);
+
+            return (
+              <li key={item.source} className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 rounded bg-gray-50 p-3">
+                <div className="flex min-w-0 items-center gap-3">
+                  <div
+                    className="h-4 w-4 shrink-0 rounded"
+                    style={{ backgroundColor: COLORS[index % COLORS.length] }}
+                  />
+                  <span className="break-words font-medium [overflow-wrap:anywhere]">{item.source}</span>
                 </div>
-              </div>
-            </div>
-          ))}
-        </div>
+                <div className="ml-auto shrink-0 text-right tabular-nums">
+                  <div className="font-semibold">
+                    {item.total_leads.toLocaleString()} {item.total_leads === 1 ? "lead" : "leads"}
+                  </div>
+                  <div className="text-sm text-gray-600">{shareLabel}% of leads</div>
+                  <div className="text-sm text-gray-600">
+                    {item.conversion_rate.toFixed(1)}% conversion
+                  </div>
+                </div>
+              </li>
+            );
+          })}
+        </ul>
       </div>
     </div>
   );
