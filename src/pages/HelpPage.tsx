@@ -1,8 +1,12 @@
+import { useCRMConfig } from "@/config/crmConfig";
 import { useState } from "react";
 import { BookOpen, ChevronDown, ChevronUp, Calendar, TrendingUp, Target, DollarSign, Users } from "lucide-react";
-import { reportGuides, generalTips } from "@/lib/reportGuideData";
+import { getReportGuides, getGeneralTips } from "@/lib/reportGuideData";
 
 export default function HelpPage() {
+  const config = useCRMConfig();
+  const reportGuides = getReportGuides(config.labels.client);
+  const generalTips = getGeneralTips(config.labels.client);
   const [expandedSection, setExpandedSection] = useState<string | null>("pipeline");
 
   const reportSections = [

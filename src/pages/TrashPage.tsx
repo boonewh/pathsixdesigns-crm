@@ -1,3 +1,4 @@
+import { useCRMConfig } from "@/config/crmConfig";
 import { useEffect, useState } from "react";
 import { apiFetch } from "@/lib/api";
 import { useAuth } from "@/authContext";
@@ -13,6 +14,7 @@ interface TrashItem {
 }
 
 export default function TrashPage() {
+  const config = useCRMConfig();
   const { token } = useAuth();
   const [clients, setClients] = useState<TrashItem[]>([]);
   const [leads, setLeads] = useState<TrashItem[]>([]);
@@ -218,7 +220,7 @@ export default function TrashPage() {
         <div className="space-y-10">
           {/* Clients */}
           <section>
-            <h2 className="text-xl font-semibold mb-2">Deleted Accounts</h2>
+            <h2 className="text-xl font-semibold mb-2">Deleted {config.labels.client}s</h2>
 
             {selectedClientIds.size > 0 && (
               <div className="mb-2 flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3">
@@ -238,7 +240,7 @@ export default function TrashPage() {
             )}
 
             {clients.length === 0 ? (
-              <p className="text-gray-500">No deleted accounts.</p>
+              <p className="text-gray-500">No deleted {config.labels.client.toLowerCase()}s.</p>
             ) : (
               <>
                 {/* Mobile list */}
@@ -251,7 +253,7 @@ export default function TrashPage() {
                       onToggle={() => toggleClient(client.id)}
                       onRestore={() => handleRestore("client", client.id)}
                       onPurge={() => handlePurge("client", client.id)}
-                      ariaPrefix="Select account"
+                      ariaPrefix={`Select ${config.labels.client.toLowerCase()}`}
                     />
                   ))}
                 </ul>
@@ -262,7 +264,7 @@ export default function TrashPage() {
                   <TableHeader
                     allChecked={clients.length > 0 && selectedClientIds.size === clients.length}
                     onToggleAll={toggleAllClients}
-                    aria="Select all accounts"
+                    aria={`Select all ${config.labels.client.toLowerCase()}s`}
                   />
                   <tbody>
                     {clients.map(client => (

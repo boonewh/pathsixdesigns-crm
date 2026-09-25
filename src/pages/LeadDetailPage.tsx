@@ -153,7 +153,7 @@ export default function LeadDetailPage() {
     if (!lead) return;
 
     const confirmed = confirm(
-      `Convert "${lead.name}" to a ${config.labels.client}? This will permanently change the lead to an account.`
+      `Convert "${lead.name}" to ${config.labels.client}? This will permanently change the record type.`
     );
 
     if (!confirmed) return;

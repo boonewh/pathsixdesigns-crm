@@ -298,7 +298,7 @@ export default function Clients() {
         setTotal(data.total);
         setError(""); // Reset error on successful fetch
       } catch (err) {
-        setError("Failed to load accounts");
+        setError(`Failed to load ${clientLabel.toLowerCase()}s`);
       } finally {
         setLoading(false);
       }
@@ -317,7 +317,7 @@ export default function Clients() {
         })
         .catch(() => setAvailableUsers([]));
     }
-  }, [token, user, currentPage, perPage, sortOrder]);
+  }, [token, user, currentPage, perPage, sortOrder, clientLabel]);
 
   // Filter logic - only type filter now
   const filteredClients = clients.filter(client => {
@@ -573,12 +573,12 @@ export default function Clients() {
       <div className="mb-4 text-sm text-gray-600">
         {typeFilter !== 'all' ? (
           <span>
-            Showing <span className="font-medium">{sortedClients.length}</span> {typeFilter} accounts 
+            Showing <span className="font-medium">{sortedClients.length}</span> {typeFilter} {clientLabel.toLowerCase()}s{" "}
             <span className="text-gray-400">({total} total)</span>
           </span>
         ) : (
           <span>
-            Showing <span className="font-medium">{sortedClients.length}</span> of {total} accounts
+            Showing <span className="font-medium">{sortedClients.length}</span> of {total} {clientLabel.toLowerCase()}s
           </span>
         )}
       </div>
@@ -592,7 +592,7 @@ export default function Clients() {
           onPageChange={setCurrentPage}
           onPerPageChange={updatePerPage}
           onSortOrderChange={updateSortOrder}
-          entityName="clients"
+          entityName={`${clientLabel.toLowerCase()}s`}
           className="border-b pb-4 mb-4"
         />
       )}
@@ -797,7 +797,7 @@ export default function Clients() {
           onPageChange={setCurrentPage}
           onPerPageChange={updatePerPage}
           onSortOrderChange={updateSortOrder}
-          entityName="clients"
+          entityName={`${clientLabel.toLowerCase()}s`}
           className="mt-6 pt-4 border-t border-gray-200"
         />
       )}

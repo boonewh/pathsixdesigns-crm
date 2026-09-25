@@ -1,3 +1,4 @@
+import { useCRMConfig } from "@/config/crmConfig";
 import { useState } from "react";
 import { BarChart3, TrendingUp, Target, Activity, DollarSign, Users, HelpCircle } from "lucide-react";
 import { PipelineReport } from "@/components/reports/PipelineReport";
@@ -7,11 +8,13 @@ import { RevenueReports } from "@/components/reports/RevenueReports";
 import { ActivityReports } from "@/components/reports/SalesActivity";
 import { DateRangePicker } from "@/components/ui/DateRangePicker";
 import ReportHelpModal from "@/components/reports/ReportHelpModal";
-import { reportGuides } from "@/lib/reportGuideData";
+import { getReportGuides } from "@/lib/reportGuideData";
 
 type ReportTab = "overview" | "pipeline" | "sources" | "conversion" | "revenue" | "activity";
 
 export default function Reports() {
+  const config = useCRMConfig();
+  const reportGuides = getReportGuides(config.labels.client);
   const [activeTab, setActiveTab] = useState<ReportTab>("overview");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");

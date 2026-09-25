@@ -505,7 +505,7 @@ export default function ProjectForm({ form, setForm, clients, leads, onSave, onC
             <div className="flex items-center gap-2">
               <span className="text-yellow-600">⚠️</span>
               <p className="text-sm text-yellow-800">
-                <strong>Standalone Project:</strong> This project is not linked to a {config.labels.client.toLowerCase()} or lead.
+                <strong>Standalone Project:</strong> This project is not linked to a lead or {config.labels.client.toLowerCase()}.
                 Make sure to add contact information above for proper interaction tracking.
               </p>
             </div>

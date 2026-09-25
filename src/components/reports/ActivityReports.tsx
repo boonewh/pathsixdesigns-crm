@@ -1,3 +1,4 @@
+import { useCRMConfig } from "@/config/crmConfig";
 import { useEffect, useState } from "react";
 import { reportService, UserActivityData, FollowUpsResponse, ConvertedLead } from "@/lib/reportService";
 import { Users, Bell, AlertTriangle, UserX, TrendingUp, ChevronDown, ChevronUp } from "lucide-react";
@@ -40,6 +41,7 @@ function CollapsibleSection({
 }
 
 export function ActivityReports({ startDate, endDate }: Props) {
+  const config = useCRMConfig();
   const [activityData, setActivityData] = useState<UserActivityData[]>([]);
   const [followUps, setFollowUps] = useState<FollowUpsResponse | null>(null);
   const [convertedLeads, setConvertedLeads] = useState<ConvertedLead[]>([]);
@@ -119,7 +121,7 @@ export function ActivityReports({ startDate, endDate }: Props) {
                   <th className="px-4 py-3 text-left font-medium text-gray-500">User</th>
                   <th className="px-4 py-3 text-right font-medium text-gray-500">Interactions</th>
                   <th className="px-4 py-3 text-right font-medium text-gray-500">Leads Assigned</th>
-                  <th className="px-4 py-3 text-right font-medium text-gray-500">Clients Assigned</th>
+                  <th className="px-4 py-3 text-right font-medium text-gray-500">{config.labels.client}s Assigned</th>
                   <th className="px-4 py-3 text-right font-medium text-gray-500">Activity Logs</th>
                 </tr>
               </thead>
@@ -156,7 +158,7 @@ export function ActivityReports({ startDate, endDate }: Props) {
               <thead className="bg-gray-50">
                 <tr>
                   <th className="px-4 py-3 text-left font-medium text-gray-500">Lead</th>
-                  <th className="px-4 py-3 text-left font-medium text-gray-500">Client</th>
+                  <th className="px-4 py-3 text-left font-medium text-gray-500">{config.labels.client}</th>
                   <th className="px-4 py-3 text-left font-medium text-gray-500">Source</th>
                   <th className="px-4 py-3 text-left font-medium text-gray-500">Assigned To</th>
                   <th className="px-4 py-3 text-right font-medium text-gray-500">Converted</th>
@@ -227,7 +229,7 @@ export function ActivityReports({ startDate, endDate }: Props) {
       {/* Inactive Clients */}
       {inactiveClients.length > 0 && (
         <CollapsibleSection
-          title="Inactive Clients"
+          title={`Inactive ${config.labels.client}s`}
           icon={<UserX className="h-5 w-5 text-orange-500" />}
           badge={
             <span className="text-xs text-gray-400 text-sm">No interaction in 30+ days</span>
@@ -238,7 +240,7 @@ export function ActivityReports({ startDate, endDate }: Props) {
             <table className="min-w-full text-sm">
               <thead className="bg-gray-50">
                 <tr>
-                  <th className="px-4 py-2 text-left font-medium text-gray-500">Client</th>
+                  <th className="px-4 py-2 text-left font-medium text-gray-500">{config.labels.client}</th>
                   <th className="px-4 py-2 text-right font-medium text-gray-500">Last Contact</th>
                   <th className="px-4 py-2 text-right font-medium text-gray-500">Days Inactive</th>
                 </tr>

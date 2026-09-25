@@ -154,7 +154,7 @@ export default function ProjectDetailPage() {
     if (!project) return;
 
     const confirmed = confirm(
-      `Convert "${project.project_name}" to a ${config.labels.client}? This will create a new account and link this project to it.`
+      `Convert "${project.project_name}" to ${config.labels.client}? This will create a new record and link this project to it.`
     );
 
     if (!confirmed) return;
