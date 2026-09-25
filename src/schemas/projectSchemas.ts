@@ -3,7 +3,7 @@ import { getStoredConfig } from '@/config/crmConfig'
 
 // Project types - loaded lazily from tenant config (businessTypes)
 export const getProjectTypes = () => getStoredConfig().businessTypes as unknown as readonly [string, ...string[]]
-export const PROJECT_STATUSES = ['active', 'pending', 'completed', 'cancelled'] as const
+export const PROJECT_STATUSES = ['active', 'pending', 'completed', 'cancelled', 'lost'] as const
 const PHONE_LABELS = ['work', 'mobile', 'home', 'fax', 'other'] as const
 
 // Helper: Transform empty strings to undefined (for optional fields)
