@@ -29,6 +29,7 @@ import { ErrorBoundary } from "./components/ErrorBoundary";
 import ProjectDetailPage from "./pages/ProjectDetailPage";
 import TrashPage from "./pages/TrashPage";
 import Vault from "./pages/Vault";
+import ProjectArchivePage from "./pages/ProjectArchivePage";
 
 function AdminRoute() {
   const { user } = useAuth();
@@ -48,6 +49,7 @@ function App() {
 
         {/* Protected Routes */}
         <Route element={<ProtectedLayout />}>
+          <Route path="/owner/project-archive" element={<ProjectArchivePage />} />
           <Route path="/accounts" element={<Accounts />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/clients" element={<Clients />} />
