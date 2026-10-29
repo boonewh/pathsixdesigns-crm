@@ -70,7 +70,7 @@ export function useSorting({ entityType, initialSort, onSortChange }: UseSorting
   const [sortDirection, setSortDirection] = useState<SortDirection>(initialSort?.direction || 'desc');
 
   const handleSort = useCallback((field: string) => {
-    let newDirection: SortDirection = 'asc';
+    let newDirection: SortDirection;
     
     if (sortField === field) {
       // Toggle direction if same field

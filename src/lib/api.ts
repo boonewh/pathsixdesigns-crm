@@ -1,6 +1,7 @@
 import toast from "react-hot-toast";
 import * as Sentry from "@sentry/react";
 import { beginRead } from "./requestActivity";
+import { telemetryUrl } from "./telemetryPrivacy";
 
 export const API_BASE = import.meta.env.VITE_API_BASE_URL || "/api";
 
@@ -58,10 +59,10 @@ export async function apiFetch(path: string, options?: RequestInit, feedback: { 
       
       // Send significant API errors to Sentry (but not auth errors)
       if (res.status >= 500) {
-        Sentry.captureException(new Error(`API Error: ${errorMessage}`), {
+        Sentry.captureException(new Error(`API request failed (${res.status})`), {
           level: 'error',
           extra: {
-            url: `${API_BASE}${path}`,
+            url: telemetryUrl(`${API_BASE}${path}`),
             status: res.status,
             method: options?.method || 'GET',
           },
@@ -82,7 +83,7 @@ export async function apiFetch(path: string, options?: RequestInit, feedback: { 
       Sentry.captureException(networkError, {
         level: 'warning',
         extra: {
-          url: `${API_BASE}${path}`,
+          url: telemetryUrl(`${API_BASE}${path}`),
           context: 'Network connection failed',
         },
       });
@@ -93,7 +94,7 @@ export async function apiFetch(path: string, options?: RequestInit, feedback: { 
       Sentry.captureException(networkError, {
         level: 'error',
         extra: {
-          url: `${API_BASE}${path}`,
+          url: telemetryUrl(`${API_BASE}${path}`),
         },
       });
     }
@@ -126,7 +127,7 @@ export async function apiFetchJson(path: string, options?: RequestInit) {
     if (error instanceof SyntaxError) {
       // This is the "<!DOCTYPE" parsing error
       toast.error("Server returned invalid data. Please refresh the page or contact support.");
-      throw new Error("JSON parsing failed");
+      throw new Error("JSON parsing failed", { cause: error });
     }
     throw error;
   }

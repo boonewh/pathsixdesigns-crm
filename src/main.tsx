@@ -6,9 +6,11 @@ import { AuthProvider } from './authContext.tsx';
 import { BrowserRouter } from 'react-router-dom';
 import { Toaster } from "react-hot-toast";
 import * as Sentry from "@sentry/react";
+import { isSensitiveTelemetryPath, sanitizeBreadcrumb, sanitizeReplayFrame, sanitizeTelemetryEvent, sanitizeTelemetrySpan } from "@/lib/telemetryPrivacy";
 
 // Initialize Sentry for error tracking and performance monitoring
-Sentry.init({
+// Reset links carry credentials in the path: do not start telemetry/replay there.
+if (!isSensitiveTelemetryPath(window.location.pathname)) Sentry.init({
   dsn: import.meta.env.VITE_SENTRY_DSN,
   
   integrations: [
@@ -21,6 +23,9 @@ Sentry.init({
     Sentry.replayIntegration({
       maskAllText: true,    // mask customer data (PII) in session replays — this is a CRM
       blockAllMedia: true,
+      maskAllInputs: true,
+      networkCaptureBodies: false,
+      beforeAddRecordingEvent: sanitizeReplayFrame,
     }),
   ],
 
@@ -44,19 +49,10 @@ Sentry.init({
   // Environment detection
   environment: import.meta.env.MODE,
   
-  // Before sending events, you can filter or modify them
-  beforeSend(event) {
-    // Don't send events for known non-critical errors
-    if (event.exception) {
-      const errorMessage = event.exception.values?.[0]?.value || '';
-      // Filter out expected errors that aren't actionable
-      if (errorMessage.includes('Failed to fetch') && event.level === 'error') {
-        // Still log network errors but at a lower level
-        event.level = 'warning';
-      }
-    }
-    return event;
-  },
+  beforeSend: sanitizeTelemetryEvent,
+  beforeSendTransaction: sanitizeTelemetryEvent,
+  beforeSendSpan: sanitizeTelemetrySpan,
+  beforeBreadcrumb: sanitizeBreadcrumb,
 });
 
 ReactDOM.createRoot(document.getElementById('root')!).render(

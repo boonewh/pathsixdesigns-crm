@@ -8,22 +8,34 @@ on:
   push:
     branches: [main]
 
+permissions:
+  contents: read
+
+concurrency:
+  group: frontend-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
   frontend:
     name: Frontend — typecheck + build
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
-          node-version: 20
+          node-version: 24.22.1
           cache: npm
-      - run: npm ci
+      - run: npm ci --include=dev --ignore-scripts --no-audit --no-fund
+      - run: npm run test:security
       - run: npm run typecheck
       - run: npm run build
       - run: npx playwright install --with-deps chromium
-      - name: Lead editing, terminology, and private archive regression tests
-        run: npx playwright test tests/lead-options.spec.ts tests/account-labels.spec.ts tests/project-archive.spec.ts --workers=1
+      - name: Frontend regression tests with synthetic data
+        run: npm run test:e2e
         env:
           VITE_API_BASE_URL: /api
           VITE_SENTRY_DSN: ''
