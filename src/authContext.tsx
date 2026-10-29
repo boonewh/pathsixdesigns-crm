@@ -2,6 +2,7 @@ import { createContext, useContext, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { API_BASE } from "@/lib/api";
 import type { CRMConfig } from "@/config/crmConfig";
+import { readTokenClaims } from "@/lib/tokenClaims";
 
 type AuthUser = {
   id: number;
@@ -48,7 +49,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const login = (newToken: string, tenantData?: TenantInfo) => {
     try {
-      const payload = JSON.parse(atob(newToken.split(".")[1]));
+      const payload = readTokenClaims(newToken);
 
       const newUser: AuthUser = {
         id: payload.sub,
@@ -111,7 +112,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (!token) return;
 
       try {
-        const payload = JSON.parse(atob(token.split(".")[1]));
+        const payload = readTokenClaims(token);
         if (payload.exp * 1000 < Date.now()) {
           console.warn("JWT expired, logging out");
           logout();

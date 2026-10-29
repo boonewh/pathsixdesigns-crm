@@ -52,14 +52,9 @@ export default function Login() {
       // Other server errors
       setErrorMessage(data?.error || "Unable to login. Please try again.");
       
-    } catch (err) {
+    } catch {
       // Capture login errors in Sentry
-      Sentry.captureException(err, {
-        extra: {
-          email,
-          context: 'Login attempt failed',
-        },
-      });
+      Sentry.captureException(new Error("Login request failed"));
       
       setErrorMessage("Unable to reach server. Please try again.");
     } finally {

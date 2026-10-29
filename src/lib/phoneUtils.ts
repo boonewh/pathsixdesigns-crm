@@ -66,7 +66,7 @@ export function isValidPhoneNumber(phone: string): boolean {
  */
 export function formatPhoneInput(value: string): { formatted: string; cursorOffset: number } {
   const cleaned = value.replace(/\D/g, '');
-  let formatted = '';
+  let formatted: string;
   let cursorOffset = 0;
   
   if (cleaned.length >= 6) {

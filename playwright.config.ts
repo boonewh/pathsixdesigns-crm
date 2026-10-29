@@ -1,19 +1,16 @@
 import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
+  globalTimeout: 240_000,
   use: {
-    baseURL: 'http://localhost:5173', // Match your Vite dev server
+    baseURL: 'http://127.0.0.1:5173',
     headless: true,
   },
   webServer: {
-    command: 'npm run dev',
+    command: 'node node_modules/vite/bin/vite.js --host 127.0.0.1 --strictPort',
     port: 5173,
     timeout: 120 * 1000,
-    reuseExistingServer: !process.env.CI,
-    env: {
-      ...process.env,
-      // Never send synthetic browser-test failures to the real Sentry project.
-      VITE_SENTRY_DSN: '',
-    },
+    reuseExistingServer: false,
+    env: { ...process.env, VITE_SENTRY_DSN: '' },
   },
 });

@@ -1,3 +1,23 @@
+# October 29 frontend security upgrade — tested maintenance
+
+- [x] Preserve original branch/history, modified source, untracked files and
+      private local configuration in a local-only backup under the upgrades folder.
+- [x] Identify live production/staging projects and sources; compare newer code
+      with preserved purge/API work instead of overwriting it.
+- [x] Audit lockfile: 20 affected entries (17 high, 2 moderate, 1 low), fixes available.
+- [x] Assess token-decoding and explicit telemetry privacy issues; record impacts.
+- [x] Review `G:\Projects\upgrades\PATHSIX_FRONTEND_UPGRADE_PLAN.md` before edits. User approved implementation.
+- [x] Implement/test approved dependency, Node/CI, token and telemetry maintenance. Local type/build, five security groups and 43 browser tests pass.
+- [ ] Preserve separate production/staging behavior; review tested result and
+      release to the correct projects when authorized. No database changes planned.
+- [ ] Record final versions/source/release evidence and reconcile local handoff.
+
+**Review:** approved implementation complete locally on the separate staging lineage; see SECURITY_UPGRADE_2026-10-29.md. Linux CI and tested-result review precede release. No database, hosted environment, original app files or deployment changed. Original local sync remains deferred. The older Phase0 notes below are historical, not a request
+to repeat old tasks or destroy Fly apps.
+
+
+---
+
 # Improvement 2 — Phase 0: Safety rails & housekeeping
 
 Working branch: `phase-0-safety-rails` (off `main`). Full plan lives in

@@ -33,7 +33,7 @@ function cleanPhoneNumber(phone: string): string {
 
 function formatPhoneInput(value: string): string {
   const cleaned = value.replace(/\D/g, '');
-  let formatted = '';
+  let formatted: string;
   
   if (cleaned.length >= 6) {
     formatted = `(${cleaned.slice(0, 3)}) ${cleaned.slice(3, 6)}-${cleaned.slice(6, 10)}`;
