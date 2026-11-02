@@ -40,14 +40,34 @@ Phase 1 notes (done):
   as before; all 43 browser tests pass.
 
 ## Phase 2 — Navigation (`SidebarNav.tsx`, `ProtectedLayout.tsx`)
-- [ ] Sidebar: navy background, plain text links (no grey boxes or
+- [x] Sidebar: navy background, plain text links (no grey boxes or
       dividers), thin highlight on the active page; keep collapse + mobile drawer.
-- [ ] Regroup to **Sales** (Dashboard, Leads, Accounts, Projects, Calendar),
+- [x] Regroup to **Sales** (Dashboard, Leads, Accounts, Projects, Calendar),
       **Insights** (Reports, Files) and **Admin** (Users, Overviews, Import,
       Deletes, Settings). Same routes and admin rules; only grouping changes.
-- [ ] Top bar: navy, search box styled for the dark bar, replace the ☰ text
+- [x] Top bar: navy, search box styled for the dark bar, replace the ☰ text
       with an icon, and move Logout / Change password / User Guide into an
       avatar menu (uses the existing `@headlessui/react` Menu).
+
+Phase 2 notes (done):
+- New `chrome` color tokens (navy) in `index.css` + `tailwind.config.js` for the
+  sidebar and top bar.
+- Sidebar groups: Sales (Dashboard, Leads, Accounts, Projects, Calendar),
+  Insights (Reports for admins, Files), Workspace (Settings, Deletes) and Admin.
+  Settings and Deletes stay in their own group rather than Admin, because every
+  user (not just admins) can use them today. Routes and admin rules unchanged.
+- Active link also highlights on detail pages (e.g. /leads/12 highlights Leads).
+- Logo fix: "Path", "Six" and "CRM" were separate SVG texts at fixed positions,
+  so a gap could open between Path and Six depending on the font. Now one
+  <text> with <tspan>s so PathSix always renders as one word. White text on navy;
+  custom tenant logos sit on a small white background so dark logos stay visible.
+- Top bar: navy, Menu icon instead of the ☰ character, search with an icon, and
+  an account menu (Settings, Change password, User Guide, Log out). The "PathSix
+  CRM" title shows on phones only (the sidebar logo covers desktop). On phones
+  the search box wraps to its own row (the first try overflowed 390px screens,
+  caught by the existing mobile tests).
+- Checks: typecheck and build pass; lint unchanged on touched files (2 errors,
+  1 warning before and after); all 43 browser tests pass.
 
 ## Phase 3 — Lead and Account record pages (fixes the collapsed boxes)
 - [ ] New shared `RecordHeader` component: name, type, key fields row
