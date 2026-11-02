@@ -70,20 +70,41 @@ Phase 2 notes (done):
   1 warning before and after); all 43 browser tests pass.
 
 ## Phase 3 — Lead and Account record pages (fixes the collapsed boxes)
-- [ ] New shared `RecordHeader` component: name, type, key fields row
+- [x] New shared `RecordHeader` component: name, type, key fields row
       (stage, source, owner, created), and all actions in one place
       (Edit, Assign, Convert). Shows lead status and source, which the lead
       page does not display today.
-- [ ] New shared `RecordTabs` component: Activity / Notes / Contacts /
+- [x] New shared `RecordTabs` component: Activity / Notes / Contacts /
       Projects (+ Subscriptions on accounts) as always-visible tabs with counts.
-- [ ] Remove the `<details>` wrapper from `CompanyInteractions`,
+- [x] Remove the `<details>` wrapper from `CompanyInteractions`,
       `CompanyNotes`, `CompanyContacts`, `CompanySubscriptions` and the
       inline Projects block, so they render open inside a tab. Their inner
       logic is not changed.
-- [ ] Use the header + tabs in `LeadDetailPage.tsx` and `ClientDetailPage.tsx`;
+- [x] Use the header + tabs in `LeadDetailPage.tsx` and `ClientDetailPage.tsx`;
       details (phone, email, address) move to a labeled side panel.
-- [ ] Stage path (Open → Qualified → Proposal → Won) on the lead page, using
+- [x] Stage path (Open → Qualified → Proposal → Won) on the lead page, using
       the existing `PUT /leads/:id` with `lead_status`.
+
+Phase 3 notes (done):
+- New `components/ui/RecordLayout.tsx`: RecordHeader, StagePath, RecordFields
+  (the "About" panel), RecordTabs and ProjectList (the project list was
+  duplicated on both pages).
+- The collapsible boxes got an `embedded` option instead of being removed, so
+  the Project detail page (which also uses Interactions and Notes) is unchanged.
+  Embedded sections render open, and report their counts for the tab badges.
+- Tabs keep every panel mounted (just hidden), so each section loads once on
+  page open, the same as the old collapsible boxes did. No extra API calls.
+- Lead page: header shows Status, Source, Owner, Type, Created (status and
+  source were not shown on this page before). Assign and Convert moved to the
+  header. Stage path uses the existing `PUT /leads/:id` with `lead_status` and
+  shows a toast. "Lost" is left off the path (it is not a forward step) and
+  still shows in the Status badge.
+- Account page: header shows Status, Type, Lead source, Converted, Created.
+  The green "Converted from Lead" box became header fields plus an "In
+  pipeline" line in About. Subscriptions tab shows only when the feature is on.
+- No Edit button was added to the header: these pages have no edit form today.
+- Checks: typecheck and build pass; lint unchanged on touched files (10 before
+  and after); all 43 browser tests pass; no horizontal overflow at 390px.
 
 ## Phase 4 — Leads list (`Leads.tsx`, `LeadsTable.tsx`)
 - [ ] Make Table the default view for new users (saved preference still wins).

@@ -14,6 +14,7 @@ type Props = {
   showMenu?: boolean;
   setShowMenu?: React.Dispatch<React.SetStateAction<boolean>>;
   menuRef?: React.RefObject<HTMLDivElement | null>;
+  embedded?: boolean;
 };
 
 export default function CompanyNotes({
@@ -27,6 +28,7 @@ export default function CompanyNotes({
   showMenu,
   setShowMenu,
   menuRef,
+  embedded = false,
 }: Props) {
   // Internal fallback state if none provided
   const [internalEditing, setInternalEditing] = useState(false);
@@ -42,11 +44,9 @@ export default function CompanyNotes({
   const updateMenuOpen = setShowMenu ?? setInternalMenuOpen;
   const ref = menuRef ?? internalMenuRef;
 
-  return (
-    <details className="bg-white rounded shadow-sm border">
-      <summary className="cursor-pointer px-4 py-2 font-semibold text-blue-700 bg-blue-50 hover:bg-blue-100 rounded-t flex items-center gap-2">
-        <StickyNote size={16} /> Notes
-      </summary>
+  // embedded: render open, without the collapsible box (used inside record tabs)
+  const content = (
+    <>
 
       <div className="p-4">
         {!notes && !editing ? (
@@ -121,6 +121,17 @@ export default function CompanyNotes({
           </div>
         )}
       </div>
+    </>
+  );
+
+  if (embedded) return content;
+
+  return (
+    <details className="bg-white rounded shadow-sm border">
+      <summary className="cursor-pointer px-4 py-2 font-semibold text-blue-700 bg-blue-50 hover:bg-blue-100 rounded-t flex items-center gap-2">
+        <StickyNote size={16} /> Notes
+      </summary>
+      {content}
     </details>
   );
 }

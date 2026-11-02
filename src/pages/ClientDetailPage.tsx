@@ -1,14 +1,5 @@
 import { useEffect, useRef, useState } from "react";
 import { useParams, Link } from "react-router-dom";
-import {
-  Mail,
-  Phone,
-  MapPin,
-  User,
-  FolderKanban,
-  Wrench,
-  ArrowRightLeft,
-} from "lucide-react";
 import { useAuth, userHasRole } from "@/authContext";
 import { useCRMConfig } from "@/config/crmConfig";
 import { Client, Interaction, Account } from "@/types";
@@ -19,6 +10,8 @@ import CompanyInteractions from "@/components/ui/CompanyInteractions";
 import CompanyContacts from "@/components/ui/CompanyContacts";
 import CompanySubscriptions from "@/components/ui/CompanySubscriptions";
 import { Button } from "@/components/ui/button";
+import StatusBadge from "@/components/ui/StatusBadge";
+import { RecordHeader, RecordFields, RecordTabs, ProjectList } from "@/components/ui/RecordLayout";
 
 export default function ClientDetailPage() {
   const { id } = useParams();
@@ -41,6 +34,9 @@ export default function ClientDetailPage() {
   const [projects, setProjects] = useState<any[]>([]);
 
   const [isAssigning, setIsAssigning] = useState(false);
+  const [interactionCount, setInteractionCount] = useState<number | undefined>(undefined);
+  const [contactCount, setContactCount] = useState<number | undefined>(undefined);
+  const [subscriptionCount, setSubscriptionCount] = useState<number | undefined>(undefined);
 
   useEffect(() => {
     const loadClient = async () => {
@@ -109,249 +105,241 @@ export default function ClientDetailPage() {
       .catch(() => setProjects([]));
   }, [id, token]);
 
+  const saveTitle = async () => {
+    const res = await apiFetch(`/clients/${id}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ contact_title: newTitle }),
+    });
+    if (res.ok) {
+      setClient((prev) => prev && { ...prev, contact_title: newTitle });
+      setEditingTitle(false);
+    } else {
+      alert("Failed to update title.");
+    }
+  };
+
   if (loadError) return <p className="p-6 text-red-600">{loadError}</p>;
   if (!client) return <p className="p-6">Loading...</p>;
 
+  const clientStatusColors: Record<string, string> = {
+    new: "bg-blue-100 text-blue-800",
+    prospect: "bg-yellow-100 text-yellow-800",
+    active: "bg-green-100 text-green-800",
+    inactive: "bg-gray-100 text-gray-800",
+  };
+  const origin = client.lead_origin;
+
   return (
     <>
-      <div className="p-6 space-y-6">
-        <h1 className="text-2xl font-bold">{client.name}</h1>
-
-        <ul className="text-sm text-gray-700 space-y-1">
-    {client.type && (
-      <li className="flex items-center gap-2">
-        <Wrench size={14} className="text-gray-500" />
-        <span className="text-gray-500 font-medium">Type:</span> {client.type}
-      </li>
-    )}
-    {client.contact_person && (
-      <li className="flex items-start gap-2">
-        <User size={14} className="mt-[2px]" />
-        <div className="leading-tight">
-          <div>{client.contact_person}</div>
-          {editingTitle ? (
-            <div className="mt-1 flex items-center gap-2">
-              <input
-                type="text"
-                className="border px-2 py-1 rounded text-sm"
-                value={newTitle}
-                onChange={(e) => setNewTitle(e.target.value)}
-              />
-              <button
-                className="text-blue-600 text-sm"
-                onClick={async () => {
-                  const res = await apiFetch(`/clients/${id}`, {
-                    method: "PUT",
-                    headers: {
-                      "Content-Type": "application/json",
-                      Authorization: `Bearer ${token}`,
-                    },
-                    body: JSON.stringify({ contact_title: newTitle }),
-                  });
-                  if (res.ok) {
-                    setClient((prev) => prev && { ...prev, contact_title: newTitle });
-                    setEditingTitle(false);
-                  } else {
-                    alert("Failed to update title.");
-                  }
-                }}
-              >
-                Save
-              </button>
-              <button
-                className="text-gray-500 text-sm"
-                onClick={() => {
-                  setNewTitle(client.contact_title || "");
-                  setEditingTitle(false);
-                }}
-              >
-                Cancel
-              </button>
-            </div>
-          ) : (
-            client.contact_title && (
-              <div
-                className="text-gray-500 text-sm italic hover:underline cursor-pointer"
-                onClick={() => setEditingTitle(true)}
-              >
-                {client.contact_title}
-              </div>
-            )
-          )}
+      <div className="p-4 lg:p-6 space-y-4">
+        <div className="text-xs text-muted-foreground">
+          <Link to="/clients" className="hover:underline">{config.labels.client}s</Link> / {client.name}
         </div>
-      </li>
-    )}
 
-          {client.email && (
-            <li className="flex items-center gap-2">
-              <Mail size={14} />
-              <a href={`mailto:${client.email}`} className="text-blue-600 underline">
-                {client.email}
-              </a>
-            </li>
-          )}
+        <RecordHeader
+          eyebrow={config.labels.client}
+          title={client.name}
+          actions={
+            userHasRole(user, "admin") ? (
+              <Button variant="outline" onClick={() => setShowAssignModal(true)}>
+                Assign {config.labels.client}
+              </Button>
+            ) : undefined
+          }
+          fields={[
+            {
+              label: "Status",
+              value: client.status ? (
+                <StatusBadge status={client.status} colorClass={clientStatusColors[client.status]} />
+              ) : "—",
+            },
+            { label: "Type", value: client.type || "None" },
+            { label: "Lead source", value: origin?.lead_source || "—" },
+            { label: "Converted", value: origin?.converted_on ? new Date(origin.converted_on).toLocaleDateString() : "—" },
+            { label: "Created", value: client.created_at ? new Date(client.created_at).toLocaleDateString() : "—" },
+          ]}
+        />
 
-          {client.phone && (
-            <li className="flex items-start gap-2">
-              <Phone size={14} className="mt-[2px]" />
-              <div className="leading-tight">
-                <div>
-                  <a href={`tel:${client.phone}`} className="text-blue-600 underline">
-                    {formatPhoneNumber(client.phone)}
-                  </a>
-                  {client.phone_label && (
-                    <span className="text-muted-foreground text-sm ml-1">
-                      ({client.phone_label})
-                    </span>
-                  )}
-                </div>
-                {client.secondary_phone && (
-                  <div>
-                    
-                    <a href={`tel:${client.secondary_phone}`}
-                    className="text-blue-600 underline"
-                    >
-                      {formatPhoneNumber(client.secondary_phone)}
-                    </a>
-                    {client.secondary_phone_label && (
-                      <span className="text-muted-foreground text-sm ml-1">
-                        ({client.secondary_phone_label})
-                      </span>
+        <div className="grid gap-4 lg:grid-cols-[320px_minmax(0,1fr)] items-start">
+          <RecordFields
+            title="About"
+            fields={[
+              {
+                label: "Contact",
+                value: client.contact_person ? (
+                  <div className="leading-tight">
+                    <div>{client.contact_person}</div>
+                    {editingTitle ? (
+                      <div className="mt-1 flex flex-wrap items-center gap-2">
+                        <input
+                          type="text"
+                          aria-label="Contact title"
+                          className="border px-2 py-1 rounded text-sm"
+                          value={newTitle}
+                          onChange={(e) => setNewTitle(e.target.value)}
+                        />
+                        <button className="text-primary text-sm" onClick={saveTitle}>
+                          Save
+                        </button>
+                        <button
+                          className="text-muted-foreground text-sm"
+                          onClick={() => {
+                            setNewTitle(client.contact_title || "");
+                            setEditingTitle(false);
+                          }}
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    ) : (
+                      client.contact_title && (
+                        <button
+                          className="text-muted-foreground text-sm hover:underline"
+                          onClick={() => setEditingTitle(true)}
+                        >
+                          {client.contact_title}
+                        </button>
+                      )
                     )}
                   </div>
-                )}
-              </div>
-            </li>
-          )}
-
-          <li className="flex items-start gap-2">
-            <MapPin size={14} className="mt-[2px]" />
-            <div className="leading-tight">
-              {client.address && <div>{client.address}</div>}
-              <div>{[client.city, client.state].filter(Boolean).join(", ")} {client.zip}</div>
-            </div>
-          </li>
-        </ul>
-
-        {client.lead_origin && (
-          <div className="bg-green-50 border border-green-200 rounded-lg p-4 flex items-start gap-3">
-            <ArrowRightLeft size={16} className="text-green-600 mt-0.5 shrink-0" />
-            <div className="text-sm">
-              <div className="font-semibold text-green-800 mb-1">Converted from Lead</div>
-              <div className="text-green-700 space-y-0.5">
-                {client.lead_origin.converted_on && (
-                  <div>Converted on {new Date(client.lead_origin.converted_on).toLocaleDateString()}</div>
-                )}
-                {client.lead_origin.lead_source && (
-                  <div>Lead source: <span className="font-medium">{client.lead_origin.lead_source}</span></div>
-                )}
-                {client.lead_origin.days_in_pipeline != null && (
-                  <div>Time in pipeline: <span className="font-medium">{client.lead_origin.days_in_pipeline} days</span></div>
-                )}
-              </div>
-            </div>
-          </div>
-        )}
-
-        <CompanyInteractions
-          token={token!}
-          entityType="client"
-          entityId={client.id}
-          initialInteractions={interactions}
-        />
-
-        <CompanyNotes
-          notes={client.notes || ""}
-          onSave={async (newNotes) => {
-            const res = await apiFetch(`/clients/${id}`, {
-              method: "PUT",
-              headers: { Authorization: `Bearer ${token}` },
-              body: JSON.stringify({ notes: newNotes }),
-            });
-            if (res.ok) {
-              setClient((prev) => prev && { ...prev, notes: newNotes });
-            } else {
-              alert("Failed to save notes.");
-            }
-          }}
-        />
-
-        <CompanyContacts
-          token={token!}
-          entityType="client"
-          entityId={client.id}
-        />
-
-        {config.features.enableSubscriptions && (
-          <CompanySubscriptions
-            token={token!}
-            clientId={client.id}
-          />
-        )}
-
-        {/* Projects Section */}
-        <details className="bg-white rounded shadow-sm border">
-          <summary className="cursor-pointer px-4 py-2 font-semibold text-blue-700 bg-blue-50 hover:bg-blue-100 rounded-t flex items-center gap-2">
-            <FolderKanban size={16} /> Projects ({projects.length})
-          </summary>
-
-          <div className="p-4 space-y-4">
-            {projects.length === 0 ? (
-              <p className="text-sm text-gray-500">
-                No projects found for this {config.labels.client.toLowerCase()}. Create new projects on the{" "}
-                <Link to="/projects" className="text-blue-600 hover:underline">
-                  Projects page
-                </Link>.
-              </p>
-            ) : (
-              <ul className="space-y-2 text-sm text-gray-800">
-                {projects.map((p) => (
-                  <li key={p.id} className="border-b pb-2">
-                    <div className="font-medium text-blue-700">{p.project_name}</div>
-                    <div className="text-gray-600 italic">{p.project_status}</div>
-
-                    {p.project_description && (
-                      <div className="text-gray-700">{p.project_description}</div>
-                    )}
-
-                    <div className="text-gray-500 text-xs">
-                      Created: {new Date(p.created_at).toLocaleDateString()}
+                ) : "—",
+              },
+              {
+                label: "Email",
+                value: client.email ? (
+                  <a href={`mailto:${client.email}`} className="text-primary hover:underline">{client.email}</a>
+                ) : "—",
+              },
+              {
+                label: "Phone",
+                value: client.phone ? (
+                  <div className="leading-tight space-y-0.5">
+                    <div>
+                      <a href={`tel:${client.phone}`} className="text-primary hover:underline">
+                        {formatPhoneNumber(client.phone)}
+                      </a>
+                      {client.phone_label && <span className="text-muted-foreground ml-1">({client.phone_label})</span>}
                     </div>
-
-                    {p.project_start && (
-                      <div className="text-gray-500 text-xs">
-                        Start: {new Date(p.project_start).toLocaleDateString()}
+                    {client.secondary_phone && (
+                      <div>
+                        <a href={`tel:${client.secondary_phone}`} className="text-primary hover:underline">
+                          {formatPhoneNumber(client.secondary_phone)}
+                        </a>
+                        {client.secondary_phone_label && (
+                          <span className="text-muted-foreground ml-1">({client.secondary_phone_label})</span>
+                        )}
                       </div>
                     )}
+                  </div>
+                ) : "—",
+              },
+              {
+                label: "Address",
+                value:
+                  client.address || client.city || client.state || client.zip ? (
+                    <div className="leading-tight">
+                      {client.address && <div>{client.address}</div>}
+                      <div>{[client.city, client.state].filter(Boolean).join(", ")} {client.zip}</div>
+                    </div>
+                  ) : "—",
+              },
+              ...(origin?.days_in_pipeline != null
+                ? [{ label: "In pipeline", value: `${origin.days_in_pipeline} days before converting` }]
+                : []),
+            ]}
+          />
 
-                    {p.project_end && (
-                      <div className="text-gray-500 text-xs">
-                        End: {new Date(p.project_end).toLocaleDateString()}
-                      </div>
-                    )}
-
-                    {p.project_worth !== undefined && p.project_worth !== null && (
-                      <div className="text-gray-500 text-xs">
-                        Worth: ${p.project_worth.toLocaleString()}
-                        {p.value_type === 'monthly' && ' / mo'}
-                        {p.value_type === 'yearly' && ` / yr ($${(p.project_worth / 12).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} / mo)`}
-                      </div>
-                    )}
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
-        </details>
-
-        {userHasRole(user, "admin") && (
-          <Button
-            onClick={() => setShowAssignModal(true)}
-            variant="outline"
-          >
-            Assign {config.labels.client}
-          </Button>
-        )}
+          <RecordTabs
+            tabs={[
+              {
+                key: "activity",
+                label: "Activity",
+                count: interactionCount,
+                content: (
+                  <CompanyInteractions
+                    token={token!}
+                    entityType="client"
+                    entityId={client.id}
+                    initialInteractions={interactions}
+                    embedded
+                    onCount={setInteractionCount}
+                  />
+                ),
+              },
+              {
+                key: "notes",
+                label: "Notes",
+                content: (
+                  <CompanyNotes
+                    notes={client.notes || ""}
+                    onSave={async (newNotes) => {
+                      const res = await apiFetch(`/clients/${id}`, {
+                        method: "PUT",
+                        headers: { Authorization: `Bearer ${token}` },
+                        body: JSON.stringify({ notes: newNotes }),
+                      });
+                      if (res.ok) {
+                        setClient((prev) => prev && { ...prev, notes: newNotes });
+                      } else {
+                        alert("Failed to save notes.");
+                      }
+                    }}
+                    embedded
+                  />
+                ),
+              },
+              {
+                key: "contacts",
+                label: "Contacts",
+                count: contactCount,
+                content: (
+                  <CompanyContacts
+                    token={token!}
+                    entityType="client"
+                    entityId={client.id}
+                    embedded
+                    onCount={setContactCount}
+                  />
+                ),
+              },
+              ...(config.features.enableSubscriptions
+                ? [{
+                    key: "subscriptions",
+                    label: "Subscriptions",
+                    count: subscriptionCount,
+                    content: (
+                      <CompanySubscriptions
+                        token={token!}
+                        clientId={client.id}
+                        embedded
+                        onCount={setSubscriptionCount}
+                      />
+                    ),
+                  }]
+                : []),
+              {
+                key: "projects",
+                label: "Projects",
+                count: projects.length,
+                content: (
+                  <ProjectList
+                    projects={projects}
+                    empty={
+                      <>
+                        No projects found for this {config.labels.client.toLowerCase()}. Create new projects on the{" "}
+                        <Link to="/projects" className="text-primary hover:underline">Projects page</Link>.
+                      </>
+                    }
+                  />
+                ),
+              },
+            ]}
+          />
+        </div>
       </div>
 
       {showAssignModal && (
