@@ -49,6 +49,12 @@ module.exports = {
 				DEFAULT: 'hsl(var(--destructive))',
 				foreground: 'hsl(var(--destructive-foreground))',
 				},
+				chrome: {
+				DEFAULT: 'hsl(var(--chrome))',
+				hover: 'hsl(var(--chrome-hover))',
+				foreground: 'hsl(var(--chrome-foreground))',
+				muted: 'hsl(var(--chrome-muted))',
+				},
 				border: 'hsl(var(--border))',
 				input: 'hsl(var(--input))',
 				ring: 'hsl(var(--ring))',

@@ -16,7 +16,7 @@ import {
   Upload,
   Trash,
   Archive,
-  HelpCircle
+  BarChart3,
 } from "lucide-react";
 
 const SHOW_REAL_ACCOUNTS_SECTION = false;
@@ -40,9 +40,12 @@ function SidebarContent({
   const clientLabel = config.labels?.client || "Client";
   const useAccountStyle = clientLabel.toLowerCase() === "account";
 
+  const isAdmin = !!user?.roles.includes("admin");
+
+  // Grouped by what people do. Routes and admin-only rules are unchanged.
   const navSections = [
     {
-      section: "Main",
+      section: "Sales",
       items: [
         { label: "Dashboard", path: "/dashboard", icon: LayoutDashboard },
         { label: "Leads", path: "/leads", icon: UserPlus },
@@ -51,35 +54,28 @@ function SidebarContent({
           path: "/clients",
           icon: useAccountStyle ? Briefcase : Users,
         },
+        ...(SHOW_REAL_ACCOUNTS_SECTION
+          ? [{ label: "Accounts", path: "/accounts", icon: Briefcase }]
+          : []),
+        { label: "Projects", path: "/projects", icon: FolderKanban },
         { label: "Calendar", path: "/calendar", icon: CalendarIcon },
       ],
     },
-    ...(SHOW_REAL_ACCOUNTS_SECTION
-      ? [{
-          section: "Accounts",
-          items: [{ label: "Accounts", path: "/accounts", icon: Briefcase }],
-        }]
-      : []),
     {
-      section: "Projects",
-      items: [{ label: "Projects", path: "/projects", icon: FolderKanban }],
-    },
-    {
-      section: "Vault",
-      items: [{ label: "Files", path: "/vault", icon: Archive }],
-    },
-    {
-      section: "Settings",
+      section: "Insights",
       items: [
-        { label: "Settings", path: "/settings", icon: Settings },
-        { label: "Deletes", path: "/trash", icon: Trash }
+        ...(isAdmin ? [{ label: "Reports", path: "/reports", icon: BarChart3 }] : []),
+        { label: "Files", path: "/vault", icon: Archive },
       ],
     },
     {
-      section: "Help",
-      items: [{ label: "User Guide", path: "/help", icon: HelpCircle }],
+      section: "Workspace",
+      items: [
+        { label: "Settings", path: "/settings", icon: Settings },
+        { label: "Deletes", path: "/trash", icon: Trash },
+      ],
     },
-    ...(user?.roles.includes("admin")
+    ...(isAdmin
       ? [
           {
             section: "Admin",
@@ -90,7 +86,6 @@ function SidebarContent({
               { label: "Interactions Overview", path: "/admin/interactions", icon: FileText },
               { label: "Projects Overview", path: "/admin/projects", icon: FolderKanban },
               { label: "Data Import", path: "/admin/import", icon: Upload },
-              { label: "Reports", path: "/reports", icon: FileText },
               // DISABLED: Backup feature - possible future project
               // { label: "Database Backups", path: "/admin/backups", icon: Database },
             ],
@@ -101,84 +96,79 @@ function SidebarContent({
 
   return (
     <div
-      className={`flex flex-col bg-neutral shadow-md border-r px-4 pt-4 pb-6 h-full transition-[width] duration-300 ease-in-out ${
+      className={`flex flex-col gap-5 bg-chrome text-chrome-foreground px-3 pt-4 pb-6 min-h-full transition-[width] duration-300 ease-in-out ${
         collapsed ? "w-20" : "w-64"
       }`}
     >
-      <div className="flex justify-center mb-4">
+      <div className={`flex items-center ${collapsed ? "flex-col gap-3" : "justify-between px-2"}`}>
         {collapsed ? (
           config.branding?.logoCompact ? (
-            <img src={config.branding.logoCompact} alt="Logo" className="w-8 h-auto" />
+            <img src={config.branding.logoCompact} alt="Logo" className="w-8 h-auto rounded bg-white p-0.5" />
           ) : (
-            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 96 96" role="img" aria-label="P6">
-              <text x="10" y="68" fontFamily="Arial, sans-serif" fontSize="64" fontWeight="700" letterSpacing="-2" fill="#05133D">P</text>
-              <text x="46" y="68" fontFamily="Arial, sans-serif" fontSize="64" fontWeight="700" letterSpacing="-2" fill="#F59E0B">6</text>
+            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 96 96" role="img" aria-label="PathSix">
+              <text x="10" y="68" fontFamily="Arial, sans-serif" fontSize="64" fontWeight="700" letterSpacing="-2" fill="#FFFFFF">P<tspan fill="#F59E0B">6</tspan></text>
             </svg>
           )
+        ) : config.branding?.logo ? (
+          <img src={config.branding.logo} alt={config.branding?.companyName || "CRM Logo"} className="max-w-[160px] h-auto rounded bg-white px-2 py-1" />
         ) : (
-          config.branding?.logo ? (
-            <img src={config.branding.logo} alt={config.branding?.companyName || "CRM Logo"} className="max-w-[180px] h-auto" />
-          ) : (
-            <svg xmlns="http://www.w3.org/2000/svg" width="180" height="36" viewBox="0 0 360 72" role="img" aria-label="PathSix CRM">
-              <text x="0" y="50" fontFamily="Arial, sans-serif" fontSize="44" fontWeight="700" letterSpacing="-2" fill="#05133D">Path</text>
-              <text x="90" y="50" fontFamily="Arial, sans-serif" fontSize="44" fontWeight="700" letterSpacing="-2" fill="#F59E0B">Six</text>
-              <text x="160" y="50" fontFamily="Arial, sans-serif" fontSize="26" fontWeight="600" letterSpacing="-1" fill="#334155">CRM</text>
-            </svg>
-          )
+          // One <text> with tspans so "PathSix" always renders as one word,
+          // whatever font the browser falls back to.
+          <svg xmlns="http://www.w3.org/2000/svg" width="160" height="32" viewBox="0 0 360 72" role="img" aria-label="PathSix CRM">
+            <text x="0" y="50" fontFamily="Arial, sans-serif" fontSize="44" fontWeight="700" letterSpacing="-2" fill="#FFFFFF">
+              Path<tspan fill="#F59E0B">Six</tspan><tspan dx="14" fontSize="26" fontWeight="600" letterSpacing="-1" fill="#9AA6C4">CRM</tspan>
+            </text>
+          </svg>
         )}
+        <button
+          onClick={toggleCollapsed}
+          aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+          className="hidden lg:inline-flex p-1 rounded text-chrome-muted hover:text-white hover:bg-chrome-hover"
+        >
+          <span className={`inline-block transition-transform duration-300 ${collapsed ? "rotate-180" : ""}`}>
+            <ChevronLeft size={18} />
+          </span>
+        </button>
       </div>
 
-      <button
-        onClick={toggleCollapsed}
-        className="self-end mb-4 text-muted-foreground hover:text-foreground transition-transform duration-300"
-      >
-        <span
-          className={`inline-block transition-transform duration-300 ${
-            collapsed ? "rotate-180" : ""
-          }`}
-        >
-          <ChevronLeft size={20} />
-        </span>
-      </button>
-
-      <nav className="border border-border rounded-md bg-neutral px-3 py-4">
-        {navSections.map((group) => (
+      <nav className="flex flex-col gap-5" aria-label="Main">
+        {navSections.filter((g) => g.items.length > 0).map((group) => (
           <div key={group.section}>
-            {navSections.length > 1 && !collapsed && (
-              <p className="text-xs text-primary font-semibold px-4 pt-0.5 pb-0.25 uppercase tracking-wide">
+            {!collapsed && (
+              <p className="px-3 mb-1 text-[11px] font-semibold uppercase tracking-wider text-chrome-muted">
                 {group.section}
               </p>
             )}
-            {group.items.map((item, index) => {
-              const Icon = item.icon;
-              const isActive = location.pathname === item.path;
+            <div className="flex flex-col gap-0.5">
+              {group.items.map((item) => {
+                const Icon = item.icon;
+                const isActive =
+                  location.pathname === item.path ||
+                  location.pathname.startsWith(item.path + "/");
 
-              return (
-                <div
-                  key={item.path}
-                  className={`my-[10px] ${
-                    index !== group.items.length - 1 ? "border-b border-muted" : ""
-                  }`}
-                >
+                return (
                   <Link
+                    key={item.path}
                     to={item.path}
-                    className={`flex items-center gap-4 px-5 py-4 w-full text-sm font-medium leading-none transition-colors duration-200 rounded-md
-                      ${
-                        isActive
-                          ? "bg-primary/10 text-primary border-l-4 border-primary"
-                          : "bg-muted text-secondary hover:bg-accent hover:text-white"
-                      }`}
+                    title={collapsed ? item.label : undefined}
+                    aria-current={isActive ? "page" : undefined}
+                    className={`flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors ${
+                      collapsed ? "justify-center" : ""
+                    } ${
+                      isActive
+                        ? "bg-chrome-hover text-white shadow-[inset_3px_0_0_#F59E0B]"
+                        : "hover:bg-chrome-hover hover:text-white"
+                    }`}
                     onClick={closeMobile}
                   >
-                    <Icon className="h-5 w-5 shrink-0" />
+                    <Icon className="h-4 w-4 shrink-0" />
                     {!collapsed && <span className="truncate">{item.label}</span>}
                   </Link>
-                </div>
-              );
-            })}
+                );
+              })}
+            </div>
           </div>
         ))}
-        <div className="mt-auto h-8" />
       </nav>
     </div>
   );
@@ -211,15 +201,16 @@ export default function SidebarNav({
           ></div>
 
           {/* Sliding Sidebar */}
-          <div className="relative z-10 w-64 h-screen overflow-y-auto bg-neutral shadow-lg transform transition-transform duration-300 translate-x-0">
+          <div className="relative z-10 w-64 h-screen overflow-y-auto bg-chrome shadow-lg transform transition-transform duration-300 translate-x-0">
             <button
               onClick={closeMobile}
-              className="absolute top-2 right-2 text-muted-foreground hover:text-foreground"
+              aria-label="Close menu"
+              className="absolute top-3 right-3 z-10 text-chrome-muted hover:text-white"
             >
               <X className="h-5 w-5" />
             </button>
 
-            <div className="pb-20">
+            <div className="min-h-full">
               <SidebarContent
                 collapsed={false}
                 toggleCollapsed={toggleCollapsed}
