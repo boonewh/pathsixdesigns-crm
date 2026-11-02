@@ -14,21 +14,8 @@ import LeadsTable from "@/components/ui/LeadsTable";
 import PaginationControls from "@/components/ui/PaginationControls";
 import { formatPhoneNumber } from "@/lib/phoneUtils";
 import { useCRMConfig } from "@/config/crmConfig";
-
-// Map icon string names from config to actual emoji characters
-const ICON_MAP: Record<string, string> = {
-  'circle-yellow': '🟡',
-  'circle-blue': '🔵',
-  'circle-orange': '🟠',
-  'circle-red': '🔴',
-  'circle-green': '🟢',
-  'phone': '📞',
-  'fire': '🔥',
-  'sun': '☀️',
-  'snowflake': '❄️',
-};
-const resolveIcons = (icons: Record<string, string>) =>
-  Object.fromEntries(Object.entries(icons).map(([k, v]) => [k, ICON_MAP[v] || v]));
+import StatusBadge from "@/components/ui/StatusBadge";
+import { Button } from "@/components/ui/button";
 
 // Smart default for filter visibility based on screen size
 const getDefaultFilterVisibility = () => {
@@ -44,7 +31,7 @@ export default function Leads() {
   const LEAD_STATUS_CONFIG = {
     statuses: LEAD_STATUS_OPTIONS,
     colors: config.leads.statusConfig.colors,
-    icons: resolveIcons(config.leads.statusConfig.icons)
+    labels: config.leads.statusConfig.labels
   };
 
   const [leads, setLeads] = useState<Lead[]>([]);
@@ -276,14 +263,14 @@ export default function Leads() {
             <span className="hidden sm:inline">Filters</span>
             {showFilters ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
             {activeFiltersCount > 0 && (
-              <span className="bg-blue-600 text-white rounded-full px-1.5 py-0.5 text-xs min-w-[20px] text-center">
+              <span className="bg-primary text-primary-foreground rounded-full px-1.5 py-0.5 text-xs min-w-[20px] text-center">
                 {activeFiltersCount}
               </span>
             )}
           </button>
 
           {/* New Lead Button */}
-          <button
+          <Button
             onClick={() => {
               setCreating(true);
               setEditingId(null);
@@ -305,12 +292,11 @@ export default function Leads() {
                 lead_source: undefined,
               });
             }}
-            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 whitespace-nowrap"
           >
             <Plus size={16} />
             <span className="hidden sm:inline">New Lead</span>
             <span className="sm:hidden">New</span>
-          </button>
+          </Button>
         </div>
       </div>
 
@@ -497,13 +483,11 @@ export default function Leads() {
                       {lead.lead_status && (
                         <li className="flex items-center gap-2">
                           <Flag size={14} />
-                          <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
-                            LEAD_STATUS_CONFIG.colors[lead.lead_status as keyof typeof LEAD_STATUS_CONFIG.colors] ||
-                            'bg-gray-100 text-gray-800'
-                          }`}>
-                            {LEAD_STATUS_CONFIG.icons[lead.lead_status as keyof typeof LEAD_STATUS_CONFIG.icons]}
-                            {lead.lead_status.toUpperCase()}
-                          </span>
+                          <StatusBadge
+                            status={lead.lead_status}
+                            colorClass={LEAD_STATUS_CONFIG.colors[lead.lead_status]}
+                            label={LEAD_STATUS_CONFIG.labels?.[lead.lead_status]}
+                          />
                         </li>
                       )}
                       {lead.lead_source && (
@@ -673,17 +657,17 @@ export default function Leads() {
             </select>
 
             <div className="flex flex-col sm:flex-row justify-end gap-2">
-              <button
+              <Button
                 onClick={() => {
                   setShowAssignModal(false);
                   setSelectedUserId(null);
                   setSelectedLeadId(null);
                 }}
-                className="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400 order-2 sm:order-1"
+                variant="outline" className="order-2 sm:order-1"
               >
                 Cancel
-              </button>
-              <button
+              </Button>
+              <Button
                 disabled={!selectedUserId || isAssigning}
                 onClick={async () => {
                   setIsAssigning(true);
@@ -712,10 +696,10 @@ export default function Leads() {
                   }
                   setIsAssigning(false);
                 }}
-                className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50 order-1 sm:order-2"
+                className="order-1 sm:order-2"
               >
                 {isAssigning ? "Assigning…" : "Assign"}
-              </button>
+              </Button>
             </div>
           </div>
         </div>

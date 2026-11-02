@@ -13,16 +13,31 @@ Checks after every phase: `npm run typecheck`, `npm run lint`, `npm run build`,
 changed screens for review.
 
 ## Phase 1 — Theme cleanup (look only, no behavior change)
-- [ ] Set the theme tokens in `src/index.css` to the new palette: navy
+- [x] Set the theme tokens in `src/index.css` to the new palette: navy
       (logo color) for chrome, one blue for actions, neutral greys, and
       green/amber/red kept only for status.
-- [ ] Change lead status badges in `src/config/crmConfig.ts` from emoji
+- [x] Change lead status badges in `src/config/crmConfig.ts` from emoji
       (🟡 📞 🔴) to plain colored pills; drop the emoji map in `Leads.tsx`
       and `LeadsTable.tsx`.
-- [ ] Replace the hard-coded `bg-blue-600` / `bg-gray-300` buttons on the
+- [x] Replace the hard-coded `bg-blue-600` / `bg-gray-300` buttons on the
       Leads, Lead detail and Account detail pages with the existing
       `components/ui/button.tsx` variants (primary / outline / destructive).
       Other pages are left alone in this phase.
+
+Phase 1 notes (done):
+- Tokens: action blue, blue-tinted greys and darker navy text. Accent and
+  neutral are unchanged because the sidebar hover uses them; Phase 2 restyles it.
+- New `components/ui/StatusBadge.tsx`: colored pill with a dot and the status
+  label (tenant `statusConfig.labels`, else capitalized). It keeps each tenant's
+  own colors. Emoji no longer render on the Leads cards or table.
+- Buttons on the Leads / Lead detail / Account detail pages now use the shared
+  `Button` (primary = blue, secondary = outline). Convert went from green to
+  primary and Assign from yellow to outline. Added a gap between them.
+- `Button` outline hover changed from mid-blue to light grey.
+- Not yet changed: the emoji badges on the Accounts list, Accounts table and
+  Admin Leads pages (outside this phase's files). Same one-line swap if wanted.
+- Checks: typecheck and build pass; lint has the same 10 errors on these files
+  as before; all 43 browser tests pass.
 
 ## Phase 2 — Navigation (`SidebarNav.tsx`, `ProtectedLayout.tsx`)
 - [ ] Sidebar: navy background, plain text links (no grey boxes or
