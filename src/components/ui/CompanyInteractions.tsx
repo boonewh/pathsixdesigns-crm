@@ -18,6 +18,8 @@ type Props = {
   entityType: EntityType; // NEW: Update to use EntityType
   entityId: number;
   initialInteractions: Interaction[];
+  embedded?: boolean;
+  onCount?: (count: number) => void;
 };
 
 export default function EntityInteractions({
@@ -25,6 +27,8 @@ export default function EntityInteractions({
   entityType,
   entityId,
   initialInteractions,
+  embedded = false,
+  onCount,
 }: Props) {
   const config = useCRMConfig();
   const [interactions, setInteractions] = useState<Interaction[]>([]);
@@ -46,6 +50,10 @@ const [openMenuId, setOpenMenuId] = useState<number | null>(null);
     updatePerPage,
     updateSortOrder,
   } = usePagination(`${entityType}_interactions`);
+
+  useEffect(() => {
+    onCount?.(total);
+  }, [total, onCount]);
 
   const resetForm = () => {
     setEditDefaultValues(undefined);
@@ -184,11 +192,9 @@ const [openMenuId, setOpenMenuId] = useState<number | null>(null);
     }
   };
 
-  return (
-    <details className="bg-white rounded shadow-sm border">
-      <summary className="cursor-pointer px-4 py-2 font-semibold text-blue-700 bg-blue-50 hover:bg-blue-100 rounded-t flex items-center gap-2">
-        <CalendarPlus size={16} /> Interactions ({total})
-      </summary>
+  // embedded: render open, without the collapsible box (used inside record tabs)
+  const content = (
+    <>
 
       <div className="p-4 space-y-4">
         {showForm && (
@@ -407,6 +413,17 @@ const [openMenuId, setOpenMenuId] = useState<number | null>(null);
           />
         )}
       </div>
+    </>
+  );
+
+  if (embedded) return content;
+
+  return (
+    <details className="bg-white rounded shadow-sm border">
+      <summary className="cursor-pointer px-4 py-2 font-semibold text-blue-700 bg-blue-50 hover:bg-blue-100 rounded-t flex items-center gap-2">
+        <CalendarPlus size={16} /> Interactions ({total})
+      </summary>
+      {content}
     </details>
   );
 }

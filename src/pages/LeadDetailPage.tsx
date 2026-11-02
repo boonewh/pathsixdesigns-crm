@@ -1,14 +1,5 @@
 import { useEffect, useRef, useState } from "react";
 import { useParams, Link } from "react-router-dom";
-import {
-  Mail,
-  Phone,
-  MapPin,
-  User,
-  UserCheck,
-  FolderKanban,
-  Wrench,
-} from "lucide-react";
 import { useAuth, userHasRole } from "@/authContext";
 import toast from "react-hot-toast";
 import { Lead, Interaction } from "@/types";
@@ -19,6 +10,8 @@ import CompanyInteractions from "@/components/ui/CompanyInteractions";
 import CompanyContacts from "@/components/ui/CompanyContacts";
 import { useCRMConfig } from "@/config/crmConfig";
 import { Button } from "@/components/ui/button";
+import StatusBadge from "@/components/ui/StatusBadge";
+import { RecordHeader, RecordFields, RecordTabs, StagePath, ProjectList } from "@/components/ui/RecordLayout";
 
 export default function LeadDetailPage() {
   const { id } = useParams();
@@ -42,6 +35,9 @@ export default function LeadDetailPage() {
   const [projectLoadError, setProjectLoadError] = useState("");
 
   const [isAssigning, setIsAssigning] = useState(false);
+  const [savingStage, setSavingStage] = useState(false);
+  const [interactionCount, setInteractionCount] = useState<number | undefined>(undefined);
+  const [contactCount, setContactCount] = useState<number | undefined>(undefined);
 
   useEffect(() => {
     if (!id) return;
@@ -120,6 +116,40 @@ export default function LeadDetailPage() {
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+
+  const saveTitle = async () => {
+    const res = await apiFetch(`/leads/${id}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ contact_title: newTitle }),
+    });
+    if (res.ok) {
+      setLead((prev) => prev && { ...prev, contact_title: newTitle });
+      setEditingTitle(false);
+    } else {
+      alert("Failed to update title.");
+    }
+  };
+
+  const changeStage = async (stage: string) => {
+    setSavingStage(true);
+    const res = await apiFetch(`/leads/${id}`, {
+      method: "PUT",
+      headers: { Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ lead_status: stage }),
+    });
+    if (res.ok) {
+      setLead((prev) => prev && { ...prev, lead_status: stage });
+      const label = config.leads.statusConfig.labels?.[stage] || stage.charAt(0).toUpperCase() + stage.slice(1);
+      toast.success(`Status changed to ${label}`);
+    } else {
+      toast.error("Couldn't change the status. Please try again.");
+    }
+    setSavingStage(false);
+  };
 
   const saveNote = async () => {
     const res = await apiFetch(`/leads/${id}`, {
@@ -211,229 +241,206 @@ export default function LeadDetailPage() {
   if (!lead) return <p className="p-6">Loading...</p>;
 
   return (
-    <div className="p-6 space-y-6">
-      <h1 className="text-2xl font-bold">{lead.name}</h1>
-      <div className="flex items-center gap-2 text-sm text-gray-600 mt-1">
-        <Wrench size={14} className="text-gray-500" />
-        <span className="text-gray-500 font-medium">Type:</span>{" "}
-        {lead.type || "None"}
+    <div className="p-4 lg:p-6 space-y-4">
+      <div className="text-xs text-muted-foreground">
+        <Link to="/leads" className="hover:underline">Leads</Link> / {lead.name}
       </div>
-      {lead.assigned_to_name && (
-        <div className="flex items-center gap-2 text-sm text-gray-600 mt-1">
-          <UserCheck size={14} className="text-gray-500" />
-          <span className="text-gray-500 font-medium">Assigned To:</span>{" "}
-          {lead.assigned_to_name}
-        </div>
-      )}
-      <ul className="text-sm text-gray-700 space-y-1">
-        {lead.contact_person && (
-          <li className="flex items-start gap-2">
-            <User size={14} className="mt-[2px]" />
-            <div className="leading-tight">
-              <div>{lead.contact_person}</div>
-              {editingTitle ? (
-                <div className="mt-1 flex items-center gap-2">
-                  <input
-                    type="text"
-                    className="border px-2 py-1 rounded text-sm"
-                    value={newTitle}
-                    onChange={(e) => setNewTitle(e.target.value)}
-                  />
-                  <button
-                    className="text-blue-600 text-sm"
-                    onClick={async () => {
-                      const res = await apiFetch(`/leads/${id}`, {
-                        method: "PUT",
-                        headers: {
-                          "Content-Type": "application/json",
-                          Authorization: `Bearer ${token}`,
-                        },
-                        body: JSON.stringify({ contact_title: newTitle }),
-                      });
-                      if (res.ok) {
-                        setLead((prev) => prev && { ...prev, contact_title: newTitle });
-                        setEditingTitle(false);
-                      } else {
-                        alert("Failed to update title.");
-                      }
-                    }}
-                  >
-                    Save
-                  </button>
-                  <button
-                    className="text-gray-500 text-sm"
-                    onClick={() => {
-                      setNewTitle(lead.contact_title || "");
-                      setEditingTitle(false);
-                    }}
-                  >
-                    Cancel
-                  </button>
-                </div>
-              ) : (
-                lead.contact_title && (
-                  <div
-                    className="text-gray-500 text-sm italic hover:underline cursor-pointer"
-                    onClick={() => setEditingTitle(true)}
-                  >
-                    {lead.contact_title}
-                  </div>
-                )
-              )}
-            </div>
-          </li>
-        )}
-        {lead.email && (
-          <li className="flex items-center gap-2">
-            <Mail size={14} />
-            <a href={`mailto:${lead.email}`} className="text-blue-600 underline">
-              {lead.email}
-            </a>
-          </li>
-        )}
 
-        {lead.phone && (
-          <li className="flex items-start gap-2">
-            <Phone size={14} className="mt-[2px]" />
-            <div className="leading-tight">
-              <div>
-                <a href={`tel:${lead.phone}`} className="text-blue-600 underline">
-                  {formatPhoneNumber(lead.phone)}
-                </a>
-                {lead.phone_label && (
-                  <span className="text-muted-foreground text-sm ml-1">
-                    ({lead.phone_label})
-                  </span>
-                )}
-              </div>
-              {lead.secondary_phone && (
-                <div>
-                  
-                  <a href={`tel:${lead.secondary_phone}`}
-                    className="text-blue-600 underline"
-                  >
-                    {formatPhoneNumber(lead.secondary_phone)}
-                  </a>
-                  {lead.secondary_phone_label && (
-                    <span className="text-muted-foreground text-sm ml-1">
-                      ({lead.secondary_phone_label})
-                    </span>
-                  )}
-                </div>
-              )}
-            </div>
-          </li>
-        )}
-
-        <li className="flex items-start gap-2">
-          <MapPin size={14} className="mt-[2px]" />
-          <div className="leading-tight">
-            {lead.address && <div>{lead.address}</div>}
-            <div>{[lead.city, lead.state].filter(Boolean).join(", ")} {lead.zip}</div>
-          </div>
-        </li>
-      </ul>
-
-      <CompanyInteractions
-        token={token!}
-        entityType="lead"
-        entityId={lead.id}
-        initialInteractions={interactions}
-      />
-
-      <CompanyNotes
-        notes={noteDraft}
-        onSave={saveNote}
-        isEditing={isEditingNote}
-        setIsEditing={setIsEditingNote}
-        onDelete={deleteNote}
-        menuRef={menuRef}
-        showMenu={showNoteMenu}
-        setShowMenu={setShowNoteMenu}
-        setNoteDraft={setNoteDraft}
-      />
-
-      <CompanyContacts
-        token={token!}
-        entityType="lead"
-        entityId={lead.id}
-      />
-
-
-      <details className="bg-white rounded shadow-sm border">
-        <summary className="cursor-pointer px-4 py-2 font-semibold text-blue-700 bg-blue-50 hover:bg-blue-100 rounded-t flex items-center gap-2">
-          <FolderKanban size={16} /> Projects ({projects.length})
-        </summary>
-
-        <div className="p-4 space-y-4">
-          {projectLoadError && (
-            <p className="text-sm text-red-600">{projectLoadError}</p>
-          )}
-
-          {projects.length === 0 && !projectLoadError ? (
-                          <p className="text-sm text-gray-500">
-                No projects found for this lead. Create new projects on the{" "}
-                <Link to="/projects" className="text-blue-600 hover:underline">
-                  Projects page
-                </Link>.
-              </p>
-          ) : (
-            <ul className="space-y-2 text-sm text-gray-800">
-              {projects.map((p) => (
-                <li key={p.id} className="border-b pb-2">
-                  <div className="font-medium text-blue-700">{p.project_name}</div>
-                  <div className="text-gray-600 italic">{p.project_status}</div>
-
-                  {p.project_description && (
-                    <div className="text-gray-700">{p.project_description}</div>
-                  )}
-
-                  <div className="text-gray-500 text-xs">
-                    Created: {new Date(p.created_at).toLocaleDateString()}
-                  </div>
-
-                  {p.project_start && (
-                    <div className="text-gray-500 text-xs">
-                      Start: {new Date(p.project_start).toLocaleDateString()}
-                    </div>
-                  )}
-
-                  {p.project_end && (
-                    <div className="text-gray-500 text-xs">
-                      End: {new Date(p.project_end).toLocaleDateString()}
-                    </div>
-                  )}
-
-                  {p.project_worth !== undefined && p.project_worth !== null && (
-                    <div className="text-gray-500 text-xs">
-                      Worth: ${p.project_worth.toLocaleString()}
-                      {p.value_type === 'monthly' && ' / mo'}
-                      {p.value_type === 'yearly' && ` / yr ($${(p.project_worth / 12).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} / mo)`}
-                    </div>
-                  )}
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
-      </details>
-
-
-      <Button
-        onClick={handleConvertToClient}
+      <RecordHeader
+        eyebrow="Lead"
+        title={lead.name}
+        actions={
+          <>
+            {userHasRole(user, "admin") && (
+              <Button variant="outline" onClick={() => setShowAssignModal(true)}>
+                Assign Lead
+              </Button>
+            )}
+            <Button onClick={handleConvertToClient}>{`Convert to ${config.labels.client}`}</Button>
+          </>
+        }
+        fields={[
+          {
+            label: "Status",
+            value: lead.lead_status ? (
+              <StatusBadge
+                status={lead.lead_status}
+                colorClass={config.leads.statusConfig.colors[lead.lead_status]}
+                label={config.leads.statusConfig.labels?.[lead.lead_status]}
+              />
+            ) : "—",
+          },
+          { label: "Source", value: lead.lead_source || "—" },
+          { label: "Owner", value: lead.assigned_to_name || "Unassigned" },
+          { label: "Type", value: lead.type || "None" },
+          { label: "Created", value: lead.created_at ? new Date(lead.created_at).toLocaleDateString() : "—" },
+        ]}
       >
-        {`Convert to ${config.labels.client}`}
-      </Button>
+        <StagePath
+          stages={config.leads.statuses.filter((s) => s !== "lost")}
+          current={lead.lead_status}
+          labels={config.leads.statusConfig.labels}
+          onSelect={changeStage}
+          disabled={savingStage}
+        />
+      </RecordHeader>
 
-      {userHasRole(user, "admin") && (
-        <Button
-          onClick={() => setShowAssignModal(true)}
-          variant="outline"
-          className="ml-2"
-        >
-          Assign Lead
-        </Button>
-      )}
+      <div className="grid gap-4 lg:grid-cols-[320px_minmax(0,1fr)] items-start">
+        <RecordFields
+          title="About"
+          fields={[
+            {
+              label: "Contact",
+              value: lead.contact_person ? (
+                <div className="leading-tight">
+                  <div>{lead.contact_person}</div>
+                  {editingTitle ? (
+                    <div className="mt-1 flex flex-wrap items-center gap-2">
+                      <input
+                        type="text"
+                        aria-label="Contact title"
+                        className="border px-2 py-1 rounded text-sm"
+                        value={newTitle}
+                        onChange={(e) => setNewTitle(e.target.value)}
+                      />
+                      <button className="text-primary text-sm" onClick={saveTitle}>
+                        Save
+                      </button>
+                      <button
+                        className="text-muted-foreground text-sm"
+                        onClick={() => {
+                          setNewTitle(lead.contact_title || "");
+                          setEditingTitle(false);
+                        }}
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  ) : (
+                    lead.contact_title && (
+                      <button
+                        className="text-muted-foreground text-sm hover:underline"
+                        onClick={() => setEditingTitle(true)}
+                      >
+                        {lead.contact_title}
+                      </button>
+                    )
+                  )}
+                </div>
+              ) : "—",
+            },
+            {
+              label: "Email",
+              value: lead.email ? (
+                <a href={`mailto:${lead.email}`} className="text-primary hover:underline">{lead.email}</a>
+              ) : "—",
+            },
+            {
+              label: "Phone",
+              value: lead.phone ? (
+                <div className="leading-tight space-y-0.5">
+                  <div>
+                    <a href={`tel:${lead.phone}`} className="text-primary hover:underline">
+                      {formatPhoneNumber(lead.phone)}
+                    </a>
+                    {lead.phone_label && <span className="text-muted-foreground ml-1">({lead.phone_label})</span>}
+                  </div>
+                  {lead.secondary_phone && (
+                    <div>
+                      <a href={`tel:${lead.secondary_phone}`} className="text-primary hover:underline">
+                        {formatPhoneNumber(lead.secondary_phone)}
+                      </a>
+                      {lead.secondary_phone_label && (
+                        <span className="text-muted-foreground ml-1">({lead.secondary_phone_label})</span>
+                      )}
+                    </div>
+                  )}
+                </div>
+              ) : "—",
+            },
+            {
+              label: "Address",
+              value:
+                lead.address || lead.city || lead.state || lead.zip ? (
+                  <div className="leading-tight">
+                    {lead.address && <div>{lead.address}</div>}
+                    <div>{[lead.city, lead.state].filter(Boolean).join(", ")} {lead.zip}</div>
+                  </div>
+                ) : "—",
+            },
+          ]}
+        />
+
+        <RecordTabs
+          tabs={[
+            {
+              key: "activity",
+              label: "Activity",
+              count: interactionCount,
+              content: (
+                <CompanyInteractions
+                  token={token!}
+                  entityType="lead"
+                  entityId={lead.id}
+                  initialInteractions={interactions}
+                  embedded
+                  onCount={setInteractionCount}
+                />
+              ),
+            },
+            {
+              key: "notes",
+              label: "Notes",
+              content: (
+                <CompanyNotes
+                  notes={noteDraft}
+                  onSave={saveNote}
+                  isEditing={isEditingNote}
+                  setIsEditing={setIsEditingNote}
+                  onDelete={deleteNote}
+                  menuRef={menuRef}
+                  showMenu={showNoteMenu}
+                  setShowMenu={setShowNoteMenu}
+                  setNoteDraft={setNoteDraft}
+                  embedded
+                />
+              ),
+            },
+            {
+              key: "contacts",
+              label: "Contacts",
+              count: contactCount,
+              content: (
+                <CompanyContacts
+                  token={token!}
+                  entityType="lead"
+                  entityId={lead.id}
+                  embedded
+                  onCount={setContactCount}
+                />
+              ),
+            },
+            {
+              key: "projects",
+              label: "Projects",
+              count: projects.length,
+              content: projectLoadError ? (
+                <p className="p-4 text-sm text-red-600">{projectLoadError}</p>
+              ) : (
+                <ProjectList
+                  projects={projects}
+                  empty={
+                    <>
+                      No projects found for this lead. Create new projects on the{" "}
+                      <Link to="/projects" className="text-primary hover:underline">Projects page</Link>.
+                    </>
+                  }
+                />
+              ),
+            },
+          ]}
+        />
+      </div>
 
       {showAssignModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">

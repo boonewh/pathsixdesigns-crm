@@ -13,10 +13,15 @@ type Props = {
   token: string;
   entityType: "client" | "lead";
   entityId: number;
+  embedded?: boolean;
+  onCount?: (count: number) => void;
 };
 
-export default function CompanyContacts({ token, entityType, entityId }: Props) {
+export default function CompanyContacts({ token, entityType, entityId, embedded = false, onCount }: Props) {
   const [contacts, setContacts] = useState<Contact[]>([]);
+  useEffect(() => {
+    onCount?.(contacts.length);
+  }, [contacts.length, onCount]);
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [openMenuId, setOpenMenuId] = useState<number | null>(null);
@@ -108,11 +113,9 @@ export default function CompanyContacts({ token, entityType, entityId }: Props) 
     }
   };
 
-  return (
-    <details className="bg-white rounded shadow-sm border">
-      <summary className="cursor-pointer px-4 py-2 font-semibold text-blue-700 bg-blue-50 hover:bg-blue-100 rounded-t flex items-center gap-2">
-        <UserPlus size={16} /> Additional Contacts ({contacts.length})
-      </summary>
+  // embedded: render open, without the collapsible box (used inside record tabs)
+  const content = (
+    <>
 
       <div className="p-4 space-y-4">
         {showForm && (
@@ -330,6 +333,17 @@ export default function CompanyContacts({ token, entityType, entityId }: Props) 
           ))}
         </ul>
       </div>
+    </>
+  );
+
+  if (embedded) return content;
+
+  return (
+    <details className="bg-white rounded shadow-sm border">
+      <summary className="cursor-pointer px-4 py-2 font-semibold text-blue-700 bg-blue-50 hover:bg-blue-100 rounded-t flex items-center gap-2">
+        <UserPlus size={16} /> Additional Contacts ({contacts.length})
+      </summary>
+      {content}
     </details>
   );
 }
