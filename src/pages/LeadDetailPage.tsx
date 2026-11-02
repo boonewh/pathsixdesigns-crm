@@ -18,6 +18,7 @@ import CompanyNotes from "@/components/ui/CompanyNotes";
 import CompanyInteractions from "@/components/ui/CompanyInteractions";
 import CompanyContacts from "@/components/ui/CompanyContacts";
 import { useCRMConfig } from "@/config/crmConfig";
+import { Button } from "@/components/ui/button";
 
 export default function LeadDetailPage() {
   const { id } = useParams();
@@ -418,20 +419,20 @@ export default function LeadDetailPage() {
       </details>
 
 
-      <button
+      <Button
         onClick={handleConvertToClient}
-        className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
       >
         {`Convert to ${config.labels.client}`}
-      </button>
+      </Button>
 
       {userHasRole(user, "admin") && (
-        <button
+        <Button
           onClick={() => setShowAssignModal(true)}
-          className="bg-yellow-600 text-white px-4 py-2 rounded hover:bg-yellow-700"
+          variant="outline"
+          className="ml-2"
         >
           Assign Lead
-        </button>
+        </Button>
       )}
 
       {showAssignModal && (
@@ -453,13 +454,13 @@ export default function LeadDetailPage() {
             </select>
 
             <div className="flex justify-end gap-2">
-              <button
+              <Button
                 onClick={() => setShowAssignModal(false)}
-                className="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400"
+                variant="outline"
               >
                 Cancel
-              </button>
-              <button
+              </Button>
+              <Button
                 disabled={!selectedUserId || isAssigning}
                 onClick={async () => {
                   setIsAssigning(true);
@@ -481,10 +482,9 @@ export default function LeadDetailPage() {
                   }
                   setIsAssigning(false);
                 }}
-                className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
               >
                 {isAssigning ? "Assigning…" : "Assign"}
-              </button>
+              </Button>
             </div>
           </div>
         </div>

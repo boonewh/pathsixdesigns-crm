@@ -18,6 +18,7 @@ import CompanyNotes from "@/components/ui/CompanyNotes";
 import CompanyInteractions from "@/components/ui/CompanyInteractions";
 import CompanyContacts from "@/components/ui/CompanyContacts";
 import CompanySubscriptions from "@/components/ui/CompanySubscriptions";
+import { Button } from "@/components/ui/button";
 
 export default function ClientDetailPage() {
   const { id } = useParams();
@@ -344,12 +345,12 @@ export default function ClientDetailPage() {
         </details>
 
         {userHasRole(user, "admin") && (
-          <button
+          <Button
             onClick={() => setShowAssignModal(true)}
-            className="bg-yellow-600 text-white px-4 py-2 rounded hover:bg-yellow-700"
+            variant="outline"
           >
             Assign {config.labels.client}
-          </button>
+          </Button>
         )}
       </div>
 
@@ -372,13 +373,13 @@ export default function ClientDetailPage() {
             </select>
 
             <div className="flex justify-end gap-2">
-              <button
+              <Button
                 onClick={() => setShowAssignModal(false)}
-                className="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400"
+                variant="outline"
               >
                 Cancel
-              </button>
-              <button
+              </Button>
+              <Button
                 disabled={!selectedUserId || isAssigning}
                 onClick={async () => {
                   setIsAssigning(true);
@@ -399,10 +400,9 @@ export default function ClientDetailPage() {
                   }
                   setIsAssigning(false);
                 }}
-                className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
               >
                 {isAssigning ? "Assigning…" : "Assign"}
-              </button>
+              </Button>
             </div>
           </div>
         </div>
