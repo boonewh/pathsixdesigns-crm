@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import EntityCard from "@/components/ui/EntityCard";
-import { Mail, Phone, MapPin, Flag, User, UserCheck, StickyNote, LayoutGrid, List, Plus, Filter, ChevronDown, ChevronUp, Radio } from "lucide-react";
+import { Mail, Phone, MapPin, Flag, User, UserCheck, StickyNote, LayoutGrid, List, Plus, Radio } from "lucide-react";
 import { useAuth, userHasRole } from "@/authContext";
 import toast from "react-hot-toast";
 import { Link } from "react-router-dom";
@@ -16,12 +16,6 @@ import { formatPhoneNumber } from "@/lib/phoneUtils";
 import { useCRMConfig } from "@/config/crmConfig";
 import StatusBadge from "@/components/ui/StatusBadge";
 import { Button } from "@/components/ui/button";
-
-// Smart default for filter visibility based on screen size
-const getDefaultFilterVisibility = () => {
-  if (typeof window === 'undefined') return true; // SSR fallback
-  return window.innerWidth >= 1024; // lg breakpoint
-};
 
 export default function Leads() {
   const config = useCRMConfig();
@@ -75,9 +69,6 @@ export default function Leads() {
   // Status and type filters (preserves user's filter choice)
   const { statusFilter, setStatusFilter } = useStatusFilter('leads');
 
-  // Smart filter visibility - default open on desktop, closed on mobile
-  const [showFilters, setShowFilters] = useState<boolean>(getDefaultFilterVisibility());
-
   const [editingId, setEditingId] = useState<number | null>(null);
   const [creating, setCreating] = useState(false);
   const [form, setForm] = useState<Partial<Lead>>({
@@ -105,22 +96,6 @@ export default function Leads() {
   const [selectedUserId, setSelectedUserId] = useState<number | null>(null);
   const [availableUsers, setAvailableUsers] = useState<{ id: number; email: string }[]>([]);
   const [isAssigning, setIsAssigning] = useState(false);
-
-  // Update filter visibility on window resize
-  useEffect(() => {
-    const handleResize = () => {
-      // Only auto-adjust if user hasn't manually toggled filters
-      const isLargeScreen = window.innerWidth >= 1024;
-      if (isLargeScreen && !showFilters) {
-        // Don't auto-open if user explicitly closed them
-      } else if (!isLargeScreen && showFilters) {
-        // Don't auto-close if user explicitly opened them
-      }
-    };
-
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, [showFilters]);
 
   useEffect(() => {
     const fetchLeads = async () => {
@@ -247,28 +222,9 @@ export default function Leads() {
   return (
     <div className="p-4 lg:p-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+      <div className="flex justify-between items-center gap-4 mb-4">
         <h1 className="text-2xl font-bold">Leads</h1>
-        <div className="flex gap-2 w-full sm:w-auto">
-          {/* Filters Toggle Button */}
-          <button
-            onClick={() => setShowFilters(!showFilters)}
-            className={`flex items-center gap-2 px-3 py-2 rounded-lg border transition-colors flex-1 sm:flex-none justify-center ${
-              activeFiltersCount > 0 
-                ? 'bg-blue-50 text-blue-700 border-blue-200' 
-                : 'bg-white border-gray-300 hover:bg-gray-50'
-            }`}
-          >
-            <Filter size={16} />
-            <span className="hidden sm:inline">Filters</span>
-            {showFilters ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-            {activeFiltersCount > 0 && (
-              <span className="bg-primary text-primary-foreground rounded-full px-1.5 py-0.5 text-xs min-w-[20px] text-center">
-                {activeFiltersCount}
-              </span>
-            )}
-          </button>
-
+        <div className="flex gap-2">
           {/* New Lead Button */}
           <Button
             onClick={() => {
@@ -302,10 +258,37 @@ export default function Leads() {
 
       {error && <p className="text-red-500 mb-4">{error}</p>}
 
-      {/* Collapsible Filters Panel */}
-      {showFilters && (
-        <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-6">
-          {/* Single Row: All Controls */}
+      {/* Status strip: click a status to filter the list (replaces the Status dropdown) */}
+      <div className="flex gap-1 overflow-x-auto rounded-lg border bg-white p-1 mb-3" role="group" aria-label="Filter by status">
+        {["all", ...LEAD_STATUS_OPTIONS].map((status) => {
+          const isActive = statusFilter === status;
+          const label = status === "all"
+            ? `All leads (${total})`
+            : LEAD_STATUS_CONFIG.labels?.[status] || status.charAt(0).toUpperCase() + status.slice(1);
+          return (
+            <button
+              key={status}
+              type="button"
+              aria-pressed={isActive}
+              onClick={() => setStatusFilter(status)}
+              className={`flex items-center gap-2 whitespace-nowrap rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
+                isActive ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted hover:text-foreground"
+              }`}
+            >
+              {status !== "all" && (
+                <span
+                  aria-hidden="true"
+                  className={`h-2 w-2 rounded-full bg-current ${isActive ? "" : (LEAD_STATUS_CONFIG.colors[status] || "").split(" ").find((c) => c.startsWith("text-")) || "text-gray-400"}`}
+                />
+              )}
+              {label}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Toolbar */}
+      <div className="mb-4">
           <div className="flex flex-wrap items-center gap-4">
             {/* View Toggle */}
             <div className="flex bg-white rounded-lg p-1 border shadow-sm">
@@ -331,26 +314,6 @@ export default function Leads() {
                 <List size={16} />
                 <span className="hidden sm:inline">Table</span>
               </button>
-            </div>
-
-            {/* Status Filter */}
-            <div className="flex items-center gap-2">
-              <label className="text-sm font-medium text-gray-700 whitespace-nowrap">Status:</label>
-              <select 
-                value={statusFilter} 
-                onChange={(e) => setStatusFilter(e.target.value)}
-                className="border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white shadow-sm min-w-32"
-              >
-                <option value="all">All ({total})</option>
-                {LEAD_STATUS_OPTIONS.map(status => {
-                  const count = leads.filter(l => l.lead_status === status).length;
-                  return (
-                    <option key={status} value={status}>
-                      {status.charAt(0).toUpperCase() + status.slice(1)} ({count})
-                    </option>
-                  );
-                })}
-              </select>
             </div>
 
             {/* Sort Control */}
@@ -400,15 +363,15 @@ export default function Leads() {
               </button>
             )}
           </div>
-        </div>
-      )}
+      </div>
 
       {/* Results Summary */}
       <div className="mb-4 text-sm text-gray-600">
         {statusFilter !== 'all' ? (
           <span>
-            Showing <span className="font-medium">{sortedLeads.length}</span> {statusFilter} leads 
-            <span className="text-gray-400">({total} total)</span>
+            Showing <span className="font-medium">{sortedLeads.length}</span>{" "}
+            {LEAD_STATUS_CONFIG.labels?.[statusFilter] || statusFilter} leads on this page{" "}
+            <span className="text-gray-400">({total} leads in total)</span>
           </span>
         ) : (
           <span>
@@ -416,21 +379,6 @@ export default function Leads() {
           </span>
         )}
       </div>
-
-      {total > perPage && (
-        <PaginationControls
-          currentPage={currentPage}
-          perPage={perPage}
-          total={total}
-          sortOrder={sortOrder}
-          onPageChange={setCurrentPage}
-          onPerPageChange={updatePerPage}
-          onSortOrderChange={updateSortOrder}
-          entityName="leads"
-          className="border-b pb-4 mb-4"
-        />
-      )}
-
 
       {/* Content */}
       {loading ? (
