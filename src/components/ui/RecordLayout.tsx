@@ -204,3 +204,43 @@ export function ProjectList({ projects, empty }: { projects: ProjectSummary[]; e
     </ul>
   );
 }
+
+// Grey placeholder in the shape of a record page, shown while it loads.
+export function RecordSkeleton() {
+  const bar = "rounded bg-muted";
+  return (
+    <div className="p-4 lg:p-6 space-y-4 animate-pulse motion-reduce:animate-none" role="status" aria-label="Loading">
+      <div className={`h-3 w-40 ${bar}`} />
+      <div className="rounded-lg border bg-white p-5 space-y-4">
+        <div className="flex items-center gap-4">
+          <div className={`h-11 w-11 ${bar}`} />
+          <div className="space-y-2">
+            <div className={`h-3 w-16 ${bar}`} />
+            <div className={`h-6 w-64 ${bar}`} />
+          </div>
+        </div>
+        <div className="grid grid-cols-2 gap-4 border-t pt-4 sm:grid-cols-3 lg:grid-cols-5">
+          {Array.from({ length: 5 }, (_, i) => (
+            <div key={i} className="space-y-2">
+              <div className={`h-3 w-14 ${bar}`} />
+              <div className={`h-4 w-24 ${bar}`} />
+            </div>
+          ))}
+        </div>
+      </div>
+      <div className="grid gap-4 lg:grid-cols-[320px_minmax(0,1fr)] items-start">
+        <div className="rounded-lg border bg-white p-4 space-y-3">
+          {Array.from({ length: 4 }, (_, i) => (
+            <div key={i} className={`h-4 ${bar}`} />
+          ))}
+        </div>
+        <div className="rounded-lg border bg-white p-4 space-y-3">
+          <div className={`h-4 w-72 ${bar}`} />
+          {Array.from({ length: 3 }, (_, i) => (
+            <div key={i} className={`h-16 ${bar}`} />
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}

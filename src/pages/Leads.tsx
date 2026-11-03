@@ -167,9 +167,8 @@ export default function Leads() {
     setShowEditModal(true);
   };
 
+  // The card menu and the table each confirm before calling this, so it doesn't ask again.
   const handleDelete = async (id: number) => {
-    if (!confirm("Are you sure you want to delete this lead?")) return;
-
     const res = await apiFetch(`/leads/${id}`, {
       method: "DELETE",
       headers: { Authorization: `Bearer ${token}` },
@@ -178,8 +177,9 @@ export default function Leads() {
     if (res.ok) {
       setLeads((prev) => prev.filter((l) => l.id !== id));
       setTotal((prev) => prev - 1);
+      toast.success("Lead deleted. You can restore it from Deletes.");
     } else {
-      alert("Failed to delete lead");
+      toast.error("Couldn't delete this lead. Please try again.");
     }
   };
 
@@ -283,7 +283,10 @@ export default function Leads() {
             ? "All leads"
             : LEAD_STATUS_CONFIG.labels?.[status] || status.charAt(0).toUpperCase() + status.slice(1);
           // Real counts when the API provides them; otherwise only "All" shows a number.
-          const count = statusCounts
+          // No numbers while loading, so the page never flashes "0 leads".
+          const count = loading
+            ? null
+            : statusCounts
             ? status === "all"
               ? Object.values(statusCounts).reduce((sum, n) => sum + n, 0)
               : statusCounts[status] ?? 0
@@ -393,8 +396,8 @@ export default function Leads() {
           </div>
       </div>
 
-      {/* Results Summary */}
-      <div className="mb-4 text-sm text-gray-600">
+      {/* Results Summary (hidden while loading) */}
+      <div className={`mb-4 text-sm text-gray-600 ${loading ? "invisible" : ""}`}>
         {statusFilter !== 'all' && statusCounts ? (
           <span>
             Showing <span className="font-medium">{sortedLeads.length}</span> of {total}{" "}
@@ -415,11 +418,17 @@ export default function Leads() {
 
       {/* Content */}
       {loading ? (
-        <div className="flex items-center justify-center py-12">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-2"></div>
-            <p className="text-gray-500">Loading leads...</p>
-          </div>
+        <div className="rounded-lg border bg-white animate-pulse motion-reduce:animate-none" role="status" aria-label="Loading leads">
+          <div className="h-11 border-b bg-muted/60" />
+          {Array.from({ length: 6 }, (_, i) => (
+            <div key={i} className="flex items-center gap-6 border-b px-4 py-4 last:border-b-0">
+              <div className="h-4 w-48 rounded bg-muted" />
+              <div className="h-4 w-28 rounded bg-muted" />
+              <div className="h-5 w-20 rounded-full bg-muted" />
+              <div className="hidden sm:block h-4 w-24 rounded bg-muted" />
+              <div className="hidden md:block h-4 w-40 rounded bg-muted" />
+            </div>
+          ))}
         </div>
       ) : (
         <div className="space-y-4">
@@ -662,7 +671,7 @@ export default function Leads() {
                   });
 
                   if (res.ok) {
-                    toast.success("Lead assigned successfully");
+                    toast.success("Lead assigned");
                     setShowAssignModal(false);
                     setSelectedUserId(null);
                     setSelectedLeadId(null);
@@ -672,7 +681,7 @@ export default function Leads() {
                     const fullData = await updatedRes.json();
                     applyLeadList(fullData);
                   } else {
-                    alert("Failed to assign lead.");
+                    toast.error("Couldn't assign this lead. Please try again.");
                   }
                   setIsAssigning(false);
                 }}

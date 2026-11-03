@@ -60,7 +60,7 @@ PRs into `staging`. No database or schema change. Nothing goes to `main`.
 
 ---
 
-# UI refresh — corporate look and record-page UX (approved — staging only)
+# UI refresh — corporate look and record-page UX (done — staging only)
 
 Goal: make the CRM look and feel like a professional business product, based on
 the approved mockup (https://claude.ai/artifact/CiGydUE1YobSD9BExQTiy1).
@@ -195,11 +195,11 @@ Phase 4 notes (done):
   and after); all 43 browser tests pass; no overflow at 390px.
 
 ## Phase 5 — Small UX polish on the touched pages
-- [ ] Replace `alert()` on the Leads / Lead detail / Account detail pages
+- [x] Replace `alert()` on the Leads / Lead detail / Account detail pages
       with `toast.error` / `toast.success` (Toaster already mounted in `main.tsx`).
-- [ ] After assigning a lead, update the page state instead of
+- [x] After assigning a lead, update the page state instead of
       `window.location.reload()`.
-- [ ] Replace "Loading..." text with simple skeleton placeholders on these pages.
+- [x] Replace "Loading..." text with simple skeleton placeholders on these pages.
 
 ## Not in this plan (need backend work, listed for a later decision)
 - Single `POST /leads/:id/convert` endpoint. Today Convert is 4 separate
@@ -213,7 +213,33 @@ Phase 4 notes (done):
 - Saved views, bulk actions, Ctrl+K search.
 
 ## Review
-(to be filled in when the work is done)
+All five phases are done and merged into `staging` (PRs #12–#15 and this one);
+nothing has gone to `main`/production.
+
+Phase 5 notes:
+- Leads, Lead and Account pages: every `alert()` is now a toast with a plain
+  "Couldn't … Please try again." message; successful delete/assign also toast.
+- Assigning a lead or account re-fetches just that record instead of
+  `window.location.reload()`, so the Owner updates in place.
+- New `RecordSkeleton` (in `RecordLayout.tsx`) replaces "Loading..." on the
+  Lead and Account pages; the Leads list shows skeleton table rows. Counts and
+  the "Showing X of Y" line are hidden while loading so it never shows "0 leads".
+- Bug fixed: a lead that failed to load left the Lead page on "Loading..."
+  forever (the error was only logged). It now shows a clear message, like the
+  Account page already did.
+- Bug fixed: deleting a lead asked "Are you sure?" twice (card/table confirm,
+  then `handleDelete` confirmed again). It now asks once.
+- `confirm()` dialogs for delete/convert are kept: they are deliberate
+  confirmations, not error messages.
+- New `tests/record-feedback.spec.ts` (3 tests: assign without reload, failed
+  save shows a toast not an alert, failed load shows an error). They fail on
+  the old code and pass on the new.
+- Checks: typecheck and build pass; lint unchanged on touched files (11 before
+  and after); 48 browser tests pass (45 existing + 3 new).
+
+Still open (needs backend or a decision): single "convert lead" endpoint,
+last-activity / next-step columns, lead value field, saved views and bulk
+actions, and the emoji status badges on the Accounts and Admin Leads pages.
 
 ---
 

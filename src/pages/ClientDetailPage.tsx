@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { useAuth, userHasRole } from "@/authContext";
+import toast from "react-hot-toast";
 import { useCRMConfig } from "@/config/crmConfig";
 import { Client, Interaction, Account } from "@/types";
 import { apiFetch } from "@/lib/api";
@@ -11,7 +12,7 @@ import CompanyContacts from "@/components/ui/CompanyContacts";
 import CompanySubscriptions from "@/components/ui/CompanySubscriptions";
 import { Button } from "@/components/ui/button";
 import StatusBadge from "@/components/ui/StatusBadge";
-import { RecordHeader, RecordFields, RecordTabs, ProjectList } from "@/components/ui/RecordLayout";
+import { RecordHeader, RecordFields, RecordTabs, ProjectList, RecordSkeleton } from "@/components/ui/RecordLayout";
 
 export default function ClientDetailPage() {
   const { id } = useParams();
@@ -118,12 +119,12 @@ export default function ClientDetailPage() {
       setClient((prev) => prev && { ...prev, contact_title: newTitle });
       setEditingTitle(false);
     } else {
-      alert("Failed to update title.");
+      toast.error("Couldn't save the contact title. Please try again.");
     }
   };
 
   if (loadError) return <p className="p-6 text-red-600">{loadError}</p>;
-  if (!client) return <p className="p-6">Loading...</p>;
+  if (!client) return <RecordSkeleton />;
 
   const clientStatusColors: Record<string, string> = {
     new: "bg-blue-100 text-blue-800",
@@ -285,7 +286,7 @@ export default function ClientDetailPage() {
                       if (res.ok) {
                         setClient((prev) => prev && { ...prev, notes: newNotes });
                       } else {
-                        alert("Failed to save notes.");
+                        toast.error("Couldn't save the notes. Please try again.");
                       }
                     }}
                     embedded
@@ -381,10 +382,16 @@ export default function ClientDetailPage() {
                   });
 
                   if (res.ok) {
+                    toast.success(`${config.labels.client} assigned`);
                     setShowAssignModal(false);
-                    window.location.reload();
+                    setSelectedUserId(null);
+                    // Reload just this record instead of the whole page.
+                    const updated = await apiFetch(`/clients/${id}`, {
+                      headers: { Authorization: `Bearer ${token}` },
+                    });
+                    if (updated.ok) setClient(await updated.json());
                   } else {
-                    alert(`Failed to assign ${config.labels.client.toLowerCase()}.`);
+                    toast.error(`Couldn't assign this ${config.labels.client.toLowerCase()}. Please try again.`);
                   }
                   setIsAssigning(false);
                 }}
