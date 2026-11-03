@@ -206,7 +206,8 @@ export default function ProtectedLayout() {
           </Menu>
         </header>
 
-        <main ref={mainRef} className="flex-1 p-6 overflow-y-auto">
+        {/* No frame padding on phones: pages keep their own margin, so content uses the full width. */}
+        <main ref={mainRef} className="flex-1 p-0 sm:p-6 overflow-y-auto">
           <Outlet />
         </main>
       </div>
