@@ -96,17 +96,35 @@ export default function Leads() {
   const [selectedUserId, setSelectedUserId] = useState<number | null>(null);
   const [availableUsers, setAvailableUsers] = useState<{ id: number; email: string }[]>([]);
   const [isAssigning, setIsAssigning] = useState(false);
+  // Per-status totals from the API. Null when the backend doesn't send them
+  // (older backend); the page then falls back to filtering the loaded page.
+  const [statusCounts, setStatusCounts] = useState<Record<string, number> | null>(null);
+
+  // The status filter is sent to the API so it covers every page, not just this one.
+  const leadsUrl =
+    `/leads/?page=${currentPage}&per_page=${perPage}&sort=${sortOrder}` +
+    (statusFilter !== "all" ? `&status=${encodeURIComponent(statusFilter)}` : "");
+
+  const applyLeadList = (data: { leads: Lead[]; total: number; status_counts?: Record<string, number> }) => {
+    setLeads(data.leads);
+    setTotal(data.total);
+    setStatusCounts(data.status_counts ?? null);
+  };
+
+  const changeStatusFilter = (status: string) => {
+    setStatusFilter(status);
+    setCurrentPage(1);
+  };
 
   useEffect(() => {
     const fetchLeads = async () => {
       setLoading(true);
       try {
-        const res = await apiFetch(`/leads/?page=${currentPage}&per_page=${perPage}&sort=${sortOrder}`, {
+        const res = await apiFetch(leadsUrl, {
           headers: { Authorization: `Bearer ${token}` },
         });
         const data = await res.json();
-        setLeads(data.leads);
-        setTotal(data.total);
+        applyLeadList(data);
         setError("");
       } catch (err) {
         setError("Failed to load leads");
@@ -125,7 +143,7 @@ export default function Leads() {
           setAvailableUsers([]);
         });
     }
-  }, [token, user, currentPage, perPage, sortOrder]);
+  }, [token, user, leadsUrl]);
 
 
   // Advanced filtering logic
@@ -178,12 +196,11 @@ export default function Leads() {
 
       if (!res.ok) throw new Error("Failed to save lead");
 
-      const updatedRes = await apiFetch(`/leads/?page=${currentPage}&per_page=${perPage}&sort=${sortOrder}`, {
+      const updatedRes = await apiFetch(leadsUrl, {
         headers: { Authorization: `Bearer ${token}` },
       });
       const fullData = await updatedRes.json();
-      setLeads(fullData.leads);
-      setTotal(fullData.total);
+      applyLeadList(fullData);
       handleCancel();
     } catch (err: any) {
       setError(err.message || "Failed to save lead");
@@ -214,7 +231,7 @@ export default function Leads() {
 
   // Clear all filters
   const clearAllFilters = () => {
-    setStatusFilter('all');
+    changeStatusFilter('all');
   };
 
   const activeFiltersCount = [statusFilter].filter(f => f !== 'all').length;
@@ -262,15 +279,23 @@ export default function Leads() {
       <div className="flex gap-1 overflow-x-auto rounded-lg border bg-white p-1 mb-3" role="group" aria-label="Filter by status">
         {["all", ...LEAD_STATUS_OPTIONS].map((status) => {
           const isActive = statusFilter === status;
-          const label = status === "all"
-            ? `All leads (${total})`
+          const name = status === "all"
+            ? "All leads"
             : LEAD_STATUS_CONFIG.labels?.[status] || status.charAt(0).toUpperCase() + status.slice(1);
+          // Real counts when the API provides them; otherwise only "All" shows a number.
+          const count = statusCounts
+            ? status === "all"
+              ? Object.values(statusCounts).reduce((sum, n) => sum + n, 0)
+              : statusCounts[status] ?? 0
+            : status === "all" && statusFilter === "all"
+              ? total
+              : null;
           return (
             <button
               key={status}
               type="button"
               aria-pressed={isActive}
-              onClick={() => setStatusFilter(status)}
+              onClick={() => changeStatusFilter(status)}
               className={`flex items-center gap-2 whitespace-nowrap rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
                 isActive ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted hover:text-foreground"
               }`}
@@ -281,7 +306,10 @@ export default function Leads() {
                   className={`h-2 w-2 rounded-full bg-current ${isActive ? "" : (LEAD_STATUS_CONFIG.colors[status] || "").split(" ").find((c) => c.startsWith("text-")) || "text-gray-400"}`}
                 />
               )}
-              {label}
+              {name}
+              {count !== null && (
+                <span className={`tabular-nums ${isActive ? "opacity-80" : "text-muted-foreground/80"}`}>{count}</span>
+              )}
             </button>
           );
         })}
@@ -367,7 +395,12 @@ export default function Leads() {
 
       {/* Results Summary */}
       <div className="mb-4 text-sm text-gray-600">
-        {statusFilter !== 'all' ? (
+        {statusFilter !== 'all' && statusCounts ? (
+          <span>
+            Showing <span className="font-medium">{sortedLeads.length}</span> of {total}{" "}
+            {LEAD_STATUS_CONFIG.labels?.[statusFilter] || statusFilter} leads
+          </span>
+        ) : statusFilter !== 'all' ? (
           <span>
             Showing <span className="font-medium">{sortedLeads.length}</span>{" "}
             {LEAD_STATUS_CONFIG.labels?.[statusFilter] || statusFilter} leads on this page{" "}
@@ -633,12 +666,11 @@ export default function Leads() {
                     setShowAssignModal(false);
                     setSelectedUserId(null);
                     setSelectedLeadId(null);
-                    const updatedRes = await apiFetch(`/leads/?page=${currentPage}&per_page=${perPage}&sort=${sortOrder}`, {
+                    const updatedRes = await apiFetch(leadsUrl, {
                       headers: { Authorization: `Bearer ${token}` },
                     });
                     const fullData = await updatedRes.json();
-                    setLeads(fullData.leads);
-                    setTotal(fullData.total);
+                    applyLeadList(fullData);
                   } else {
                     alert("Failed to assign lead.");
                   }

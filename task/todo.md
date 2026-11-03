@@ -1,4 +1,4 @@
-# Leads status filter + counts (backend + frontend) — PLAN, awaiting approval
+# Leads status filter + counts (backend + frontend) — done (staging PRs open)
 
 Why: the Leads page's status filter only filters the 10–50 leads on the current
 page, and per-status counts can't be shown, because `GET /api/leads/` only
@@ -9,30 +9,30 @@ Scope: staging only, in both repos. Branch `ccr-5934bc6a-eapcnw` in each repo,
 PRs into `staging`. No database or schema change. Nothing goes to `main`.
 
 ## Backend (boonewh/pathsix-backend)
-- [ ] `LeadService.list_mine(..., status=None)`: when `status` is given, filter
+- [x] `LeadService.list_mine(..., status=None)`: when `status` is given, filter
       `Lead.lead_status == status` before counting/paging, so `total` and the
       pages reflect the filter.
-- [ ] Also return `status_counts`: one count per status over the same leads the
+- [x] Also return `status_counts`: one count per status over the same leads the
       user can see (same tenant / own-or-assigned / not-deleted rules), ignoring
       the status filter and paging. One extra GROUP BY query.
-- [ ] Route `GET /api/leads/`: pass `request.args.get("status")` through.
+- [x] Route `GET /api/leads/`: pass `request.args.get("status")` through.
       Existing callers that don't send `status` get the same results as today,
       plus the new `status_counts` field.
-- [ ] Tests (PostgreSQL, existing `crm` fixture): filter returns only that
+- [x] Tests (PostgreSQL, existing `crm` fixture): filter returns only that
       status with the right total; counts cover all the user's statuses;
       another user's / tenant's leads never appear in results or counts.
-- [ ] Run the backend suite locally against PostgreSQL 16 before pushing.
+- [x] Run the backend suite locally against PostgreSQL 16 before pushing.
 - Admin `/api/leads/all` is unchanged (not used by the Leads page).
 
 ## Frontend (this repo)
-- [ ] `Leads.tsx`: send `status` with the list request when a status is picked;
+- [x] `Leads.tsx`: send `status` with the list request when a status is picked;
       reset to page 1 when the filter changes.
-- [ ] Status strip shows real counts from `status_counts` ("Qualified 12").
+- [x] Status strip shows real counts from `status_counts` ("Qualified 12").
       If the backend hasn't been deployed yet (no `status_counts`), the strip
       just shows names like today and the current-page filter still applies,
       so deploy order can't break the page.
-- [ ] Summary line drops "on this page" once the server is filtering.
-- [ ] Browser test for: status param sent, counts shown, page reset.
+- [x] Summary line drops "on this page" once the server is filtering.
+- [x] Browser test for: status param sent, counts shown, page reset.
 
 ## Deploy note
 - Backend staging is deployed with Fly (`fly.staging.toml`), not by merging.
@@ -40,7 +40,23 @@ PRs into `staging`. No database or schema change. Nothing goes to `main`.
   the frontend counts appear. The frontend works either way.
 
 ## Review
-(to be filled in when the work is done)
+- Backend PR boonewh/pathsix-backend#31 (into `staging`): `list_mine` takes an
+  optional `status`, applied before counting/paging, and returns
+  `status_counts` over the same visible leads (one GROUP BY). Route passes
+  `?status=` through; callers without it get the same leads as before.
+  New `tests/test_lead_status_filter.py` (3 tests) fail on the old code and
+  pass on the new. Full suite locally on PostgreSQL 16 with RLS and the
+  restricted runtime role (same setup as CI): 612 passed (609 before + 3).
+- Frontend (this repo): one `leadsUrl` used by all three list requests (load,
+  after save, after assign) adds `&status=`; changing the filter resets to
+  page 1; the strip shows real counts from `status_counts`; the summary reads
+  "Showing X of N Qualified leads". Without `status_counts` (backend not yet
+  deployed) it keeps the old page-only behaviour, so deploy order is safe.
+  New `tests/lead-status-filter.spec.ts` covers both cases.
+  Checks: typecheck and build pass; lint unchanged (4 before and after);
+  45 browser tests pass (43 existing + 2 new).
+- Deploy: after the backend PR merges, staging needs a Fly deploy
+  (`fly.staging.toml`) before the counts appear.
 
 ---
 
