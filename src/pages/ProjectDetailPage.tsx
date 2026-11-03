@@ -1,40 +1,16 @@
 import { useEffect, useRef, useState } from "react";
-import { useParams } from "react-router-dom";
-import {
-  Mail,
-  Phone,
-  User,
-  CalendarDays,
-  DollarSign,
-  Wrench,
-  Building,
-} from "lucide-react";
+import { useParams, Link } from "react-router-dom";
 import { useAuth, userHasRole } from "@/authContext";
 import { Project, Interaction } from "@/types";
 import { apiFetch } from "@/lib/api";
 import CompanyNotes from "@/components/ui/CompanyNotes";
 import CompanyInteractions from "@/components/ui/CompanyInteractions";
 import { toast } from "react-hot-toast";
-import { PROJECT_STATUSES } from "@/schemas/projectSchemas";
 import { useCRMConfig } from "@/config/crmConfig";
-
-const PROJECT_STATUS_CONFIG = {
-  statuses: PROJECT_STATUSES,
-  colors: {
-    active: "bg-blue-100 text-blue-800",
-    pending: "bg-yellow-100 text-yellow-800",
-    completed: "bg-green-100 text-green-800",
-    cancelled: "bg-red-100 text-red-800",
-    lost: "bg-red-100 text-red-800",
-  },
-  labels: {
-    active: "Active",
-    pending: "Pending",
-    completed: "Completed",
-    cancelled: "Cancelled",
-    lost: "Lost",
-  },
-};
+import StatusBadge from "@/components/ui/StatusBadge";
+import { Button } from "@/components/ui/button";
+import { RecordHeader, RecordFields, RecordTabs, RecordSkeleton } from "@/components/ui/RecordLayout";
+import { PROJECT_STATUS_COLORS, PROJECT_STATUS_LABELS, formatProjectValue } from "@/lib/projectStatus";
 
 export default function ProjectDetailPage() {
   const { id } = useParams();
@@ -56,6 +32,7 @@ export default function ProjectDetailPage() {
 
   const [loadError, setLoadError] = useState("");
   const [isAssigning, setIsAssigning] = useState(false);
+  const [interactionCount, setInteractionCount] = useState<number | undefined>(undefined);
 
   
   useEffect(() => {
@@ -133,7 +110,7 @@ export default function ProjectDetailPage() {
       setProject((prev) => prev && { ...prev, notes: noteDraft });
       setIsEditingNote(false);
     } else {
-      toast.error("Failed to save notes");
+      toast.error("Couldn't save the notes. Please try again.");
     }
   };
 
@@ -148,7 +125,7 @@ export default function ProjectDetailPage() {
       setNoteDraft("");
       setIsEditingNote(false);
     } else {
-      toast.error("Failed to delete notes");
+      toast.error("Couldn't delete the notes. Please try again.");
     }
   };
 
@@ -210,13 +187,19 @@ export default function ProjectDetailPage() {
 
       window.location.href = `/clients/${newClient.id}`;
     } else {
-      toast.error("Failed to convert project to account.");
+      toast.error(`Couldn't convert this project to ${config.labels.client.toLowerCase()}. Please try again.`);
     }
   };
 
-  if (loadError) return <p className="p-6 text-red-600">{loadError}</p>;
   if (!id) return <p className="p-6 text-red-600">Invalid project ID.</p>;
-  if (!project) return <p className="p-6">Loading...</p>;
+  if (loadError) {
+    return (
+      <p className="p-6 text-red-600">
+        This project couldn't be loaded. It may have been deleted, or you may not have access to it.
+      </p>
+    );
+  }
+  if (!project) return <RecordSkeleton />;
 
   const handleAssignProject = async () => {
     if (!project || !selectedUserId) return;
@@ -236,232 +219,209 @@ export default function ProjectDetailPage() {
       setSelectedUserId(null);
       toast.success("Project assigned");
     } else {
-      toast.error("Failed to assign project");
+      toast.error("Couldn't assign this project. Please try again.");
     }
     setIsAssigning(false);
   };
 
+  const saveTitle = async () => {
+    const res = await apiFetch(`/projects/${id}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ primary_contact_title: newTitle }),
+    });
+    if (res.ok) {
+      setProject((prev) => prev && { ...prev, primary_contact_title: newTitle });
+      setEditingTitle(false);
+    } else {
+      toast.error("Couldn't save the contact title. Please try again.");
+    }
+  };
+
+  const status = project.project_status || "pending";
+  const isStandalone = !project.client_id && !project.lead_id;
+  const value = formatProjectValue(project.project_worth, project.value_type);
+  const formatDate = (d?: string) => (d ? new Date(d).toLocaleDateString() : null);
+  const dates = [formatDate(project.project_start), formatDate(project.project_end)].filter(Boolean).join(" – ");
 
   return (
-    <div className="p-6 space-y-6">
-      <h1 className="text-2xl font-bold">{project.project_name}</h1>
-      
-      {/* Project Type */}
-      <div className="flex items-center gap-2 text-sm text-gray-600 mt-1">
-        <Wrench size={14} className="text-gray-500" />
-        <span className="text-gray-500 font-medium">Type:</span>{" "}
-        {project.type || "None"}
+    <div className="p-4 lg:p-6 space-y-4">
+      <div className="text-xs text-muted-foreground">
+        <Link to="/projects" className="hover:underline">Projects</Link> / {project.project_name}
       </div>
 
-      {/* Project Status and Value */}
-      <div className="flex items-center gap-4 text-sm text-gray-600">
-        <div className="flex items-center gap-2">
-          <Building size={14} className="text-gray-500" />
-          <span className="text-gray-500 font-medium">Status:</span>{" "}
-          {project.project_status ? (
-            <span
-              className={`px-2 py-1 text-xs rounded ${
-                PROJECT_STATUS_CONFIG.colors[project.project_status as keyof typeof PROJECT_STATUS_CONFIG.colors] ||
-                'bg-gray-100 text-gray-800'
-              }`}
-            >
-              {PROJECT_STATUS_CONFIG.labels[project.project_status as keyof typeof PROJECT_STATUS_CONFIG.labels] ||
-                project.project_status}
-            </span>
-          ) : (
-            <span className="px-2 py-1 text-xs rounded bg-gray-100 text-gray-800">Pending</span>
-          )}
-        </div>
-        
-        {project.project_worth && (
-          <div className="flex items-center gap-2">
-            <DollarSign size={14} className="text-gray-500" />
-            <span className="text-gray-500 font-medium">Value:</span>{" "}
-            ${project.project_worth.toLocaleString()}
-            {project.value_type === 'monthly' && <span className="text-gray-400 text-xs">/ mo</span>}
-            {project.value_type === 'yearly' && (
-              <>
-                <span className="text-gray-400 text-xs">/ yr</span>
-                <span className="text-gray-400 text-xs">
-                  (${(project.project_worth / 12).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} / mo)
-                </span>
-              </>
+      <RecordHeader
+        eyebrow="Project"
+        title={project.project_name}
+        actions={
+          <>
+            {userHasRole(user, "admin") && (
+              <Button variant="outline" onClick={() => setShowAssignModal(true)}>
+                Assign Project
+              </Button>
             )}
-          </div>
-        )}
-      </div>
+            {isStandalone && (
+              <Button onClick={handleConvertToClient}>{`Convert to ${config.labels.client}`}</Button>
+            )}
+          </>
+        }
+        fields={[
+          {
+            label: "Status",
+            value: <StatusBadge status={status} colorClass={PROJECT_STATUS_COLORS[status]} label={PROJECT_STATUS_LABELS[status]} />,
+          },
+          {
+            label: "Value",
+            value: value ? (
+              <span title={project.value_type === "yearly" && project.project_worth
+                ? `$${(project.project_worth / 12).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} / mo`
+                : undefined}>
+                {value}
+              </span>
+            ) : "—",
+          },
+          { label: "Dates", value: dates || "—" },
+          {
+            label: "Linked to",
+            value: project.client_id && project.client_name ? (
+              <Link to={`/clients/${project.client_id}`} className="text-primary hover:underline">{project.client_name}</Link>
+            ) : project.lead_id && project.lead_name ? (
+              <Link to={`/leads/${project.lead_id}`} className="text-primary hover:underline">{project.lead_name} (lead)</Link>
+            ) : (
+              "Standalone"
+            ),
+          },
+          { label: "Owner", value: project.assigned_to_name || "Unassigned" },
+        ]}
+      />
 
-      {/* Project Description */}
-      {project.project_description && (
-        <div className="text-sm text-gray-700 bg-gray-50 p-3 rounded">
-          <strong>Description:</strong> {project.project_description}
-        </div>
-      )}
-
-      {/* Project Timeline */}
-      <ul className="text-sm text-gray-700 space-y-1">
-        {(project.project_start || project.project_end) && (
-          <li className="flex items-start gap-2">
-            <CalendarDays size={14} className="mt-[2px]" />
-            <div className="leading-tight">
-              {project.project_start && (
-                <div>Start: {new Date(project.project_start).toLocaleDateString()}</div>
-              )}
-              {project.project_end && (
-                <div>End: {new Date(project.project_end).toLocaleDateString()}</div>
-              )}
-            </div>
-          </li>
-        )}
-      </ul>
-
-      {/* Contact Information - Only for standalone projects */}
-      {!project.client_id && !project.lead_id && (
-        <>
-          <h2 className="text-lg font-semibold text-gray-800 border-b pb-2">Primary Contact</h2>
-          <ul className="text-sm text-gray-700 space-y-1">
-            {project.primary_contact_name && (
-              <li className="flex items-start gap-2">
-                <User size={14} className="mt-[2px]" />
-                <div className="leading-tight">
-                  <div>{project.primary_contact_name}</div>
-                  {editingTitle ? (
-                    <div className="mt-1 flex items-center gap-2">
-                      <input
-                        type="text"
-                        className="border px-2 py-1 rounded text-sm"
-                        value={newTitle}
-                        onChange={(e) => setNewTitle(e.target.value)}
-                      />
-                      <button
-                        className="text-blue-600 text-sm"
-                        onClick={async () => {
-                          const res = await apiFetch(`/projects/${id}`, {
-                            method: "PUT",
-                            headers: {
-                              "Content-Type": "application/json",
-                              Authorization: `Bearer ${token}`,
-                            },
-                            body: JSON.stringify({ primary_contact_title: newTitle }),
-                          });
-                          if (res.ok) {
-                            setProject((prev) => prev && { ...prev, primary_contact_title: newTitle });
-                            setEditingTitle(false);
-                          } else {
-                            toast.error("Failed to update title.");
-                          }
-                        }}
-                      >
-                        Save
-                      </button>
-                      <button
-                        className="text-gray-500 text-sm"
-                        onClick={() => {
-                          setNewTitle(project.primary_contact_title || "");
-                          setEditingTitle(false);
-                        }}
-                      >
-                        Cancel
-                      </button>
-                    </div>
-                  ) : (
-                    project.primary_contact_title && (
-                      <div
-                        className="text-gray-500 text-sm italic hover:underline cursor-pointer"
-                        onClick={() => setEditingTitle(true)}
-                      >
-                        {project.primary_contact_title}
+      <div className="grid gap-4 lg:grid-cols-[320px_minmax(0,1fr)] items-start">
+        <RecordFields
+          title="About"
+          fields={[
+            { label: "Type", value: project.type || "None" },
+            { label: "Description", value: project.project_description || "—" },
+            ...(project.value_type === "yearly" && project.project_worth
+              ? [{
+                  label: "Per month",
+                  value: `$${(project.project_worth / 12).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+                }]
+              : []),
+            ...(isStandalone
+              ? [
+                  {
+                    label: "Contact",
+                    value: project.primary_contact_name ? (
+                      <div className="leading-tight">
+                        <div>{project.primary_contact_name}</div>
+                        {editingTitle ? (
+                          <div className="mt-1 flex flex-wrap items-center gap-2">
+                            <input
+                              type="text"
+                              aria-label="Contact title"
+                              className="border px-2 py-1 rounded text-sm"
+                              value={newTitle}
+                              onChange={(e) => setNewTitle(e.target.value)}
+                            />
+                            <button className="text-primary text-sm" onClick={saveTitle}>
+                              Save
+                            </button>
+                            <button
+                              className="text-muted-foreground text-sm"
+                              onClick={() => {
+                                setNewTitle(project.primary_contact_title || "");
+                                setEditingTitle(false);
+                              }}
+                            >
+                              Cancel
+                            </button>
+                          </div>
+                        ) : (
+                          project.primary_contact_title && (
+                            <button
+                              className="text-muted-foreground text-sm hover:underline"
+                              onClick={() => setEditingTitle(true)}
+                            >
+                              {project.primary_contact_title}
+                            </button>
+                          )
+                        )}
                       </div>
-                    )
-                  )}
-                </div>
-              </li>
-            )}
-
-            {project.primary_contact_email && (
-              <li className="flex items-center gap-2">
-                <Mail size={14} />
-                <a href={`mailto:${project.primary_contact_email}`} className="text-blue-600 underline">
-                  {project.primary_contact_email}
-                </a>
-              </li>
-            )}
-
-            {project.primary_contact_phone && (
-              <li className="flex items-start gap-2">
-                <Phone size={14} className="mt-[2px]" />
-                <div className="leading-tight">
-                  <div>
-                    <a href={`tel:${project.primary_contact_phone}`} className="text-blue-600 underline">
-                      {project.primary_contact_phone}
-                    </a>
-                    {project.primary_contact_phone_label && (
-                      <span className="text-muted-foreground text-sm ml-1">
-                        ({project.primary_contact_phone_label})
+                    ) : "—",
+                  },
+                  {
+                    label: "Email",
+                    value: project.primary_contact_email ? (
+                      <a href={`mailto:${project.primary_contact_email}`} className="text-primary hover:underline">
+                        {project.primary_contact_email}
+                      </a>
+                    ) : "—",
+                  },
+                  {
+                    label: "Phone",
+                    value: project.primary_contact_phone ? (
+                      <span>
+                        <a href={`tel:${project.primary_contact_phone}`} className="text-primary hover:underline">
+                          {project.primary_contact_phone}
+                        </a>
+                        {project.primary_contact_phone_label && (
+                          <span className="text-muted-foreground ml-1">({project.primary_contact_phone_label})</span>
+                        )}
                       </span>
-                    )}
-                  </div>
-                </div>
-              </li>
-            )}
-          </ul>
-        </>
-      )}
+                    ) : "—",
+                  },
+                ]
+              : []),
+            { label: "Created", value: formatDate(project.created_at) || "—" },
+          ]}
+        />
 
-      {/* Linked Entity Information */}
-      {(project.client_id || project.lead_id) && (
-        <>
-          <h2 className="text-lg font-semibold text-gray-800 border-b pb-2">Linked Entity</h2>
-          <div className="text-sm text-gray-700">
-            {project.client_id && project.client_name && (
-              <p>
-                <strong>{config.labels.client}:</strong>{" "}
-                <a href={`/clients/${project.client_id}`} className="text-blue-600 hover:underline">
-                  {project.client_name}
-                </a>
-              </p>
-            )}
-            {project.lead_id && project.lead_name && (
-              <p>
-                <strong>Lead:</strong>{" "}
-                <a href={`/leads/${project.lead_id}`} className="text-blue-600 hover:underline">
-                  {project.lead_name}
-                </a>
-              </p>
-            )}
-          </div>
-        </>
-      )}
-
-      {project.assigned_to_name && (
-        <div className="text-sm text-gray-600">
-          <strong>Assigned to:</strong> {project.assigned_to_name}
-        </div>
-      )}
-
-      <CompanyInteractions
-        token={token!}
-        entityType="project"
-        entityId={project.id}
-        initialInteractions={interactions}
-      />
-
-      <CompanyNotes
-        notes={project.notes || ""}
-        noteDraft={noteDraft}
-        onSave={saveNote}
-        isEditing={isEditingNote}
-        setIsEditing={setIsEditingNote}
-        onDelete={deleteNote}
-        menuRef={menuRef}
-        showMenu={showNoteMenu}
-        setShowMenu={setShowNoteMenu}
-        setNoteDraft={setNoteDraft}
-      />
+        <RecordTabs
+          tabs={[
+            {
+              key: "activity",
+              label: "Activity",
+              count: interactionCount,
+              content: (
+                <CompanyInteractions
+                  token={token!}
+                  entityType="project"
+                  entityId={project.id}
+                  initialInteractions={interactions}
+                  embedded
+                  onCount={setInteractionCount}
+                />
+              ),
+            },
+            {
+              key: "notes",
+              label: "Notes",
+              content: (
+                <CompanyNotes
+                  notes={project.notes || ""}
+                  noteDraft={noteDraft}
+                  onSave={saveNote}
+                  isEditing={isEditingNote}
+                  setIsEditing={setIsEditingNote}
+                  onDelete={deleteNote}
+                  menuRef={menuRef}
+                  showMenu={showNoteMenu}
+                  setShowMenu={setShowNoteMenu}
+                  setNoteDraft={setNoteDraft}
+                  embedded
+                />
+              ),
+            },
+          ]}
+        />
+      </div>
 
       {showAssignModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-lg p-6 w-[90%] max-w-md">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-md">
             <h2 className="text-lg font-semibold mb-4">Assign Project</h2>
 
             <select
@@ -470,53 +430,24 @@ export default function ProjectDetailPage() {
               className="w-full px-3 py-2 border border-gray-300 rounded mb-4"
             >
               <option value="">Select a user</option>
-              {availableUsers.map((user) => (
-                <option key={user.id} value={user.id}>
-                  {user.email}
+              {availableUsers.map((u) => (
+                <option key={u.id} value={u.id}>
+                  {u.email}
                 </option>
               ))}
             </select>
 
-            <div className="flex justify-end gap-3">
-              <button
-                onClick={() => setShowAssignModal(false)}
-                className="px-4 py-2 text-sm text-gray-600 hover:text-gray-800"
-              >
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setShowAssignModal(false)}>
                 Cancel
-              </button>
-              <button
-                disabled={!selectedUserId || isAssigning}
-                onClick={handleAssignProject}
-                className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
-              >
-                Assign
-              </button>
+              </Button>
+              <Button disabled={!selectedUserId || isAssigning} onClick={handleAssignProject}>
+                {isAssigning ? "Assigning…" : "Assign"}
+              </Button>
             </div>
           </div>
         </div>
       )}
-
-
-      {/* Action Buttons */}
-      <div className="flex gap-4 pt-4 border-t">
-        {!project.client_id && !project.lead_id && (
-          <button
-            onClick={handleConvertToClient}
-            className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
-          >
-            {`Convert to ${config.labels.client}`}
-          </button>
-        )}
-
-        {userHasRole(user, "admin") && (
-          <button
-            onClick={() => setShowAssignModal(true)}
-            className="bg-yellow-600 text-white px-4 py-2 rounded hover:bg-yellow-700"
-          >
-            Assign Project
-          </button>
-        )}
-      </div>
     </div>
   );
 }

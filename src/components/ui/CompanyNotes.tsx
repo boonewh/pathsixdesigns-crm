@@ -1,5 +1,6 @@
 import { useState, useRef } from "react";
 import { MoreVertical, StickyNote } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 type Props = {
   notes: string;
@@ -50,12 +51,12 @@ export default function CompanyNotes({
 
       <div className="p-4">
         {!notes && !editing ? (
-          <button
+          <Button
             onClick={() => updateEditing(true)}
-            className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+            size="sm"
           >
             Add Note
-          </button>
+          </Button>
         ) : editing ? (
           <div className="space-y-2">
             <textarea
@@ -66,24 +67,24 @@ export default function CompanyNotes({
               placeholder="Enter notes here"
             />
             <div className="flex gap-2">
-              <button
+              <Button
                 onClick={async () => {
                   await onSave(draft);
                   updateEditing(false);
                 }}
-                className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+                size="sm"
               >
                 Save
-              </button>
-              <button
+              </Button>
+              <Button
                 onClick={() => {
                   updateEditing(false);
                   updateDraft(notes || "");
                 }}
-                className="bg-gray-300 px-4 py-2 rounded hover:bg-gray-400"
+                size="sm" variant="outline"
               >
                 Cancel
-              </button>
+              </Button>
             </div>
           </div>
         ) : (

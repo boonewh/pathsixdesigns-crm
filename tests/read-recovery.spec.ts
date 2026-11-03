@@ -18,11 +18,11 @@ test("loading stays visible until the last related request finishes", async ({pa
     await route.fulfill({json: {leads: []}});
   });
   await page.goto("/projects");
-  await expect(page.getByText("Loading projects...", {exact: true})).toBeVisible();
+  await expect(page.getByRole("status", {name: "Loading projects", exact: true})).toBeVisible();
   await expect(page.getByRole("status").filter({hasText: "Loading…"})).toBeVisible();
   await page.screenshot({path: "test-results/projects-loading.png", fullPage: true});
   release();
-  await expect(page.getByText("Loading projects...", {exact: true})).toHaveCount(0);
+  await expect(page.getByRole("status", {name: "Loading projects", exact: true})).toHaveCount(0);
   await expect(page.getByText("Loading…", {exact: true})).toHaveCount(0);
 });
 
@@ -46,15 +46,15 @@ test("failure shows an explicit retry and retry stays busy until completion", as
   recovered = true;
   await page.getByRole("button", {name: "Try again", exact: true}).click();
   await expect(page.getByRole("button", {name: "Try again", exact: true})).toHaveCount(0);
-  await expect(page.getByText("Loading projects...", {exact: true})).toBeVisible();
+  await expect(page.getByRole("status", {name: "Loading projects", exact: true})).toBeVisible();
   release();
-  await expect(page.getByText("Loading projects...", {exact: true})).toHaveCount(0);
+  await expect(page.getByRole("status", {name: "Loading projects", exact: true})).toHaveCount(0);
   await expect(page.getByText(/We couldn't load projects/)).toHaveCount(0);
 });
 
 test("API errors remain readable by callers and cancelled reads clear the indicator", async ({page}) => {
   await page.goto("/projects");
-  await expect(page.getByText("Loading projects...", {exact: true})).toHaveCount(0);
+  await expect(page.getByRole("status", {name: "Loading projects", exact: true})).toHaveCount(0);
   await page.route("**/api/error-probe", route => route.fulfill({status: 503, json: {error: "Temporary failure"}}));
   const result = await page.evaluate(async () => {
     // @ts-expect-error Vite serves source modules for this isolated browser test.

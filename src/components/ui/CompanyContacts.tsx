@@ -8,6 +8,7 @@ import { useForm, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { contactCreateSchema, contactUpdateSchema, type ContactCreateInput } from "@/schemas/contactSchemas";
 import { Contact } from "@/types";
+import { Button } from "@/components/ui/button";
 
 type Props = {
   token: string;
@@ -222,30 +223,30 @@ export default function CompanyContacts({ token, entityType, entityId, embedded 
             </div>
 
             <div className="flex gap-2 mt-3">
-              <button
+              <Button
                 type="submit"
-                className="px-3 py-1 bg-green-500 text-white rounded text-sm"
+                size="sm"
               >
                 Save
-              </button>
-              <button
+              </Button>
+              <Button
                 type="button"
                 onClick={resetForm}
-                className="px-3 py-1 bg-gray-500 text-white rounded text-sm"
+                size="sm" variant="outline"
               >
                 Cancel
-              </button>
+              </Button>
             </div>
           </form>
         )}
 
         {!showForm && (
-          <button
+          <Button
             onClick={() => setShowForm(true)}
-            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+            size="sm"
           >
             Add Contact
-          </button>
+          </Button>
         )}
 
         <ul className="space-y-4">

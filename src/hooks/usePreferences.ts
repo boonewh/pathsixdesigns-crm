@@ -104,8 +104,8 @@ export function usePreferences() {
 
   // Get pagination preferences for a specific table
   const getPaginationPrefs = useCallback((tableName: string): PaginationPreferences => {
-    // Leads open as a table by default; other lists keep cards. A saved choice always wins.
-    const defaults = { perPage: 10, sort: 'newest' as const, viewMode: tableName === 'leads' ? 'table' as const : 'cards' as const };
+    // Leads, accounts and projects open as a table by default; other lists keep cards. A saved choice always wins.
+    const defaults = { perPage: 10, sort: 'newest' as const, viewMode: ['leads', 'clients', 'projects'].includes(tableName) ? 'table' as const : 'cards' as const };
     return preferences?.pagination?.[tableName] || defaults;
   }, [preferences]);
 
