@@ -447,7 +447,8 @@ export default function ProjectDetailPage() {
       />
 
       <CompanyNotes
-        notes={noteDraft}
+        notes={project.notes || ""}
+        noteDraft={noteDraft}
         onSave={saveNote}
         isEditing={isEditingNote}
         setIsEditing={setIsEditingNote}
