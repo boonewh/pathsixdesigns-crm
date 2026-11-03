@@ -107,11 +107,30 @@ Phase 3 notes (done):
   and after); all 43 browser tests pass; no horizontal overflow at 390px.
 
 ## Phase 4 — Leads list (`Leads.tsx`, `LeadsTable.tsx`)
-- [ ] Make Table the default view for new users (saved preference still wins).
-- [ ] Pipeline strip above the list: count per stage, click to filter
+- [x] Make Table the default view for new users (saved preference still wins).
+- [x] Pipeline strip above the list: count per stage, click to filter
       (replaces the Status dropdown). Counts come from the leads already loaded.
-- [ ] Toolbar cleanup: one "New lead" primary button, remove the duplicate
+- [x] Toolbar cleanup: one "New lead" primary button, remove the duplicate
       top pagination and the "Showing X of Y" line.
+
+Phase 4 notes (done):
+- Table is the default Leads view when no saved preference exists
+  (`usePreferences` defaults per table; other lists keep cards).
+- Status strip replaces the Filters toggle and Status dropdown: "All leads (N)"
+  plus one button per status. No per-status numbers, on purpose: the backend
+  `GET /leads/` only takes page/per_page/sort (checked in pathsix-backend
+  staging), so counts from the loaded page would be wrong. The old dropdown
+  showed those page-only counts as if they were totals.
+- Filtering by status still only filters the current page (unchanged
+  behaviour). The summary line now says "on this page" so it is not misleading.
+  Real fix needs a backend `status` filter + counts (added to the list below).
+- Toolbar is always visible (view toggle, sort, rows); removed the duplicate
+  top pagination and the unused filter-visibility/resize code.
+- `tests/lead-options.spec.ts` opened the Edit form from the card menu; with
+  table as default it now uses the table's "Edit lead" button, which calls the
+  same `handleTableEdit` and opens the same form. Assertions unchanged.
+- Checks: typecheck and build pass; lint unchanged on touched files (4 before
+  and after); all 43 browser tests pass; no overflow at 390px.
 
 ## Phase 5 — Small UX polish on the touched pages
 - [ ] Replace `alert()` on the Leads / Lead detail / Account detail pages
@@ -127,6 +146,8 @@ Phase 3 notes (done):
 - "Last activity" / "Next step" columns and overdue highlighting on the
   Leads table (needs the API to return these per lead).
 - Estimated value per lead and $ totals in the pipeline strip (no field today).
+- `status` filter and per-status counts on `GET /leads/`, so the status strip
+  can filter all leads (not just the current page) and show real counts.
 - Saved views, bulk actions, Ctrl+K search.
 
 ## Review
