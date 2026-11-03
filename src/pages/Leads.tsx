@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import EntityCard from "@/components/ui/EntityCard";
-import { Mail, Phone, MapPin, Flag, User, UserCheck, StickyNote, LayoutGrid, List, Plus, Radio } from "lucide-react";
+import { Mail, Phone, MapPin, Flag, User, UserCheck, StickyNote, LayoutGrid, List, Plus, Radio, ChevronRight } from "lucide-react";
 import { useAuth, userHasRole } from "@/authContext";
 import toast from "react-hot-toast";
 import { Link } from "react-router-dom";
@@ -321,8 +321,8 @@ export default function Leads() {
       {/* Toolbar */}
       <div className="mb-4">
           <div className="flex flex-wrap items-center gap-4">
-            {/* View Toggle */}
-            <div className="flex bg-white rounded-lg p-1 border shadow-sm">
+            {/* View Toggle (phones always get the compact list, so it's hidden there) */}
+            <div className="hidden sm:flex bg-white rounded-lg p-1 border shadow-sm">
               <button 
                 className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-all ${
                   viewMode === 'cards' 
@@ -350,29 +350,36 @@ export default function Leads() {
             {/* Sort Control */}
             <div className="flex items-center gap-2">
               <label className="text-sm font-medium text-gray-700 whitespace-nowrap">Sort:</label>
-              {viewMode === 'cards' ? (
-                <select 
-                  value={currentCardValue} 
-                  onChange={(e) => setCardSort(e.target.value)}
-                  className="border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white min-w-32"
-                >
-                  {cardSortOptions.map(option => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
-              ) : (
-                <span className="text-sm text-gray-600 px-3 py-2 border border-gray-300 rounded-lg bg-gray-50">
-                  Click headers
-                </span>
-              )}
+              {(() => {
+                const sortSelect = (className: string) => (
+                  <select
+                    value={currentCardValue}
+                    onChange={(e) => setCardSort(e.target.value)}
+                    className={`border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white min-w-32 ${className}`}
+                  >
+                    {cardSortOptions.map(option => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                );
+                return viewMode === 'cards' ? sortSelect("") : (
+                  <>
+                    {/* Phones show a list without column headers, so offer the dropdown there. */}
+                    {sortSelect("sm:hidden")}
+                    <span className="hidden sm:inline text-sm text-gray-600 px-3 py-2 border border-gray-300 rounded-lg bg-gray-50">
+                      Click headers
+                    </span>
+                  </>
+                );
+              })()}
             </div>
 
             {/* Per Page Control */}
             <div className="flex items-center gap-2">
               <label className="text-sm font-medium text-gray-700 whitespace-nowrap">Show:</label>
-              <select 
+              <select
                 value={perPage} 
                 onChange={(e) => updatePerPage(Number(e.target.value))}
                 className="border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white w-20"
@@ -451,6 +458,34 @@ export default function Leads() {
             </div>
           )}
 
+          {/* Phones: compact list, one tappable row per lead (no sideways scrolling) */}
+          {sortedLeads.length > 0 && (
+            <ul className="sm:hidden divide-y rounded-lg border bg-white" aria-label="Leads">
+              {sortedLeads.map((lead) => (
+                <li key={lead.id}>
+                  <Link to={`/leads/${lead.id}`} className="flex items-center gap-3 px-4 py-3 active:bg-muted">
+                    <div className="min-w-0 flex-1">
+                      <div className="truncate font-medium text-foreground">{lead.name}</div>
+                      <div className="truncate text-sm text-muted-foreground">
+                        {[lead.contact_person, [lead.city, lead.state].filter(Boolean).join(", ")].filter(Boolean).join(" · ") || "No contact yet"}
+                      </div>
+                    </div>
+                    {lead.lead_status && (
+                      <StatusBadge
+                        status={lead.lead_status}
+                        colorClass={LEAD_STATUS_CONFIG.colors[lead.lead_status]}
+                        label={LEAD_STATUS_CONFIG.labels?.[lead.lead_status]}
+                      />
+                    )}
+                    <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
+
+          {/* Tablets and desktop: the saved Table / Cards view */}
+          <div className="hidden sm:block">
           {viewMode === 'cards' ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
               {sortedLeads.map((lead) => (
@@ -587,6 +622,7 @@ export default function Leads() {
               statusConfig={LEAD_STATUS_CONFIG}
             />
           )}
+          </div>
 
           {sortedLeads.length === 0 && (
             <div className="text-center py-12">
