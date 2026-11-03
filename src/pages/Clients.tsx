@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import EntityCard from "@/components/ui/EntityCard";
 import { useAuth, userHasRole } from "@/authContext";
-import { Mail, Phone, MapPin, User, StickyNote, LayoutGrid, List, Plus, Filter, ChevronDown, ChevronUp, Edit, Trash2, CircleDot } from "lucide-react";
+import { Mail, Phone, MapPin, User, StickyNote, LayoutGrid, List, Plus, Edit, Trash2, CircleDot, ChevronRight } from "lucide-react";
+import toast from "react-hot-toast";
 import { Link } from "react-router-dom";
 import CompanyForm from "@/components/ui/CompanyForm";
 import PaginationControls from "@/components/ui/PaginationControls";
@@ -13,12 +14,8 @@ import { useSorting, legacySortToUnified, unifiedToLegacySort } from "@/hooks/us
 import { formatPhoneNumber } from "@/lib/phoneUtils";
 import { getClientTypes } from "@/schemas/clientSchemas";
 import { useCRMConfig } from "@/config/crmConfig";
-
-// Smart default for filter visibility based on screen size
-const getDefaultFilterVisibility = () => {
-  if (typeof window === 'undefined') return true; // SSR fallback
-  return window.innerWidth >= 1024; // lg breakpoint
-};
+import StatusBadge from "@/components/ui/StatusBadge";
+import { Button } from "@/components/ui/button";
 
 const statusConfig = {
   colors: {
@@ -26,12 +23,6 @@ const statusConfig = {
     prospect: "bg-yellow-100 text-yellow-800",
     active: "bg-green-100 text-green-800",
     inactive: "bg-gray-100 text-gray-800",
-  },
-  icons: {
-    new: "🆕",
-    prospect: "👀",
-    active: "✅",
-    inactive: "⏸️",
   },
 };
 
@@ -81,6 +72,9 @@ function ClientsTable({
               Type <span className="ml-1">{getSortIcon('type')}</span>
             </th>
             <th className="px-4 py-3 text-left text-sm font-medium text-gray-500">
+              Status
+            </th>
+            <th className="px-4 py-3 text-left text-sm font-medium text-gray-500">
               Contact Info
             </th>
             <th 
@@ -127,6 +121,13 @@ function ClientsTable({
               </td>
               <td className="px-4 py-3 text-sm text-gray-600">
                 {client.type || '—'}
+              </td>
+              <td className="px-4 py-3">
+                {client.status ? (
+                  <StatusBadge status={client.status} colorClass={statusConfig.colors[client.status]} />
+                ) : (
+                  <span className="text-gray-400">—</span>
+                )}
               </td>
               <td className="px-4 py-3 text-sm text-gray-600">
                 <div className="space-y-1">
@@ -242,9 +243,6 @@ export default function Clients() {
   // Type filter (preserves user's filter choice)
   const { statusFilter: typeFilter, setStatusFilter: setTypeFilter } = useStatusFilter('clients_type');
 
-  // Smart filter visibility - default open on desktop, closed on mobile
-  const [showFilters, setShowFilters] = useState<boolean>(getDefaultFilterVisibility());
-
   const [editingId, setEditingId] = useState<number | null>(null);
   const [creating, setCreating] = useState(false);
   const [form, setForm] = useState<Partial<Client>>({
@@ -270,22 +268,6 @@ export default function Clients() {
   const [selectedClientId, setSelectedClientId] = useState<number | null>(null);
   const [selectedUserId, setSelectedUserId] = useState<number | null>(null);
   const [availableUsers, setAvailableUsers] = useState<{ id: number; email: string }[]>([]);
-
-  // Update filter visibility on window resize
-  useEffect(() => {
-    const handleResize = () => {
-      // Only auto-adjust if user hasn't manually toggled filters
-      const isLargeScreen = window.innerWidth >= 1024;
-      if (isLargeScreen && !showFilters) {
-        // Don't auto-open if user explicitly closed them
-      } else if (!isLargeScreen && showFilters) {
-        // Don't auto-close if user explicitly opened them
-      }
-    };
-
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, [showFilters]);
 
   useEffect(() => {
     const fetchClients = async () => {
@@ -339,9 +321,8 @@ export default function Clients() {
     setShowEditModal(true);
   };
 
+  // The card menu and the table each confirm before calling this, so it doesn't ask again.
   const handleDelete = async (id: number) => {
-    if (!confirm(`Are you sure you want to delete this ${clientLabel.toLowerCase()}?`)) return;
-
     const res = await apiFetch(`/clients/${id}`, {
       method: "DELETE",
       headers: { Authorization: `Bearer ${token}` },
@@ -350,8 +331,9 @@ export default function Clients() {
     if (res.ok) {
       setClients((prev) => prev.filter((c) => c.id !== id));
       setTotal((prev) => prev - 1);
+      toast.success(`${clientLabel} deleted. You can restore it from Deletes.`);
     } else {
-      alert(`Failed to delete ${clientLabel.toLowerCase()}`);
+      toast.error(`Couldn't delete this ${clientLabel.toLowerCase()}. Please try again.`);
     }
   };
 
@@ -411,32 +393,13 @@ export default function Clients() {
   return (
     <div className="p-4 lg:p-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+      <div className="flex justify-between items-center gap-4 mb-4">
         <h1 className="text-2xl font-bold">
           {clientLabel}s
         </h1>
-        <div className="flex gap-2 w-full sm:w-auto">
-          {/* Filters Toggle Button */}
-          <button
-            onClick={() => setShowFilters(!showFilters)}
-            className={`flex items-center gap-2 px-3 py-2 rounded-lg border transition-colors flex-1 sm:flex-none justify-center ${
-              activeFiltersCount > 0 
-                ? 'bg-blue-50 text-blue-700 border-blue-200' 
-                : 'bg-white border-gray-300 hover:bg-gray-50'
-            }`}
-          >
-            <Filter size={16} />
-            <span className="hidden sm:inline">Filters</span>
-            {showFilters ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-            {activeFiltersCount > 0 && (
-              <span className="bg-blue-600 text-white rounded-full px-1.5 py-0.5 text-xs min-w-[20px] text-center">
-                {activeFiltersCount}
-              </span>
-            )}
-          </button>
-
+        <div className="flex gap-2">
           {/* New Account Button */}
-          <button
+          <Button
             onClick={() => {
               setCreating(true);
               setEditingId(null);
@@ -457,24 +420,21 @@ export default function Clients() {
                 status: "new",
               });
             }}
-            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 whitespace-nowrap"
           >
             <Plus size={16} />
             <span className="hidden sm:inline">New {clientLabel}</span>
             <span className="sm:hidden">New</span>
-          </button>
+          </Button>
         </div>
       </div>
 
       {error && <p className="text-red-500 mb-4">{error}</p>}
 
-      {/* Collapsible Filters Panel */}
-      {showFilters && (
-        <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-6">
-          {/* Single Row: All Controls */}
+      {/* Toolbar (always visible) */}
+      <div className="mb-4">
           <div className="flex flex-wrap items-center gap-4">
-            {/* View Toggle */}
-            <div className="flex bg-white rounded-lg p-1 border shadow-sm">
+            {/* View Toggle (phones always get the compact list, so it's hidden there) */}
+            <div className="hidden sm:flex bg-white rounded-lg p-1 border shadow-sm">
               <button 
                 className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-all ${
                   viewMode === 'cards' 
@@ -507,38 +467,42 @@ export default function Clients() {
                 onChange={(e) => setTypeFilter(e.target.value)}
                 className="border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white shadow-sm min-w-40"
               >
-                <option value="all">All ({total})</option>
-                {ACCOUNT_TYPE_OPTIONS.map(type => {
-                  const count = clients.filter(c => c.type === type).length;
-                  return (
-                    <option key={type} value={type}>
-                      {type} ({count})
-                    </option>
-                  );
-                })}
+                <option value="all">All types</option>
+                {ACCOUNT_TYPE_OPTIONS.map(type => (
+                  <option key={type} value={type}>
+                    {type}
+                  </option>
+                ))}
               </select>
             </div>
 
             {/* Sort Control */}
             <div className="flex items-center gap-2">
               <label className="text-sm font-medium text-gray-700 whitespace-nowrap">Sort:</label>
-              {viewMode === 'cards' ? (
-                <select 
-                  value={currentCardValue} 
-                  onChange={(e) => setCardSort(e.target.value)}
-                  className="border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white min-w-32"
-                >
-                  {cardSortOptions.map(option => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
-              ) : (
-                <span className="text-sm text-gray-600 px-3 py-2 border border-gray-300 rounded-lg bg-gray-50">
-                  Click headers
-                </span>
-              )}
+              {(() => {
+                const sortSelect = (className: string) => (
+                  <select
+                    value={currentCardValue}
+                    onChange={(e) => setCardSort(e.target.value)}
+                    className={`border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white min-w-32 ${className}`}
+                  >
+                    {cardSortOptions.map(option => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                );
+                return viewMode === 'cards' ? sortSelect("") : (
+                  <>
+                    {/* Phones show a list without column headers, so offer the dropdown there. */}
+                    {sortSelect("sm:hidden")}
+                    <span className="hidden sm:inline text-sm text-gray-600 px-3 py-2 border border-gray-300 rounded-lg bg-gray-50">
+                      Click headers
+                    </span>
+                  </>
+                );
+              })()}
             </div>
 
             {/* Per Page Control */}
@@ -566,15 +530,14 @@ export default function Clients() {
               </button>
             )}
           </div>
-        </div>
-      )}
+      </div>
 
-      {/* Results Summary */}
-      <div className="mb-4 text-sm text-gray-600">
+      {/* Results Summary (hidden while loading). The Type filter applies to the loaded page only. */}
+      <div className={`mb-4 text-sm text-gray-600 ${loading ? "invisible" : ""}`}>
         {typeFilter !== 'all' ? (
           <span>
-            Showing <span className="font-medium">{sortedClients.length}</span> {typeFilter} {clientLabel.toLowerCase()}s{" "}
-            <span className="text-gray-400">({total} total)</span>
+            Showing <span className="font-medium">{sortedClients.length}</span> {typeFilter} {clientLabel.toLowerCase()}s on this page{" "}
+            <span className="text-gray-400">({total} in total)</span>
           </span>
         ) : (
           <span>
@@ -583,28 +546,19 @@ export default function Clients() {
         )}
       </div>
 
-      {total > perPage && (
-        <PaginationControls
-          currentPage={currentPage}
-          perPage={perPage}
-          total={total}
-          sortOrder={sortOrder}
-          onPageChange={setCurrentPage}
-          onPerPageChange={updatePerPage}
-          onSortOrderChange={updateSortOrder}
-          entityName={`${clientLabel.toLowerCase()}s`}
-          className="border-b pb-4 mb-4"
-        />
-      )}
-
-
       {/* Content */}
       {loading ? (
-        <div className="flex items-center justify-center py-12">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-2"></div>
-            <p className="text-gray-500">Loading {clientLabel.toLowerCase()}s...</p>
-          </div>
+        <div className="rounded-lg border bg-white animate-pulse motion-reduce:animate-none" role="status" aria-label={`Loading ${clientLabel.toLowerCase()}s`}>
+          <div className="h-11 border-b bg-muted/60" />
+          {Array.from({ length: 6 }, (_, i) => (
+            <div key={i} className="flex items-center gap-6 border-b px-4 py-4 last:border-b-0">
+              <div className="h-4 w-48 rounded bg-muted" />
+              <div className="h-4 w-28 rounded bg-muted" />
+              <div className="h-5 w-20 rounded-full bg-muted" />
+              <div className="hidden sm:block h-4 w-24 rounded bg-muted" />
+              <div className="hidden md:block h-4 w-40 rounded bg-muted" />
+            </div>
+          ))}
         </div>
       ) : (
         <div className="space-y-4">
@@ -628,6 +582,30 @@ export default function Clients() {
             </div>
           )}
 
+          {/* Phones: compact list, one tappable row per account (no sideways scrolling) */}
+          {sortedClients.length > 0 && (
+            <ul className="sm:hidden divide-y rounded-lg border bg-white" aria-label={`${clientLabel}s`}>
+              {sortedClients.map((client) => (
+                <li key={client.id}>
+                  <Link to={`/clients/${client.id}`} className="flex items-center gap-3 px-4 py-3 active:bg-muted">
+                    <div className="min-w-0 flex-1">
+                      <div className="truncate font-medium text-foreground">{client.name}</div>
+                      <div className="truncate text-sm text-muted-foreground">
+                        {[client.contact_person, [client.city, client.state].filter(Boolean).join(", ")].filter(Boolean).join(" · ") || "No contact yet"}
+                      </div>
+                    </div>
+                    {client.status && (
+                      <StatusBadge status={client.status} colorClass={statusConfig.colors[client.status]} />
+                    )}
+                    <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
+
+          {/* Tablets and desktop: the saved Table / Cards view */}
+          <div className="hidden sm:block">
           {viewMode === 'cards' ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
               {sortedClients.map((client) => (
@@ -661,11 +639,7 @@ export default function Clients() {
                       {client.status && (
                         <li className="flex items-start gap-2">
                           <CircleDot size={14} className="mt-[2px] flex-shrink-0" />
-                          <span className={`inline-flex px-2 py-0.5 text-xs font-medium rounded-full ${
-                            statusConfig.colors[client.status]
-                          }`}>
-                            {statusConfig.icons[client.status]} {client.status.toUpperCase()}
-                          </span>
+                          <StatusBadge status={client.status} colorClass={statusConfig.colors[client.status]} />
                         </li>
                       )}
                       {client.contact_person && (
@@ -762,6 +736,7 @@ export default function Clients() {
               clientLabel={clientLabel}
             />
           )}
+          </div>
 
           {sortedClients.length === 0 && (
             <div className="text-center py-12">
@@ -822,17 +797,19 @@ export default function Clients() {
             </select>
 
             <div className="flex flex-col sm:flex-row justify-end gap-2">
-              <button
+              <Button
+                variant="outline"
+                className="order-2 sm:order-1"
                 onClick={() => {
                   setShowAssignModal(false);
                   setSelectedUserId(null);
                   setSelectedClientId(null);
                 }}
-                className="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400 order-2 sm:order-1"
               >
                 Cancel
-              </button>
-              <button
+              </Button>
+              <Button
+                className="order-1 sm:order-2"
                 disabled={!selectedUserId}
                 onClick={async () => {
                   const res = await apiFetch(`/clients/${selectedClientId}/assign`, {
@@ -845,6 +822,7 @@ export default function Clients() {
                   });
 
                   if (res.ok) {
+                    toast.success(`${clientLabel} assigned`);
                     setShowAssignModal(false);
                     setSelectedUserId(null);
                     setSelectedClientId(null);
@@ -855,13 +833,12 @@ export default function Clients() {
                     setClients(fullData.clients);
                     setTotal(fullData.total);
                   } else {
-                    alert(`Failed to assign ${clientLabel.toLowerCase()}.`);
+                    toast.error(`Couldn't assign this ${clientLabel.toLowerCase()}. Please try again.`);
                   }
                 }}
-                className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50 order-1 sm:order-2"
               >
                 Assign
-              </button>
+              </Button>
             </div>
           </div>
         </div>

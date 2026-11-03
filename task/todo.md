@@ -1,3 +1,93 @@
+# Phase 6 — Accounts and Projects caught up with Leads (staging) — done
+
+Target: `staging` only. Same patterns and shared pieces as Leads (StatusBadge,
+Button, RecordLayout, toasts, skeletons, compact phone list). Nothing to `main`.
+
+Found in screenshots (staging, sample data):
+- Accounts list: old Filters toggle (on phones an empty full-width button),
+  emoji + ALL-CAPS status badges, oversized hard-coded "New" button, pagination
+  shown twice (top and bottom), cards default, tall cards on phones.
+- Projects list: same issues (emoji badges, Filters toggle, double pagination).
+- Project page: still the old layout (plain text rows, "Linked Entity",
+  collapsed Interactions/Notes boxes, yellow Assign button).
+- Account page: already on the new layout (Phase 3); only the shared section
+  buttons inside the tabs ("Add Interaction" etc.) are still the old big style.
+- Bug (same as Leads had): deleting an account or project asks "Are you sure?"
+  twice (card/table confirm, then the page confirms again).
+
+Keep each section's own features:
+- Accounts: Type filter (business types), account statuses (new / prospect /
+  active / inactive), Subscriptions tab, Assign.
+- Projects: project statuses (pending / active / completed / cancelled / lost),
+  value with one-time / monthly / yearly, start and end dates, link to an
+  account OR a lead OR standalone with its own primary contact, type,
+  description, Assign.
+
+## A. Accounts list (`Clients.tsx`)
+- [x] Status pills (StatusBadge) instead of emoji/caps, cards and table.
+- [x] One always-visible toolbar like Leads: view toggle, Type dropdown, sort,
+      rows. Remove the Filters toggle, the duplicate top pagination and the
+      unused filter-visibility code.
+- [x] Table default on desktop (saved choice wins); compact list on phones
+      (name, contact · city, status).
+- [x] Shared Button for New / modal buttons; toasts instead of alert();
+      skeleton while loading; delete asks once.
+
+## B. Projects list (`Projects.tsx`, `ProjectsTable.tsx`)
+- [x] Same as A, with the Status dropdown kept (project statuses). The backend
+      has no project status filter, so the summary says "on this page" when a
+      status is picked (same honest wording Leads had before its fix).
+- [x] Compact phone row: project name, account/lead · value, status.
+
+## C. Project page (`ProjectDetailPage.tsx`)
+- [x] RecordHeader: Status, Value (with / mo or / yr), Dates, Linked to (link to
+      the account or lead, or "Standalone"), Owner; Assign in the header.
+- [x] About panel: type, description, primary contact (standalone projects).
+- [x] Tabs: Activity and Notes (embedded, always open, with counts).
+- [x] Toasts, skeleton, error message if it fails to load, no reload after assign.
+
+## D. Shared section buttons
+- [x] "Add Interaction" / "Add Contact" / "Add Note" / "Add Subscription" use
+      the shared Button (fixes the oversized buttons on Lead, Account and
+      Project pages at once).
+
+## Checks
+- [x] Typecheck, build, lint unchanged, all browser tests; new tests for the
+      Projects/Accounts phone list and the single delete confirmation.
+- [x] Before/after screenshots (desktop and phone) of all four pages.
+
+## Review
+- Accounts list (`Clients.tsx`): StatusBadge pills (no emoji/caps) in cards,
+  table (new Status column) and the new phone list; always-visible toolbar
+  with the Type filter; Filters toggle, duplicate top pagination and the
+  filter-visibility code removed; shared Button; toasts; skeleton; delete asks
+  once. The Type filter only filters the loaded page (same as Leads had), so
+  its page-only counts were removed and the summary says "on this page".
+- Projects list (`Projects.tsx`, `ProjectsTable.tsx`): same treatment; status
+  colors/labels now in `src/lib/projectStatus.ts` (shared with the Project
+  page); table "Entity" column renamed "Linked to", emoji removed; phone rows
+  show value first ("$12,000 / yr · Account"). Server error text on a failed
+  delete is kept (now a toast).
+- Table is the default view for Leads, Accounts and Projects (saved choice wins).
+- Project page: RecordHeader (Status, Value, Dates, Linked to, Owner), About
+  panel (type, description, per-month for yearly values, primary contact with
+  editable title for standalone projects, created), Activity and Notes tabs.
+  "Convert to account" kept for standalone projects only. Toasts, skeleton,
+  clear load error, assign updates in place.
+- Shared buttons: section components (Interactions, Contacts, Notes,
+  Subscriptions) and the create/edit forms (Lead, Account, Project) use the
+  shared Button, fixing the oversized buttons everywhere they appear.
+- Tests: new `tests/accounts-projects.spec.ts` (phone lists, single delete
+  confirmation, Project page header/tabs) fails on the old code and passes on
+  the new. `tests/read-recovery.spec.ts` looked for the old "Loading
+  projects..." text; it now checks the loading placeholder (same intent).
+- Checks: typecheck and build pass; lint unchanged (27 before and after on the
+  touched files); 55 browser tests pass (52 existing + 3 new).
+- Follow-up (backend): Type filter for accounts and Status filter for projects
+  only filter the loaded page; a server-side filter like the Leads one fixes it.
+
+---
+
 # Bug fix: typing in Notes shows nothing, saves only the last letter — done
 
 Reported on the Lead page; the Project page had the same bug, and so does

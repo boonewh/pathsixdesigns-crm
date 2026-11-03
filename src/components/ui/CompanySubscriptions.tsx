@@ -12,6 +12,7 @@ import {
   type SubscriptionCreateInput,
   type Subscription,
 } from "@/schemas/subscriptionSchemas";
+import { Button } from "@/components/ui/button";
 
 type Props = {
   token: string;
@@ -272,31 +273,31 @@ export default function CompanySubscriptions({ token, clientId, embedded = false
             {saveError && <p className="text-sm text-red-600">{saveError}</p>}
 
             <div className="flex gap-2">
-              <button
+              <Button
                 type="submit"
                 disabled={isSubmitting}
-                className="px-3 py-1 bg-green-600 text-white rounded text-sm hover:bg-green-700 disabled:opacity-50"
+                size="sm"
               >
                 {isSubmitting ? "Saving…" : editingId ? "Update" : "Add Subscription"}
-              </button>
-              <button
+              </Button>
+              <Button
                 type="button"
                 onClick={resetForm}
-                className="px-3 py-1 bg-gray-500 text-white rounded text-sm hover:bg-gray-600"
+                size="sm" variant="outline"
               >
                 Cancel
-              </button>
+              </Button>
             </div>
           </form>
         )}
 
         {!showForm && (
-          <button
+          <Button
             onClick={() => setShowForm(true)}
-            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm"
+            size="sm"
           >
             Add Subscription
-          </button>
+          </Button>
         )}
 
         {subscriptions.length === 0 && !showForm && (

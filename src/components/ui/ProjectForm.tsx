@@ -10,6 +10,7 @@ import { useForm, type SubmitHandler, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { PROJECT_STATUSES, getProjectTypes, getProjectCreateSchema, getProjectUpdateSchema, type ProjectCreateInput, type ProjectUpdateInput } from "@/schemas/projectSchemas";
 import { useCRMConfig } from "@/config/crmConfig";
+import { Button } from "@/components/ui/button";
 
 interface ProjectFormProps {
   form: Partial<Project>;
@@ -515,20 +516,19 @@ export default function ProjectForm({ form, setForm, clients, leads, onSave, onC
 
       {/* Sticky Save/Cancel Footer */}
       <div className="sticky bottom-0 bg-white pt-4 border-t flex justify-end gap-2 z-10 px-4 pb-4">
-        <button
+        <Button
           type="button"
           onClick={handleCancel}
-          className="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400"
+          variant="outline"
         >
           Cancel
-        </button>
-        <button
+        </Button>
+        <Button
           type="submit"
           disabled={isSubmitting}
-          className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {isSubmitting ? "Saving..." : "Save"}
-        </button>
+        </Button>
       </div>
     </form>
   );

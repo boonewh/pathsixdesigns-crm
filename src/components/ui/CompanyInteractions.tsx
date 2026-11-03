@@ -10,6 +10,7 @@ import { usePagination } from "@/hooks/usePreferences";
 import { generateGoogleCalendarUrl, generateOutlookComUrl } from "@/lib/calendarUtils";
 import { type InteractionCreateInput } from "@/schemas/interactionSchemas";
 import { useCRMConfig } from "@/config/crmConfig";
+import { Button } from "@/components/ui/button";
 
 type EntityType = "lead" | "client" | "project"; // NEW: Add project support
 
@@ -212,16 +213,16 @@ const [openMenuId, setOpenMenuId] = useState<number | null>(null);
         )}
 
         {!showForm && (
-          <button
+          <Button
             onClick={() => {
               setShowForm(true);
               setEditingId(null);
               resetForm();
             }}
-            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+            size="sm"
           >
             Add Interaction
-          </button>
+          </Button>
         )}
 
         {/* Pagination Controls at top */}

@@ -11,44 +11,16 @@ import { usePagination } from "@/hooks/usePreferences";
 import { useStatusFilter } from "@/hooks/useStatusFilter";
 import { useSorting, legacySortToUnified, unifiedToLegacySort } from "@/hooks/useSorting";
 import ProjectsTable from "@/components/ui/ProjectsTable";
-import { LayoutGrid, List, Plus, Filter, ChevronDown, ChevronUp } from "lucide-react";
+import { LayoutGrid, List, Plus, ChevronRight } from "lucide-react";
+import toast from "react-hot-toast";
+import StatusBadge from "@/components/ui/StatusBadge";
+import { Button } from "@/components/ui/button";
+import { PROJECT_STATUS_COLORS, PROJECT_STATUS_LABELS, formatProjectValue } from "@/lib/projectStatus";
 import { PROJECT_STATUSES } from "@/schemas/projectSchemas";
 import { useCRMConfig } from "@/config/crmConfig";
 
 // Project status options for filtering (align with backend/Pydantic)
 const PROJECT_STATUS_OPTIONS = PROJECT_STATUSES;
-
-// Project status configuration
-const PROJECT_STATUS_CONFIG = {
-  statuses: PROJECT_STATUS_OPTIONS,
-  colors: {
-    active: 'bg-blue-100 text-blue-800',
-    pending: 'bg-yellow-100 text-yellow-800',
-    completed: 'bg-green-100 text-green-800',
-    cancelled: 'bg-red-100 text-red-800',
-    lost: 'bg-red-100 text-red-800'
-  },
-  icons: {
-    active: '🔵',
-    pending: '🟡',
-    completed: '🟢',
-    cancelled: '🔴',
-    lost: '🔴'
-  },
-  labels: {
-    active: 'Active',
-    pending: 'Pending',
-    completed: 'Completed',
-    cancelled: 'Cancelled',
-    lost: 'Lost'
-  }
-};
-
-// Smart default for filter visibility based on screen size
-const getDefaultFilterVisibility = () => {
-  if (typeof window === 'undefined') return true; // SSR fallback
-  return window.innerWidth >= 1024; // lg breakpoint
-};
 
 export default function Projects() {
   const { token } = useAuth();
@@ -94,9 +66,6 @@ export default function Projects() {
   // Status filter (preserves user's filter choice)
   const { statusFilter, setStatusFilter } = useStatusFilter('projects');
 
-  // Smart filter visibility - default open on desktop, closed on mobile
-  const [showFilters, setShowFilters] = useState<boolean>(getDefaultFilterVisibility());
-
   const [form, setForm] = useState<Partial<Project>>({});
   const [creating, setCreating] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
@@ -105,22 +74,6 @@ export default function Projects() {
   const [error, setError] = useState("");
   const [loadError, setLoadError] = useState("");
   const [reload, setReload] = useState(0);
-
-  // Update filter visibility on window resize
-  useEffect(() => {
-    const handleResize = () => {
-      // Only auto-adjust if user hasn't manually toggled filters
-      const isLargeScreen = window.innerWidth >= 1024;
-      if (isLargeScreen && !showFilters) {
-        // Don't auto-open if user explicitly closed them
-      } else if (!isLargeScreen && showFilters) {
-        // Don't auto-close if user explicitly opened them
-      }
-    };
-
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, [showFilters]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -218,9 +171,8 @@ export default function Projects() {
     }
   };
 
+  // The card menu and the table each confirm before calling this, so it doesn't ask again.
   const handleDelete = async (id: number) => {
-    if (!confirm("Are you sure you want to delete this project?")) return;
-
     try {
       const res = await apiFetch(`/projects/${id}`, {
         method: "DELETE",
@@ -230,6 +182,7 @@ export default function Projects() {
       if (res.ok) {
         setProjects((prev) => prev.filter((p) => p.id !== id));
         setTotal((prev) => prev - 1);
+        toast.success("Project deleted. You can restore it from Deletes.");
       } else {
         // Try to get error details from response
         let errorMsg = "Failed to delete project";
@@ -239,12 +192,12 @@ export default function Projects() {
         } catch {
           errorMsg = `Failed to delete project (${res.status})`;
         }
-        alert(errorMsg);
+        toast.error(errorMsg);
         console.error('Delete project error:', res.status, errorMsg);
       }
     } catch (err) {
       console.error('Delete project exception:', err);
-      alert("Error deleting project - check console for details");
+      toast.error("Couldn't delete this project. Please try again.");
     }
   };
 
@@ -271,53 +224,31 @@ export default function Projects() {
   return (
     <div className="p-4 lg:p-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+      <div className="flex justify-between items-center gap-4 mb-4">
         <h1 className="text-2xl font-bold">Projects</h1>
-        <div className="flex gap-2 w-full sm:w-auto">
-          {/* Filters Toggle Button */}
-          <button
-            onClick={() => setShowFilters(!showFilters)}
-            className={`flex items-center gap-2 px-3 py-2 rounded-lg border transition-colors flex-1 sm:flex-none justify-center ${
-              activeFiltersCount > 0 
-                ? 'bg-blue-50 text-blue-700 border-blue-200' 
-                : 'bg-white border-gray-300 hover:bg-gray-50'
-            }`}
-          >
-            <Filter size={16} />
-            <span className="hidden sm:inline">Filters</span>
-            {showFilters ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-            {activeFiltersCount > 0 && (
-              <span className="bg-blue-600 text-white rounded-full px-1.5 py-0.5 text-xs min-w-[20px] text-center">
-                {activeFiltersCount}
-              </span>
-            )}
-          </button>
-
+        <div className="flex gap-2">
           {/* New Project Button */}
-          <button
+          <Button
             disabled={loading || !!loadError}
             onClick={() => {
               setCreating(true);
               setForm({});
             }}
-            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <Plus size={16} />
             <span className="hidden sm:inline">New Project</span>
             <span className="sm:hidden">New</span>
-          </button>
+          </Button>
         </div>
       </div>
 
       {error && <p className="text-red-500 mb-4">{error}</p>}
 
-      {/* Collapsible Filters Panel */}
-      {showFilters && (
-        <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-6">
-          {/* Single Row: All Controls */}
+      {/* Toolbar (always visible) */}
+      <div className="mb-4">
           <div className="flex flex-wrap items-center gap-4">
-            {/* View Toggle */}
-            <div className="flex bg-white rounded-lg p-1 border shadow-sm">
+            {/* View Toggle (phones always get the compact list, so it's hidden there) */}
+            <div className="hidden sm:flex bg-white rounded-lg p-1 border shadow-sm">
               <button 
                 className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-all ${
                   viewMode === 'cards' 
@@ -350,38 +281,42 @@ export default function Projects() {
                 onChange={(e) => setStatusFilter(e.target.value)}
                 className="border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white shadow-sm min-w-32"
               >
-                <option value="all">{loading || loadError ? "All" : `All (${total})`}</option>
-                {PROJECT_STATUS_OPTIONS.map(status => {
-                  const count = projects.filter(p => p.project_status === status).length;
-                  return (
-                    <option key={status} value={status}>
-                      {status.charAt(0).toUpperCase() + status.slice(1)}{!loading && !loadError && ` (${count})`}
-                    </option>
-                  );
-                })}
+                <option value="all">All statuses</option>
+                {PROJECT_STATUS_OPTIONS.map(status => (
+                  <option key={status} value={status}>
+                    {PROJECT_STATUS_LABELS[status] || status}
+                  </option>
+                ))}
               </select>
             </div>
 
             {/* Sort Control */}
             <div className="flex items-center gap-2">
               <label className="text-sm font-medium text-gray-700 whitespace-nowrap">Sort:</label>
-              {viewMode === 'cards' ? (
-                <select 
-                  value={currentCardValue} 
-                  onChange={(e) => setCardSort(e.target.value)}
-                  className="border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white min-w-32"
-                >
-                  {cardSortOptions.map(option => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
-              ) : (
-                <span className="text-sm text-gray-600 px-3 py-2 border border-gray-300 rounded-lg bg-gray-50">
-                  Click headers
-                </span>
-              )}
+              {(() => {
+                const sortSelect = (className: string) => (
+                  <select
+                    value={currentCardValue}
+                    onChange={(e) => setCardSort(e.target.value)}
+                    className={`border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white min-w-32 ${className}`}
+                  >
+                    {cardSortOptions.map(option => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                );
+                return viewMode === 'cards' ? sortSelect("") : (
+                  <>
+                    {/* Phones show a list without column headers, so offer the dropdown there. */}
+                    {sortSelect("sm:hidden")}
+                    <span className="hidden sm:inline text-sm text-gray-600 px-3 py-2 border border-gray-300 rounded-lg bg-gray-50">
+                      Click headers
+                    </span>
+                  </>
+                );
+              })()}
             </div>
 
             {/* Per Page Control */}
@@ -409,16 +344,16 @@ export default function Projects() {
               </button>
             )}
           </div>
-        </div>
-      )}
+      </div>
 
-      {/* Results Summary */}
+      {/* Results Summary. The Status filter applies to the loaded page only. */}
       {!loading && !loadError && (
       <div className="mb-4 text-sm text-gray-600">
         {statusFilter !== 'all' ? (
           <span>
-            Showing <span className="font-medium">{sortedProjects.length}</span> {statusFilter} projects 
-            <span className="text-gray-400">({total} total)</span>
+            Showing <span className="font-medium">{sortedProjects.length}</span>{" "}
+            {(PROJECT_STATUS_LABELS[statusFilter] || statusFilter).toLowerCase()} projects on this page{" "}
+            <span className="text-gray-400">({total} in total)</span>
           </span>
         ) : (
           <span>
@@ -428,28 +363,19 @@ export default function Projects() {
       </div>
       )}
 
-      {!loading && !loadError && total > perPage && (
-        <PaginationControls
-          currentPage={currentPage}
-          perPage={perPage}
-          total={total}
-          sortOrder={sortOrder}
-          onPageChange={setCurrentPage}
-          onPerPageChange={updatePerPage}
-          onSortOrderChange={updateSortOrder}
-          entityName="projects"
-          className="border-b pb-4 mb-4"
-        />
-      )}
-
-
       {/* Content */}
       {loading ? (
-        <div role="status" className="flex items-center justify-center py-12">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-2"></div>
-            <p className="text-gray-500">Loading projects...</p>
-          </div>
+        <div className="rounded-lg border bg-white animate-pulse motion-reduce:animate-none" role="status" aria-label="Loading projects">
+          <div className="h-11 border-b bg-muted/60" />
+          {Array.from({ length: 6 }, (_, i) => (
+            <div key={i} className="flex items-center gap-6 border-b px-4 py-4 last:border-b-0">
+              <div className="h-4 w-48 rounded bg-muted" />
+              <div className="h-4 w-28 rounded bg-muted" />
+              <div className="h-5 w-20 rounded-full bg-muted" />
+              <div className="hidden sm:block h-4 w-24 rounded bg-muted" />
+              <div className="hidden md:block h-4 w-40 rounded bg-muted" />
+            </div>
+          ))}
         </div>
       ) : loadError ? (
         <div role="alert" className="rounded-md border border-red-200 bg-red-50 p-6 text-center">
@@ -494,6 +420,32 @@ export default function Projects() {
             />
           )}
 
+          {/* Phones: compact list, one tappable row per project (no sideways scrolling) */}
+          {sortedProjects.length > 0 && (
+            <ul className="sm:hidden divide-y rounded-lg border bg-white" aria-label="Projects">
+              {sortedProjects.map((project) => (
+                <li key={project.id}>
+                  <Link to={`/projects/${project.id}`} className="flex items-center gap-3 px-4 py-3 active:bg-muted">
+                    <div className="min-w-0 flex-1">
+                      <div className="truncate font-medium text-foreground">{project.project_name}</div>
+                      <div className="truncate text-sm text-muted-foreground">
+                        {[formatProjectValue(project.project_worth, project.value_type), project.client_name || project.lead_name || project.primary_contact_name].filter(Boolean).join(" · ") || "Not linked yet"}
+                      </div>
+                    </div>
+                    <StatusBadge
+                      status={project.project_status || 'pending'}
+                      colorClass={PROJECT_STATUS_COLORS[project.project_status || 'pending']}
+                      label={PROJECT_STATUS_LABELS[project.project_status || 'pending']}
+                    />
+                    <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
+
+          {/* Tablets and desktop: the saved Table / Cards view */}
+          <div className="hidden sm:block">
           {viewMode === 'cards' ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
               {sortedProjects.map((project) => (
@@ -513,15 +465,11 @@ export default function Projects() {
                     details={
                       <ul className="text-sm text-gray-700 space-y-1">
                         <li>
-                          <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
-                            PROJECT_STATUS_CONFIG.colors[project.project_status as keyof typeof PROJECT_STATUS_CONFIG.colors] || 
-                            'bg-gray-100 text-gray-800'
-                          }`}>
-                            {PROJECT_STATUS_CONFIG.icons[project.project_status as keyof typeof PROJECT_STATUS_CONFIG.icons]}
-                            {PROJECT_STATUS_CONFIG.labels[project.project_status as keyof typeof PROJECT_STATUS_CONFIG.labels] ||
-                              project.project_status?.toUpperCase() ||
-                              'Pending'}
-                          </span>
+                          <StatusBadge
+                            status={project.project_status || 'pending'}
+                            colorClass={PROJECT_STATUS_COLORS[project.project_status || 'pending']}
+                            label={PROJECT_STATUS_LABELS[project.project_status || 'pending']}
+                          />
                         </li>
                         {project.project_description && <li>{project.project_description}</li>}
                         {project.client_id && project.client_name && (
@@ -544,7 +492,7 @@ export default function Projects() {
                           </li>
                         )}
                         {!project.client_id && !project.lead_id && !project.primary_contact_name && (
-                          <li className="text-yellow-600 text-xs font-medium">⚠️ Unassigned Project</li>
+                          <li className="text-amber-700 text-xs font-medium">Not linked to an account or lead</li>
                         )}
                         {project.project_worth && (
                           <li>
@@ -577,6 +525,7 @@ export default function Projects() {
               onSort={handleSort}
             />
           )}
+          </div>
 
           {sortedProjects.length === 0 && (
             <div className="text-center py-12">
