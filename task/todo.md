@@ -1,3 +1,49 @@
+# Leads status filter + counts (backend + frontend) — PLAN, awaiting approval
+
+Why: the Leads page's status filter only filters the 10–50 leads on the current
+page, and per-status counts can't be shown, because `GET /api/leads/` only
+accepts page / per_page / sort (pathsix-backend `app/routes/leads.py`,
+`LeadService.list_mine` in `app/services/leads.py`).
+
+Scope: staging only, in both repos. Branch `ccr-5934bc6a-eapcnw` in each repo,
+PRs into `staging`. No database or schema change. Nothing goes to `main`.
+
+## Backend (boonewh/pathsix-backend)
+- [ ] `LeadService.list_mine(..., status=None)`: when `status` is given, filter
+      `Lead.lead_status == status` before counting/paging, so `total` and the
+      pages reflect the filter.
+- [ ] Also return `status_counts`: one count per status over the same leads the
+      user can see (same tenant / own-or-assigned / not-deleted rules), ignoring
+      the status filter and paging. One extra GROUP BY query.
+- [ ] Route `GET /api/leads/`: pass `request.args.get("status")` through.
+      Existing callers that don't send `status` get the same results as today,
+      plus the new `status_counts` field.
+- [ ] Tests (PostgreSQL, existing `crm` fixture): filter returns only that
+      status with the right total; counts cover all the user's statuses;
+      another user's / tenant's leads never appear in results or counts.
+- [ ] Run the backend suite locally against PostgreSQL 16 before pushing.
+- Admin `/api/leads/all` is unchanged (not used by the Leads page).
+
+## Frontend (this repo)
+- [ ] `Leads.tsx`: send `status` with the list request when a status is picked;
+      reset to page 1 when the filter changes.
+- [ ] Status strip shows real counts from `status_counts` ("Qualified 12").
+      If the backend hasn't been deployed yet (no `status_counts`), the strip
+      just shows names like today and the current-page filter still applies,
+      so deploy order can't break the page.
+- [ ] Summary line drops "on this page" once the server is filtering.
+- [ ] Browser test for: status param sent, counts shown, page reset.
+
+## Deploy note
+- Backend staging is deployed with Fly (`fly.staging.toml`), not by merging.
+  After the backend PR merges to `staging`, it needs a staging deploy before
+  the frontend counts appear. The frontend works either way.
+
+## Review
+(to be filled in when the work is done)
+
+---
+
 # UI refresh — corporate look and record-page UX (approved — staging only)
 
 Goal: make the CRM look and feel like a professional business product, based on
