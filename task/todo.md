@@ -1,3 +1,35 @@
+# UI tweaks round 1 (staging) — PLAN, awaiting approval
+
+Target: `staging` only, one small PR. Nothing goes to `main`.
+
+## 1. Use the full width on phones
+Cause: double side margin. The layout's `<main>` adds 24px on every side
+(`ProtectedLayout.tsx`), then each page adds its own 16–24px. On a 390px phone
+that is ~80–96px of empty edges.
+- [ ] `ProtectedLayout.tsx`: `<main>` padding only from the `sm` breakpoint up
+      (`p-0 sm:p-6`). One line; desktop unchanged. Pages keep their own margin.
+- [ ] Check the pages with no padding of their own (Vault, Project archive,
+      Not found, Account page wrapper) still have a margin on phones; add
+      `p-4` to any that would touch the screen edge.
+- [ ] Screenshots at 390px: Leads, Lead page, Account page, Dashboard.
+
+## 2. Leads list on phones: compact list
+Professional CRMs (Salesforce, HubSpot, Pipedrive mobile) use a compact list on
+phones: one tappable row per record, name in bold, contact and status
+underneath, no sideways scrolling. Our 9-column table scrolls sideways; our
+cards show only 2–3 leads per screen.
+- [ ] `Leads.tsx`: under the `sm` breakpoint, always show a compact list
+      (name, contact, status badge, tap to open the lead), whatever view is
+      saved. Desktop keeps the Table / Cards choice (Table default).
+- [ ] Hide the Table / Cards toggle on phones (it would do nothing there).
+- [ ] Browser test at 390px: compact list shown, no horizontal overflow,
+      tapping a row opens the lead.
+
+## Review
+(to be filled in when the work is done)
+
+---
+
 # Leads status filter + counts (backend + frontend) — done (staging PRs open)
 
 Why: the Leads page's status filter only filters the 10–50 leads on the current
