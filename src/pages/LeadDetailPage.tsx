@@ -11,7 +11,7 @@ import CompanyContacts from "@/components/ui/CompanyContacts";
 import { useCRMConfig } from "@/config/crmConfig";
 import { Button } from "@/components/ui/button";
 import StatusBadge from "@/components/ui/StatusBadge";
-import { RecordHeader, RecordFields, RecordTabs, StagePath, ProjectList } from "@/components/ui/RecordLayout";
+import { RecordHeader, RecordFields, RecordTabs, StagePath, ProjectList, RecordSkeleton } from "@/components/ui/RecordLayout";
 
 export default function LeadDetailPage() {
   const { id } = useParams();
@@ -36,6 +36,7 @@ export default function LeadDetailPage() {
 
   const [isAssigning, setIsAssigning] = useState(false);
   const [savingStage, setSavingStage] = useState(false);
+  const [loadError, setLoadError] = useState("");
   const [interactionCount, setInteractionCount] = useState<number | undefined>(undefined);
   const [contactCount, setContactCount] = useState<number | undefined>(undefined);
 
@@ -57,6 +58,7 @@ export default function LeadDetailPage() {
       })
       .catch((err) => {
         console.error("Error loading lead:", err);
+        setLoadError("This lead couldn't be loaded. It may have been deleted, or you may not have access to it.");
       });
 
     // Fetch interactions
@@ -130,7 +132,7 @@ export default function LeadDetailPage() {
       setLead((prev) => prev && { ...prev, contact_title: newTitle });
       setEditingTitle(false);
     } else {
-      alert("Failed to update title.");
+      toast.error("Couldn't save the contact title. Please try again.");
     }
   };
 
@@ -161,7 +163,7 @@ export default function LeadDetailPage() {
       setLead((prev) => prev && { ...prev, notes: noteDraft });
       setIsEditingNote(false);
     } else {
-      alert("Failed to save notes");
+      toast.error("Couldn't save the notes. Please try again.");
     }
   };
 
@@ -176,7 +178,7 @@ export default function LeadDetailPage() {
       setNoteDraft("");
       setIsEditingNote(false);
     } else {
-      alert("Failed to delete notes");
+      toast.error("Couldn't delete the notes. Please try again.");
     }
   };
 
@@ -232,13 +234,14 @@ export default function LeadDetailPage() {
 
       window.location.href = `/clients/${newClient.id}`;
     } else {
-      alert("Failed to convert lead to account.");
+      toast.error(`Couldn't convert this lead to ${config.labels.client.toLowerCase()}. Please try again.`);
     }
   };
 
   if (!id) return <p className="p-6 text-red-600">Invalid lead ID.</p>;
 
-  if (!lead) return <p className="p-6">Loading...</p>;
+  if (loadError) return <p className="p-6 text-red-600">{loadError}</p>;
+  if (!lead) return <RecordSkeleton />;
 
   return (
     <div className="p-4 lg:p-6 space-y-4">
@@ -481,11 +484,16 @@ export default function LeadDetailPage() {
                   });
 
                   if (res.ok) {
-                    toast.success("Lead assigned successfully");
+                    toast.success("Lead assigned");
                     setShowAssignModal(false);
-                    window.location.reload();
+                    setSelectedUserId(null);
+                    // Reload just this lead so the Owner field updates without a page reload.
+                    const updated = await apiFetch(`/leads/${id}`, {
+                      headers: { Authorization: `Bearer ${token}` },
+                    });
+                    if (updated.ok) setLead(await updated.json());
                   } else {
-                    alert("Failed to assign lead.");
+                    toast.error("Couldn't assign this lead. Please try again.");
                   }
                   setIsAssigning(false);
                 }}
