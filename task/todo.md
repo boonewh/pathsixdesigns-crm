@@ -1,3 +1,18 @@
+# Bug fix (production): typing in Notes shows nothing, saves only the last letter — done
+
+Same bug and fix as on staging (PR #20). The Lead and Project pages passed
+`setNoteDraft` to `CompanyNotes` but not `noteDraft`, so the textarea kept its
+own empty value and each keystroke replaced the draft with one letter; they also
+showed the unsaved draft as the saved note, so Cancel could not restore it.
+
+- [x] Lead and Project pages: `notes={record.notes || ""}` and `noteDraft={noteDraft}`.
+- [x] `tests/notes-editing.spec.ts` (production layout: Notes is a collapsible
+      box): fails on the old code (3 failed), passes on the new.
+- [x] Checks: typecheck and build pass; lint unchanged (3 before and after);
+      41 browser tests pass.
+
+---
+
 # UI refresh — corporate look and record-page UX (PLAN, awaiting approval)
 
 Goal: make the CRM look and feel like a professional business product, based on
