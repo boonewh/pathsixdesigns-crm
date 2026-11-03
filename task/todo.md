@@ -1,3 +1,47 @@
+# Phase 7 — Dashboard (staging) — plan, waiting for approval
+
+Target: `staging` only. Same ideas as Leads/Accounts/Projects. Nothing to `main`.
+
+Found while reading the code:
+- **Bug: the Dashboard only looks at the 10 newest interactions.** It calls
+  `/interactions/` with no paging, and the backend defaults to 10 per page,
+  newest first. Any follow-up on an older interaction never shows as overdue,
+  today or upcoming. The Calendar page has the same bug.
+- **Bug: "All Caught Up!" shows while loading**, and also when loading fails,
+  so a network error looks like "nothing to do".
+- "Recently Touched" links use a plain `<a href>`, so clicking one reloads the
+  whole app instead of moving to the page.
+- Old look: colored alert boxes with emoji headings, times with seconds
+  ("2:00:00 PM"), double padding on desktop (page `p-6` inside the layout's
+  `p-6`), the support e-mail banner sits at the top above the real content.
+- Follow-up rows are clickable `<li>`s (no keyboard access).
+
+## Todo
+- [ ] Fix the data: Dashboard and Calendar ask for `sort=pending&per_page=200`
+      (backend already supports it: open follow-ups come first, soonest first).
+- [ ] Page frame like the other pages: `p-4 sm:p-0`, title "Dashboard" + today's date.
+- [ ] Summary tiles: Overdue / Due today / Next 7 days counts (reuse the unused
+      `MetricCard`, switched to the theme colors). Overdue number in red when > 0.
+- [ ] One "My follow-ups" card with three groups (Overdue, Today, Next 7 days).
+      Rows: record name, small muted type ("Lead", "Account", "Project"),
+      summary, and the date/time on the right (overdue dates in red). Rows are
+      buttons and still open the existing follow-up window. No emoji.
+- [ ] "Recently touched" card next to it (two columns on desktop, stacked on
+      phones), rows use in-app links, type label instead of emoji.
+- [ ] Loading skeleton; "Couldn't load follow-ups" message on error; the
+      "all caught up" empty state only after a successful load.
+- [ ] Support e-mail line moves to a small line at the bottom of the page.
+- [ ] Browser test: follow-ups beyond 10 interactions show, counts are right,
+      no "all caught up" while loading, phone has no sideways scroll.
+- [ ] Run all browser tests + lint (compare with before), screenshots, PR into `staging`.
+
+Out of scope (later phases, if you want them):
+- **Calendar**: `alert()` popups → toasts, emoji, double padding.
+- **Deletes (Trash), Reports, Settings, Help**: double padding / phone gutters,
+  `alert()` popups in Trash, Help page titled "Reports User Guide".
+- **Admin pages** (Leads, Accounts, Projects, Interactions): still use emoji
+  status badges (19 on Admin Leads alone) — switch to `StatusBadge`.
+
 # Phase 6 — Accounts and Projects caught up with Leads (staging) — done
 
 Target: `staging` only. Same patterns and shared pieces as Leads (StatusBadge,
