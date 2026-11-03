@@ -1,3 +1,26 @@
+# Bug fix: typing in Notes shows nothing, saves only the last letter — done
+
+Reported on the Lead page; the Project page had the same bug, and so does
+production (`main`), since it predates the UI refresh.
+
+Cause: `CompanyNotes` can manage its own text or be driven by the page. The
+Lead and Project pages passed `setNoteDraft` (so each keystroke updated the
+page) but not `noteDraft`, so the textarea kept showing its own empty value and
+each keystroke replaced the page's draft with just that one letter. They also
+passed the unsaved draft as `notes`, so Cancel could not restore the saved note.
+
+- [x] Lead and Project pages: `notes={record.notes || ""}` (the saved note) and
+      `noteDraft={noteDraft}` (the text being typed). The Account page already
+      worked (it lets the box manage its own text).
+- [x] `tests/notes-editing.spec.ts`: types a full note on both pages, checks
+      every letter shows and the whole note is saved, and that Cancel restores
+      the saved note. Fails on the old code (3 failed), passes on the new.
+- [x] Checks: typecheck and build pass; lint unchanged (3 before and after);
+      52 browser tests pass.
+- [ ] Same fix for production: separate small PR into `main` (after this one).
+
+---
+
 # UI tweaks round 1 (staging) — done
 
 Target: `staging` only, one small PR. Nothing goes to `main`.

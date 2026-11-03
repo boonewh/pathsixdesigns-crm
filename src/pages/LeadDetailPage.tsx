@@ -396,7 +396,8 @@ export default function LeadDetailPage() {
               label: "Notes",
               content: (
                 <CompanyNotes
-                  notes={noteDraft}
+                  notes={lead.notes || ""}
+                  noteDraft={noteDraft}
                   onSave={saveNote}
                   isEditing={isEditingNote}
                   setIsEditing={setIsEditingNote}
