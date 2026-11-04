@@ -194,7 +194,7 @@ export default function ProtectedLayout() {
                 <Link to="/change-password" className="block px-4 py-2 data-[focus]:bg-muted">Change password</Link>
               </MenuItem>
               <MenuItem>
-                <Link to="/help" className="block px-4 py-2 data-[focus]:bg-muted">User Guide</Link>
+                <Link to="/help" className="block px-4 py-2 data-[focus]:bg-muted">Reports guide</Link>
               </MenuItem>
               <div className="my-1 border-t" />
               <MenuItem>

@@ -65,7 +65,7 @@ export function PipelineReport({ startDate, endDate }: Props) {
   if (error) return <div className="p-6 text-center text-red-600">{error}</div>;
   if (!data || (data.leads.length === 0 && data.projects.length === 0)) {
     return (
-      <div className="bg-white rounded-lg shadow p-6">
+      <div className="bg-white rounded-lg border p-6">
         <p className="text-center text-gray-500 py-8">No pipeline data available</p>
       </div>
     );
@@ -78,7 +78,7 @@ export function PipelineReport({ startDate, endDate }: Props) {
     <div className="space-y-6">
       {/* Lead Pipeline */}
       {data.leads.length > 0 && (
-        <div className="bg-white rounded-lg shadow p-6">
+        <div className="bg-white rounded-lg border p-6">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
               <TrendingUp className="h-5 w-5 text-blue-600" />
@@ -122,7 +122,7 @@ export function PipelineReport({ startDate, endDate }: Props) {
 
       {/* Project Pipeline */}
       {data.projects.length > 0 && (
-        <div className="bg-white rounded-lg shadow p-6">
+        <div className="bg-white rounded-lg border p-6">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
               <Briefcase className="h-5 w-5 text-green-600" />
