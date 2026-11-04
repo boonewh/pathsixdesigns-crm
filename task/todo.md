@@ -1,3 +1,49 @@
+# Phase 11 — Backend filters for Accounts (type) and Projects (status) — plan, waiting for approval
+
+Target: backend `pathsix-backend` → `staging` branch (you deploy to Fly
+staging); frontend → `staging`. Nothing to production. Same approach as the
+Leads status filter (backend PR #31 / frontend Phase "status filter").
+
+Problem: the Accounts **Type** dropdown and the Projects **Status** dropdown
+only filter the page already loaded (10 rows by default). Records of that
+type/status on other pages are hidden, and the message says "on this page".
+The backend list endpoints (`GET /api/clients/`, `GET /api/projects/`) accept
+page/sort only — no type or status.
+
+## Backend (`pathsix-backend`, branch `ccr-5934bc6a-eapcnw` → PR into `staging`)
+- [ ] `ClientService.list_mine(..., type=None)`: count per type over the
+      user's visible accounts (before the type filter and paging) →
+      `type_counts`; then optional `Client.type == type` filter. Admin
+      `list_all` untouched.
+- [ ] `ProjectService.list_mine(..., status=None)`: same with
+      `project_status` → `status_counts`, then optional status filter.
+      (Counts use a plain query without the eager-load options.)
+- [ ] Routes pass `type=request.args.get("type")` /
+      `status=request.args.get("status")`. Empty or missing = no filter, so
+      old frontends behave exactly as before.
+- [ ] Tests (like `tests/test_lead_status_filter.py`): filter returns only
+      matching rows across pages, total is the filtered total, counts ignore
+      the filter, other users' records are not counted, missing param =
+      unchanged behaviour.
+- [ ] Run the full backend test suite.
+
+## Frontend (`staging`)
+- [ ] Accounts: send `&type=` with the list request (and the refreshes after
+      edit/assign), reset to page 1 on change, show counts in the dropdown
+      ("Healthcare (30)") when the backend sends `type_counts`; remove the
+      "on this page" wording in that case.
+- [ ] Projects: same with `&status=` and `status_counts`.
+- [ ] Fallback: if the backend doesn't send counts yet (old backend), keep
+      today's page-only filtering and wording — so deploy order doesn't
+      matter.
+- [ ] Browser tests: filter param sent, page resets to 1, counts shown,
+      fallback without counts still works.
+- [ ] Run all browser tests + lint, PR into `staging`.
+
+## Order
+1. Backend PR → you merge it into backend `staging` and deploy to Fly staging.
+2. Frontend PR → merge into `staging` (works before or after step 1).
+
 # Phase 10 — Admin pages (staging) — done
 
 Target: `staging` only. Same ideas as the earlier phases. Nothing to `main`.
