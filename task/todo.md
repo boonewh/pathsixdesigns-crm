@@ -1,3 +1,48 @@
+# Phase 9 — Deletes, Reports, Settings, Help (staging) — plan, waiting for approval
+
+Target: `staging` only. Same ideas as the earlier phases. Nothing to `main`.
+
+Found while reading the code and screenshots:
+- **Bug (Deletes): broken character in the error message.** The file has a
+  stray Windows-1252 apostrophe, so "Trash couldn't be refreshed" shows as
+  "Trash couldn�t be refreshed". It's the only file in `src/` with this problem.
+- **Bug (Deletes): Restore has no error handling.** A failed restore shows a
+  browser `alert()`; a network error throws an unhandled error and nothing is
+  shown. A successful restore gives no feedback (the row just vanishes).
+- Deletes: page says "Trash" but the menu says "Deletes"; tables sit
+  straight on the gray background; every row has a solid blue Restore and a
+  solid red "Delete Permanently" button (very loud, and on phones two
+  full-width buttons per record).
+- Reports: report cards use a drop shadow instead of the bordered cards used
+  everywhere else; tab underline/colors are hard-coded blues.
+- Settings: narrow column centered in the middle of the page (everything
+  else is left-aligned); "Change Password" is a plain link.
+- Help: the account menu calls it "User Guide", but the page is only about
+  Reports and is titled "Reports User Guide". Very large heading, bright blue
+  callout box, colored bullets.
+- `src/components/reports/ActivityReports.tsx` (316 lines) and
+  `src/pages/TrashPage.module.css` are not used anywhere.
+
+## Todo
+- [ ] Deletes: fix the broken character.
+- [ ] Deletes: Restore uses try/catch; toast "<name> restored" on success,
+      toast error on failure. No `alert()`.
+- [ ] Deletes: title "Deletes" (same as the menu); each section in a white
+      bordered card with a count ("Deleted Leads (2)"); Restore as an outline
+      button, "Delete permanently" as a quiet red text button (the
+      confirmation dialog stays exactly as it is). Phones: buttons side by side.
+- [ ] Reports: bordered cards instead of shadows (class swap in the report
+      components), tabs use the theme colors, page frame `p-4 lg:p-6`.
+- [ ] Settings: left-aligned like other pages, bordered card, "Change password"
+      as an outline button. (Dev-only Sentry test box left alone.)
+- [ ] Help: title "Reports guide" and the account menu item renamed to
+      "Reports guide" so they match; normal-size heading, neutral callout,
+      plain bullets, bordered cards. Content unchanged.
+- [ ] Remove the two unused files.
+- [ ] Browser tests: Deletes restore success/failure (toast, no alert), error
+      text has no broken character; existing Trash/purge tests still pass.
+- [ ] Run all browser tests + lint (compare with before), screenshots, PR into `staging`.
+
 # Phase 8 — Calendar (staging) — done
 
 Target: `staging` only. Same ideas as Leads/Dashboard. Nothing to `main`.
