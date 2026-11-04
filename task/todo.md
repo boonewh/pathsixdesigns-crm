@@ -1,4 +1,4 @@
-# Phase 10 — Admin pages (staging) — plan, waiting for approval
+# Phase 10 — Admin pages (staging) — done
 
 Target: `staging` only. Same ideas as the earlier phases. Nothing to `main`.
 
@@ -24,31 +24,58 @@ Found while reading the code:
   plain gray tables with shadows, wrench icon for Edit, pagination shown twice.
 
 ## Todo
-- [ ] Admin Leads: clear the selection whenever the list reloads (page, page
+- [x] Admin Leads: clear the selection whenever the list reloads (page, page
       size, sort, user); one bulk-delete button in a toolbar above the table;
       try/catch with toasts; single confirm stays.
-- [ ] Admin Interactions: show project names (and link); put interactions
+- [x] Admin Interactions: show project names (and link); put interactions
       without a follow-up in their own "No follow-up" group; use local dates
       (same rules as the Dashboard).
-- [ ] Fix the colSpan of the empty rows (Leads, Accounts, Projects).
-- [ ] Admin Projects: use the configured label (Account/Customer…), link
+- [x] Fix the colSpan of the empty rows (Leads, Accounts, Projects).
+- [x] Admin Projects: use the configured label (Account/Customer…), link
       project names to the project page, status via shared `StatusBadge`.
-- [ ] Admin Leads: status via shared `StatusBadge` (no emoji, proper labels).
-- [ ] Replace `alert()` with toasts (Leads, Accounts, Projects, Users) and add
+- [x] Admin Leads: status via shared `StatusBadge` (no emoji, proper labels).
+- [x] Replace `alert()` with toasts (Leads, Accounts, Projects, Users) and add
       try/catch where missing.
-- [ ] Same look as the rest: page frame `p-4 lg:p-6`, plain titles, "Filter
+- [x] Same look as the rest: page frame `p-4 lg:p-6`, plain titles, "Filter
       by user" select styled like other inputs, tables in white bordered
       cards with the muted header, pencil "Edit" button (like Leads table),
       pagination once (bottom), shared `Button` (Users "New user", Save, etc.).
-- [ ] Backups / Import: page frame and title style only (they already use
+- [x] Backups / Import: page frame and title style only (they already use
       toasts).
-- [ ] Browser tests: selection clears on page change (no hidden deletes),
+- [x] Browser tests: selection clears on page change (no hidden deletes),
       project interaction name shows, no-follow-up group, empty row spans the
       table, failed save shows a toast (no alert).
-- [ ] Run all browser tests + lint (compare with before), screenshots, PR into `staging`.
+- [x] Run all browser tests + lint (compare with before), screenshots, PR into `staging`.
 
 Not included (say if you want it): phone-specific lists for admin tables
 (they scroll sideways inside their card, which is usual for admin screens).
+
+## Review
+- `AdminLeadsPage.tsx`: selection is cleared every time the list reloads
+  (page, size, sort, user), so bulk delete only ever deletes rows you can
+  see; one bulk-delete toolbar (was duplicated top and bottom) with
+  try/catch + toasts; status via `StatusBadge` (emoji map removed); row
+  checkboxes labelled; failed save shows a toast.
+- `AdminInteractionsPage.tsx`: project interactions show their name; new
+  "No follow-up" group (they used to sit under "Upcoming"); overdue/today/
+  upcoming use local dates (date-fns, same as Dashboard).
+- `AdminProjectsPage.tsx`: configured label instead of hard-coded
+  "Account:", project names link to the project, `StatusBadge`, value shown
+  like the Projects page ("$1,530 / mo"), "Standalone" instead of the emoji
+  warning, toasts.
+- `AdminClientsPage.tsx`: toasts instead of `alert()`.
+- `AdminUsersPage.tsx`: toasts instead of `alert()`, try/catch on role and
+  email changes, error bodies read safely; primary-colored buttons.
+- Leads/Accounts/Projects: empty-row colSpan matches the column count.
+- Look on all list pages: page frame, plain titles, styled user select,
+  white bordered tables with the muted header, pencil edit button,
+  pagination once (bottom). Backups/Import: frame and title only.
+- `tests/admin-pages.spec.ts`: 5 tests (selection cleared on page change,
+  badge without emoji, failed bulk delete toast, empty row spans table,
+  interactions project name + no-follow-up group).
+- Checks: 74/74 browser tests, `tsc` clean, lint unchanged on touched files
+  (7 old problems, none new).
+
 
 # Phase 9 — Deletes, Reports, Settings, Help (staging) — done
 

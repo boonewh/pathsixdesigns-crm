@@ -7,23 +7,11 @@ import LeadForm from "@/components/ui/LeadForm";
 import PaginationControls from "@/components/ui/PaginationControls";
 import { usePagination } from "@/hooks/usePreferences";
 import { formatPhoneNumber } from "@/lib/phoneUtils";
-import { Wrench } from "lucide-react";
+import { Edit } from "lucide-react";
 import { useCRMConfig } from "@/config/crmConfig";
-
-const ICON_MAP: Record<string, string> = {
-  'circle-yellow': '🟡',
-  'circle-blue': '🔵',
-  'circle-orange': '🟠',
-  'circle-red': '🔴',
-  'circle-green': '🟢',
-  'phone': '📞',
-  'star': '⭐',
-  'check': '✅',
-  'x': '❌',
-  'snowflake': '❄️',
-};
-const resolveIcons = (icons: Record<string, string>) =>
-  Object.fromEntries(Object.entries(icons).map(([k, v]) => [k, ICON_MAP[v] || v]));
+import toast from "react-hot-toast";
+import StatusBadge from "@/components/ui/StatusBadge";
+import { Button } from "@/components/ui/button";
 
 interface AdminLead extends Lead {
   assigned_to_name?: string;
@@ -110,6 +98,8 @@ export default function AdminLeadsPage() {
       }
 
       setLoading(true);
+      // Never keep checked leads from another page/user: they'd be deleted unseen.
+      setSelectedLeadIds([]);
       try {
         const leadRes = await apiFetch(
           `/leads/all?page=${currentPage}&per_page=${perPage}&sort=${sortOrder}&user_email=${encodeURIComponent(selectedEmail)}`,
@@ -139,25 +129,52 @@ export default function AdminLeadsPage() {
     setCurrentPage(1);
   }, [selectedEmail, setCurrentPage]);
 
+  const listUrl = `/leads/all?page=${currentPage}&per_page=${perPage}&sort=${sortOrder}&user_email=${encodeURIComponent(selectedEmail)}`;
+
+  const deleteSelected = async () => {
+    const count = selectedLeadIds.length;
+    if (!confirm(`Delete ${count} selected lead(s)?`)) return;
+    try {
+      const res = await apiFetch("/leads/bulk-delete", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ lead_ids: selectedLeadIds }),
+      });
+      if (!res.ok) throw new Error(`Status ${res.status}`);
+      const refreshed = await apiFetch(listUrl, { headers: { Authorization: `Bearer ${token}` } });
+      const data = await refreshed.json();
+      setLeads(data.leads);
+      setTotal(data.total);
+      clearSelection();
+      toast.success(`${count} lead(s) deleted`);
+    } catch (err) {
+      console.error(err);
+      toast.error("Couldn't delete the selected leads. Please try again.");
+    }
+  };
+
   const handleUserChange = (email: string) => {
     setSearchParams(email ? { user: email } : {});
     setCurrentPage(1);
   };
 
   return (
-    <div className="p-6 space-y-6">
-      <h1 className="text-2xl font-bold text-blue-800">Admin: Leads Overview</h1>
-      {error && <p className="text-red-500">{error}</p>}
+    <div className="p-4 lg:p-6 space-y-6">
+      <h1 className="text-2xl font-bold">Admin: Leads Overview</h1>
+      {error && <p role="alert" className="text-sm text-red-700">{error}</p>}
 
       <div className="max-w-sm">
-        <label htmlFor="user-select" className="block font-medium mb-2">
+        <label htmlFor="user-select" className="block text-sm font-medium mb-1">
           Filter by user:
         </label>
         <select
           id="user-select"
           value={selectedEmail}
           onChange={(e) => handleUserChange(e.target.value)}
-          className="w-full border border-gray-300 rounded px-3 py-2"
+          className="w-full rounded-md border border-input bg-white px-3 py-2 text-sm"
         >
           <option value="">— Select a user —</option>
           {users.map((u) => (
@@ -170,51 +187,13 @@ export default function AdminLeadsPage() {
 
       {selectedEmail && (
         <>
-          {/* Pagination Controls at top */}
-          <PaginationControls
-            currentPage={currentPage}
-            perPage={perPage}
-            total={total}
-            sortOrder={sortOrder}
-            onPageChange={setCurrentPage}
-            onPerPageChange={updatePerPage}
-            onSortOrderChange={updateSortOrder}
-            entityName="leads"
-            className="border-b pb-4"
-          />
-
           {selectedLeadIds.length > 0 && (
-            <div className="mb-4">
-              <button
-                onClick={async () => {
-                  if (!confirm(`Delete ${selectedLeadIds.length} selected lead(s)?`)) return;
-
-                  const res = await apiFetch("/leads/bulk-delete", {
-                    method: "POST",
-                    headers: {
-                      "Content-Type": "application/json",
-                      Authorization: `Bearer ${token}`,
-                    },
-                    body: JSON.stringify({ lead_ids: selectedLeadIds }),
-                  });
-
-                  if (res.ok) {
-                    const refreshed = await apiFetch(
-                      `/leads/all?page=${currentPage}&per_page=${perPage}&sort=${sortOrder}&user_email=${encodeURIComponent(selectedEmail)}`,
-                      { headers: { Authorization: `Bearer ${token}` } }
-                    );
-                    const data = await refreshed.json();
-                    setLeads(data.leads);
-                    setTotal(data.total);
-                    clearSelection();
-                  } else {
-                    alert("Failed to delete selected leads");
-                  }
-                }}
-                className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700"
-              >
+            <div className="flex items-center gap-3 rounded-lg border bg-white px-4 py-2">
+              <span className="text-sm">{selectedLeadIds.length} selected</span>
+              <Button size="sm" variant="destructive" onClick={deleteSelected}>
                 Delete Selected ({selectedLeadIds.length})
-              </button>
+              </Button>
+              <Button size="sm" variant="ghost" onClick={clearSelection}>Clear</Button>
             </div>
           )}
 
@@ -223,11 +202,11 @@ export default function AdminLeadsPage() {
           {loading ? (
             <div className="text-gray-500 text-center py-10">Loading...</div>
           ) : (
-            <div className="overflow-auto border rounded shadow-sm">
+            <div className="overflow-x-auto bg-white rounded-lg border">
               <table className="min-w-full table-auto">
-                <thead className="bg-gray-100">
+                <thead className="bg-gray-50">
                   <tr>
-                    <th className="px-4 py-2 text-left">
+                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-500">
                       <input
                         type="checkbox"
                         aria-label="Select all leads"
@@ -235,29 +214,29 @@ export default function AdminLeadsPage() {
                         onChange={toggleAllLeads}
                       />
                     </th>
-                    <th className="px-4 py-2 text-left">Name</th>
-                    <th className="px-4 py-2 text-left">Contact</th>
-                    <th className="px-4 py-2 text-left">Email</th>
-                    <th className="px-4 py-2 text-left">Phone</th>
-                    <th className="px-4 py-2 text-left">Status</th>
-                    <th className="px-4 py-2 text-left">Type</th>
-                    <th className="px-4 py-2 text-left">Assigned To</th>
-                    <th className="px-4 py-2 text-left">Created</th>
-                    <th className="px-4 py-2 text-left">Edit</th>
+                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-500">Name</th>
+                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-500">Contact</th>
+                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-500">Email</th>
+                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-500">Phone</th>
+                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-500">Status</th>
+                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-500">Type</th>
+                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-500">Assigned To</th>
+                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-500">Created</th>
+                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-500">Edit</th>
                   </tr>
                 </thead>
                 <tbody>
                   {leads.map((lead) => (
                     <tr key={lead.id} className="border-t hover:bg-gray-50 transition">
-                      <td className="px-4 py-2">
+                      <td className="px-4 py-3 text-sm">
                         <input
                           type="checkbox"
                           checked={selectedLeadIds.includes(lead.id)}
                           onChange={() => toggleLeadSelection(lead.id)}
-                          className="form-checkbox"
+                          aria-label={`Select ${lead.name}`}
                         />
                       </td>
-                      <td className="px-4 py-2">
+                      <td className="px-4 py-3 text-sm">
                         <Link
                           to={`/leads/${lead.id}`}
                           className="text-blue-600 hover:underline"
@@ -265,7 +244,7 @@ export default function AdminLeadsPage() {
                           {lead.name}
                         </Link>
                       </td>
-                      <td className="px-4 py-2">
+                      <td className="px-4 py-3 text-sm">
                         <div>
                           {lead.contact_person ?? "—"}
                           {lead.contact_title && (
@@ -273,35 +252,36 @@ export default function AdminLeadsPage() {
                           )}
                         </div>
                       </td>
-                      <td className="px-4 py-2">{lead.email ?? "—"}</td>
-                      <td className="px-4 py-2">{lead.phone ? formatPhoneNumber(lead.phone) : "—"}</td>
-                      <td className="px-4 py-2">
-                        <span className={`inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-full ${
-                          config.leads.statusConfig.colors[lead.lead_status || ''] || 'bg-gray-100 text-gray-800'
-                        }`}>
-                          <span>{resolveIcons(config.leads.statusConfig.icons)[lead.lead_status || '']}</span>
-                          {lead.lead_status ?? "—"}
-                        </span>
+                      <td className="px-4 py-3 text-sm">{lead.email ?? "—"}</td>
+                      <td className="px-4 py-3 text-sm">{lead.phone ? formatPhoneNumber(lead.phone) : "—"}</td>
+                      <td className="px-4 py-3 text-sm">
+                        {lead.lead_status ? (
+                          <StatusBadge
+                            status={lead.lead_status}
+                            colorClass={config.leads.statusConfig.colors[lead.lead_status]}
+                            label={config.leads.statusConfig.labels?.[lead.lead_status]}
+                          />
+                        ) : "—"}
                       </td>
-                      <td className="px-4 py-2">{lead.type ?? "—"}</td>
-                      <td className="px-4 py-2">{lead.assigned_to_name ?? "—"}</td>
-                      <td className="px-4 py-2">
+                      <td className="px-4 py-3 text-sm">{lead.type ?? "—"}</td>
+                      <td className="px-4 py-3 text-sm">{lead.assigned_to_name ?? "—"}</td>
+                      <td className="px-4 py-3 text-sm">
                         {lead.created_at 
                           ? new Date(lead.created_at).toLocaleDateString()
                           : "—"
                         }
                       </td>
-                      <td className="px-4 py-2">
+                      <td className="px-4 py-3 text-sm">
                         <button
                           onClick={() => {
                             setEditingLeadId(lead.id);
                             setForm(lead);
                             setShowEditModal(true);
                           }}
-                          className="text-blue-600 hover:underline"
+                          className="text-blue-600 hover:text-blue-800 p-1 rounded hover:bg-blue-50"
                           title="Edit Lead"
                         >
-                          <Wrench size={16} />
+                          <Edit size={14} />
                         </button>
                       </td>
 
@@ -309,7 +289,7 @@ export default function AdminLeadsPage() {
                   ))}
                   {leads.length === 0 && !loading && (
                     <tr>
-                      <td colSpan={8} className="px-4 py-4 text-center text-gray-500">
+                      <td colSpan={10} className="px-4 py-4 text-center text-gray-500">
                         No leads found for this user.
                       </td>
                     </tr>
@@ -333,41 +313,6 @@ export default function AdminLeadsPage() {
                 entityName="leads"
                 className="border-t pt-4"
               />
-
-              {selectedLeadIds.length > 0 && (
-                <div className="mb-4">
-                  <button
-                    onClick={async () => {
-                      if (!confirm(`Delete ${selectedLeadIds.length} selected lead(s)?`)) return;
-
-                      const res = await apiFetch("/leads/bulk-delete", {
-                        method: "POST",
-                        headers: {
-                          "Content-Type": "application/json",
-                          Authorization: `Bearer ${token}`,
-                        },
-                        body: JSON.stringify({ lead_ids: selectedLeadIds }),
-                      });
-
-                      if (res.ok) {
-                        const refreshed = await apiFetch(
-                          `/leads/all?page=${currentPage}&per_page=${perPage}&sort=${sortOrder}&user_email=${encodeURIComponent(selectedEmail)}`,
-                          { headers: { Authorization: `Bearer ${token}` } }
-                        );
-                        const data = await refreshed.json();
-                        setLeads(data.leads);
-                        setTotal(data.total);
-                        clearSelection();
-                      } else {
-                        alert("Failed to delete selected leads");
-                      }
-                    }}
-                    className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700"
-                  >
-                    Delete Selected ({selectedLeadIds.length})
-                  </button>
-                </div>
-              )}
             </>
           )}
 
@@ -414,11 +359,12 @@ export default function AdminLeadsPage() {
                       setShowEditModal(false);
                       setEditingLeadId(null);
                       setForm({});
+                      toast.success("Lead updated");
                     } else {
-                      alert("Failed to update lead");
+                      toast.error("Couldn't update the lead. Please try again.");
                     }
                   } catch {
-                    alert("Failed to update lead");
+                    toast.error("Couldn't update the lead. Please try again.");
                   }
                 }}
                 onCancel={() => {
