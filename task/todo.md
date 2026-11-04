@@ -1,3 +1,49 @@
+# Phase 8 — Calendar (staging) — plan, waiting for approval
+
+Target: `staging` only. Same ideas as Leads/Dashboard. Nothing to `main`.
+
+Found while reading the code and screenshots:
+- **Bug: changing the filter throws you back to today.** Every filter change
+  re-downloads all interactions and swaps the calendar for "Loading...", so
+  the calendar is rebuilt and you lose the month/week you navigated to.
+- **Bug: loading never ends if the request fails.** No error handling: a
+  network error or a 500 leaves "Loading follow-ups..." on screen forever.
+- **Bug: the follow-up window has no summary.** The Calendar doesn't pass the
+  interaction summary to the window (the Dashboard does), so you see outcome
+  and notes but not what the follow-up is about.
+- Dragging a follow-up to a new day: failures use browser `alert()` popups,
+  and success gives no feedback at all.
+- Old look: default FullCalendar dark-gray buttons, yellow "today" cell,
+  emoji legend and emoji on every event, bold "Filter by:" label, double
+  padding on desktop.
+- Phones: opens on a single-day 5am–10pm grid, which is mostly empty
+  scrolling. Phone calendar apps open on an agenda list instead.
+
+## Todo
+- [ ] Load once; filter in the page (no re-download, calendar keeps its place).
+- [ ] Error handling: message "Couldn't load follow-ups. Please refresh…"
+      instead of loading forever; loading placeholder like the other pages.
+- [ ] Pass the summary to the follow-up window.
+- [ ] Drag to reschedule: toast "Follow-up moved to <date>" on success, toast
+      error (and the event jumps back) on failure. No `alert()`.
+- [ ] Page frame like the other pages: `p-4 lg:p-6`, title "Calendar".
+- [ ] Toolbar: type filter as a small segmented control
+      (All / Clients / Leads / Projects), "24 hours" toggle as the shared
+      outline Button, legend as colored dots (no emoji).
+- [ ] Calendar inside a white card; theme FullCalendar with our colors
+      (outline buttons, blue active view, light-blue "today", our borders) —
+      CSS variables in `src/index.css`, no library changes.
+- [ ] Events: colored dot by type + name (no emoji); overdue in red;
+      completed in gray with a line through (kept as today).
+- [ ] Phones: open on a "List" (agenda) view of the week — needs one small
+      official package, `@fullcalendar/list` (same version as the other
+      FullCalendar packages). Desktop keeps Month as default, List added as a
+      4th view button.
+- [ ] Browser tests: filter keeps your place and doesn't re-download; error
+      message on failure; summary shown in the window; drag failure shows a
+      message instead of an alert; phone opens on the list, no sideways scroll.
+- [ ] Run all browser tests + lint (compare with before), screenshots, PR into `staging`.
+
 # Phase 7 — Dashboard (staging) — done
 
 Target: `staging` only. Same ideas as Leads/Accounts/Projects. Nothing to `main`.
