@@ -102,6 +102,88 @@
   box-shadow: none !important;
 }
 
+/* === FullCalendar theme (matches the app's colors) === */
+.fc {
+  --fc-border-color: hsl(var(--border));
+  --fc-page-bg-color: #fff;
+  --fc-neutral-bg-color: hsl(var(--muted));
+  --fc-today-bg-color: hsl(var(--primary) / 0.05);
+  --fc-list-event-hover-bg-color: hsl(var(--muted));
+  --fc-button-text-color: hsl(var(--foreground));
+  --fc-button-bg-color: #fff;
+  --fc-button-border-color: hsl(var(--border));
+  --fc-button-hover-bg-color: hsl(var(--muted));
+  --fc-button-hover-border-color: hsl(var(--border));
+  --fc-button-active-bg-color: hsl(var(--primary));
+  --fc-button-active-border-color: hsl(var(--primary));
+}
+
+.fc .fc-button {
+  font-size: 0.875rem;
+  font-weight: 500;
+  text-transform: none;
+  box-shadow: none !important;
+}
+
+.fc .fc-button-primary:not(:disabled).fc-button-active,
+.fc .fc-button-primary:not(:disabled):active {
+  color: hsl(var(--primary-foreground));
+}
+
+.fc .fc-toolbar-title {
+  font-size: 1.125rem;
+  font-weight: 600;
+}
+
+.fc .fc-col-header-cell {
+  background: hsl(var(--muted));
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: hsl(var(--muted-foreground));
+}
+
+.fc a.fc-col-header-cell-cushion,
+.fc a.fc-daygrid-day-number,
+.fc a.fc-list-day-text,
+.fc a.fc-list-day-side-text {
+  color: inherit;
+  text-decoration: none;
+}
+
+.fc .fc-daygrid-day-number {
+  font-size: 0.8125rem;
+  font-weight: 500;
+}
+
+.fc .fc-day-today .fc-daygrid-day-number {
+  margin: 2px;
+  min-width: 1.5rem;
+  border-radius: 9999px;
+  background: hsl(var(--primary));
+  color: hsl(var(--primary-foreground));
+  text-align: center;
+}
+
+.fc .fc-daygrid-event {
+  padding: 1px 4px;
+}
+
+.fc .fc-event {
+  cursor: pointer;
+}
+
+.fc .fc-list-day-cushion {
+  padding: 6px 14px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+
+.fc .fc-list-event td {
+  font-size: 0.875rem;
+}
+
 .scrollbar-hide::-webkit-scrollbar {
   display: none;
 }

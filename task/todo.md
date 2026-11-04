@@ -1,4 +1,4 @@
-# Phase 8 — Calendar (staging) — plan, waiting for approval
+# Phase 8 — Calendar (staging) — done
 
 Target: `staging` only. Same ideas as Leads/Dashboard. Nothing to `main`.
 
@@ -20,29 +20,49 @@ Found while reading the code and screenshots:
   scrolling. Phone calendar apps open on an agenda list instead.
 
 ## Todo
-- [ ] Load once; filter in the page (no re-download, calendar keeps its place).
-- [ ] Error handling: message "Couldn't load follow-ups. Please refresh…"
+- [x] Load once; filter in the page (no re-download, calendar keeps its place).
+- [x] Error handling: message "Couldn't load follow-ups. Please refresh…"
       instead of loading forever; loading placeholder like the other pages.
-- [ ] Pass the summary to the follow-up window.
-- [ ] Drag to reschedule: toast "Follow-up moved to <date>" on success, toast
+- [x] Pass the summary to the follow-up window.
+- [x] Drag to reschedule: toast "Follow-up moved to <date>" on success, toast
       error (and the event jumps back) on failure. No `alert()`.
-- [ ] Page frame like the other pages: `p-4 lg:p-6`, title "Calendar".
-- [ ] Toolbar: type filter as a small segmented control
+- [x] Page frame like the other pages: `p-4 lg:p-6`, title "Calendar".
+- [x] Toolbar: type filter as a small segmented control
       (All / Clients / Leads / Projects), "24 hours" toggle as the shared
       outline Button, legend as colored dots (no emoji).
-- [ ] Calendar inside a white card; theme FullCalendar with our colors
+- [x] Calendar inside a white card; theme FullCalendar with our colors
       (outline buttons, blue active view, light-blue "today", our borders) —
       CSS variables in `src/index.css`, no library changes.
-- [ ] Events: colored dot by type + name (no emoji); overdue in red;
+- [x] Events: colored dot by type + name (no emoji); overdue in red;
       completed in gray with a line through (kept as today).
-- [ ] Phones: open on a "List" (agenda) view of the week — needs one small
+- [x] Phones: open on a "List" (agenda) view of the week — needs one small
       official package, `@fullcalendar/list` (same version as the other
       FullCalendar packages). Desktop keeps Month as default, List added as a
       4th view button.
-- [ ] Browser tests: filter keeps your place and doesn't re-download; error
+- [x] Browser tests: filter keeps your place and doesn't re-download; error
       message on failure; summary shown in the window; drag failure shows a
       message instead of an alert; phone opens on the list, no sideways scroll.
-- [ ] Run all browser tests + lint (compare with before), screenshots, PR into `staging`.
+- [x] Run all browser tests + lint (compare with before), screenshots, PR into `staging`.
+
+## Review
+- `src/pages/CalendarPage.tsx`: loads once (with error handling and a
+  loading placeholder); the type filter works on loaded data, so the calendar
+  keeps your place. Follow-up window gets the summary (window now reads the
+  interaction directly instead of copying fields). Drag to reschedule shows a
+  toast either way, keeps the moved date, jumps back on failure. Segmented
+  type filter doubles as the color legend; events show a colored dot, overdue
+  red, completed gray/struck through. Phones open on List (week); desktop
+  keeps Month with a List button. Removed the 4 `any` lint errors.
+- `src/index.css`: FullCalendar theme via its CSS variables (outline
+  buttons, blue active view, light "today", our borders and header style).
+- `package.json` / `package-lock.json`: added `@fullcalendar/list` 6.1.22
+  (lockfile edited by hand to add only that entry; the local npm version
+  would otherwise have rewritten unrelated lines).
+- `tests/calendar.spec.ts`: 6 tests (filter keeps place without reloading,
+  load error, summary, drag success, drag failure without alert, phone list).
+- Checks: 65/65 browser tests, `tsc` clean, lint 0 errors on the Calendar,
+  production build OK.
+
 
 # Phase 7 — Dashboard (staging) — done
 
