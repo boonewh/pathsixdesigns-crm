@@ -1,4 +1,4 @@
-# Phase 9 — Deletes, Reports, Settings, Help (staging) — plan, waiting for approval
+# Phase 9 — Deletes, Reports, Settings, Help (staging) — done
 
 Target: `staging` only. Same ideas as the earlier phases. Nothing to `main`.
 
@@ -24,24 +24,47 @@ Found while reading the code and screenshots:
   `src/pages/TrashPage.module.css` are not used anywhere.
 
 ## Todo
-- [ ] Deletes: fix the broken character.
-- [ ] Deletes: Restore uses try/catch; toast "<name> restored" on success,
+- [x] Deletes: fix the broken character.
+- [x] Deletes: Restore uses try/catch; toast "<name> restored" on success,
       toast error on failure. No `alert()`.
-- [ ] Deletes: title "Deletes" (same as the menu); each section in a white
+- [x] Deletes: title "Deletes" (same as the menu); each section in a white
       bordered card with a count ("Deleted Leads (2)"); Restore as an outline
       button, "Delete permanently" as a quiet red text button (the
       confirmation dialog stays exactly as it is). Phones: buttons side by side.
-- [ ] Reports: bordered cards instead of shadows (class swap in the report
+- [x] Reports: bordered cards instead of shadows (class swap in the report
       components), tabs use the theme colors, page frame `p-4 lg:p-6`.
-- [ ] Settings: left-aligned like other pages, bordered card, "Change password"
+- [x] Settings: left-aligned like other pages, bordered card, "Change password"
       as an outline button. (Dev-only Sentry test box left alone.)
-- [ ] Help: title "Reports guide" and the account menu item renamed to
+- [x] Help: title "Reports guide" and the account menu item renamed to
       "Reports guide" so they match; normal-size heading, neutral callout,
       plain bullets, bordered cards. Content unchanged.
-- [ ] Remove the two unused files.
-- [ ] Browser tests: Deletes restore success/failure (toast, no alert), error
+- [x] Remove the two unused files.
+- [x] Browser tests: Deletes restore success/failure (toast, no alert), error
       text has no broken character; existing Trash/purge tests still pass.
-- [ ] Run all browser tests + lint (compare with before), screenshots, PR into `staging`.
+- [x] Run all browser tests + lint (compare with before), screenshots, PR into `staging`.
+
+## Review
+- `src/pages/TrashPage.tsx`: fixed the broken apostrophe (stray Windows-1252
+  byte); Restore wrapped in try/catch with toasts ("<name> restored" /
+  "Couldn't restore <name>…"), no `alert()`; title "Deletes"; sections are
+  white bordered cards with counts; Restore = outline button, "Delete
+  permanently" = quiet red text button (confirmation dialog untouched);
+  phone buttons side by side.
+- Reports: report cards use borders instead of shadows (class swap in 5
+  report components), date filter box white/bordered, tabs use theme colors,
+  page frame `p-4 lg:p-6`.
+- `src/pages/Settings.tsx`: left-aligned, bordered card, "Change password"
+  outline button. Dev-only Sentry box unchanged.
+- `src/pages/HelpPage.tsx` + account menu: both now "Reports guide"; calmer
+  sizes/colors; content unchanged.
+- Removed unused `src/components/reports/ActivityReports.tsx` and
+  `src/pages/TrashPage.module.css`.
+- `tests/deletes.spec.ts`: 4 tests (restore success, restore failure, error
+  text without broken characters, phone fits). Existing Trash/purge tests
+  pass unchanged.
+- Checks: 69/69 browser tests, `tsc` clean, lint unchanged on touched files
+  (7 old problems, none new).
+
 
 # Phase 8 — Calendar (staging) — done
 

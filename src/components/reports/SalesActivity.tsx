@@ -39,7 +39,7 @@ function SalesActivity({ startDate, endDate }: Props) {
   }, [startDate, endDate, userId, page, retry]);
 
   return <div className="space-y-5" aria-busy={loading}>
-    <div className="bg-white rounded-lg shadow p-6 space-y-3">
+    <div className="bg-white rounded-lg border p-6 space-y-3">
       <h2 className="text-lg font-semibold">Sales team activity</h2>
       <p className="text-sm text-gray-600">Work performed by each person, regardless of assignment. Includes inactive team members.</p>
       <p className="text-sm font-medium">Applied dates (UTC): {startDate || "Beginning of history"} through {endDate || "Present"}. End date includes the full day.</p>
@@ -59,7 +59,7 @@ function SalesActivity({ startDate, endDate }: Props) {
       <div role="alert" className="p-6 bg-red-50 text-red-700 rounded-lg">{error}
         <button className="ml-3 underline" onClick={() => setRetry((value) => value + 1)}>Retry</button>
       </div> : data && <>
-        <div className="bg-white rounded-lg shadow overflow-x-auto">
+        <div className="bg-white rounded-lg border overflow-x-auto">
           <table className="min-w-full text-sm">
             <caption className="text-left p-4 font-semibold">Activity by salesperson in the applied date range</caption>
             <thead className="bg-gray-50"><tr><th scope="col" className="px-4 py-3 text-left">Salesperson</th>
@@ -72,7 +72,7 @@ function SalesActivity({ startDate, endDate }: Props) {
           </table>
           {data.users.length === 0 && <p className="p-4 text-gray-500">No team members found.</p>}
         </div>
-        <section className="bg-white rounded-lg shadow p-4 space-y-3">
+        <section className="bg-white rounded-lg border p-4 space-y-3">
           <h3 className="font-semibold">Activity details · {data.total} recorded events</h3>
           {data.unattributed_total > 0 && <p className="text-sm text-amber-800">{data.unattributed_total} historical events have no recorded author and are excluded from salesperson totals.</p>}
           <div className="overflow-x-auto"><table className="min-w-full text-sm">
