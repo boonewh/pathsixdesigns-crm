@@ -1,4 +1,4 @@
-# Phase 7 — Dashboard (staging) — plan, waiting for approval
+# Phase 7 — Dashboard (staging) — done
 
 Target: `staging` only. Same ideas as Leads/Accounts/Projects. Nothing to `main`.
 
@@ -17,23 +17,43 @@ Found while reading the code:
 - Follow-up rows are clickable `<li>`s (no keyboard access).
 
 ## Todo
-- [ ] Fix the data: Dashboard and Calendar ask for `sort=pending&per_page=200`
+- [x] Fix the data: Dashboard and Calendar ask for `sort=pending&per_page=200`
       (backend already supports it: open follow-ups come first, soonest first).
-- [ ] Page frame like the other pages: `p-4 sm:p-0`, title "Dashboard" + today's date.
-- [ ] Summary tiles: Overdue / Due today / Next 7 days counts (reuse the unused
+- [x] Page frame like the other pages: `p-4 lg:p-6` (same as Leads), title "Dashboard" + today's date.
+- [x] Summary tiles: Overdue / Due today / Next 7 days counts (reuse the unused
       `MetricCard`, switched to the theme colors). Overdue number in red when > 0.
-- [ ] One "My follow-ups" card with three groups (Overdue, Today, Next 7 days).
+- [x] One "My follow-ups" card with three groups (Overdue, Today, Next 7 days).
       Rows: record name, small muted type ("Lead", "Account", "Project"),
       summary, and the date/time on the right (overdue dates in red). Rows are
       buttons and still open the existing follow-up window. No emoji.
-- [ ] "Recently touched" card next to it (two columns on desktop, stacked on
+- [x] "Recently touched" card next to it (two columns on desktop, stacked on
       phones), rows use in-app links, type label instead of emoji.
-- [ ] Loading skeleton; "Couldn't load follow-ups" message on error; the
+- [x] Loading skeleton; "Couldn't load follow-ups" message on error; the
       "all caught up" empty state only after a successful load.
-- [ ] Support e-mail line moves to a small line at the bottom of the page.
-- [ ] Browser test: follow-ups beyond 10 interactions show, counts are right,
+- [x] Support e-mail line moves to a small line at the bottom of the page.
+- [x] Browser test: follow-ups beyond 10 interactions show, counts are right,
       no "all caught up" while loading, phone has no sideways scroll.
-- [ ] Run all browser tests + lint (compare with before), screenshots, PR into `staging`.
+- [x] Run all browser tests + lint (compare with before), screenshots, PR into `staging`.
+
+## Review
+- `src/pages/Dashboard.tsx`: asks for `/interactions/?sort=pending&per_page=200`
+  so open follow-ups come first and are no longer cut off at 10. New layout:
+  title + date, three summary tiles (one row on phones), one "My follow-ups"
+  card grouped Overdue / Today / Next 7 days (rows are buttons, open the same
+  follow-up window), "Recently touched" card with in-app links, loading
+  skeleton, error message, empty state only after a successful load, support
+  line at the bottom. No emoji; removed the two `any` lint errors.
+- `src/components/ui/MetricCard.tsx` (was unused): theme colors, compact on
+  phones, optional `valueClassName` (red overdue count).
+- `src/pages/CalendarPage.tsx`: same one-line data fix (Calendar was also
+  limited to the 10 newest interactions).
+- `tests/dashboard.spec.ts`: 4 tests (older follow-ups + counts, in-app links,
+  no "all caught up" while loading / on error, phone fits).
+- Checks: 59/59 browser tests (incl. new ones), `tsc` clean, lint unchanged on
+  Calendar (4 old errors), Dashboard now 0.
+- Note: 200 is the backend's per-page maximum. More than 200 *open*
+  follow-ups for one user would still be cut off; unlikely, but a dedicated
+  backend endpoint would remove the limit if it ever matters.
 
 Out of scope (later phases, if you want them):
 - **Calendar**: `alert()` popups → toasts, emoji, double padding.
