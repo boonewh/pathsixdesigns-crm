@@ -41,7 +41,8 @@ export default function CalendarPage() {
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
-      const res = await apiFetch("/interactions/", {
+      // Open follow-ups first, so they aren't cut off by the page size.
+      const res = await apiFetch("/interactions/?sort=pending&per_page=200", {
         headers: { Authorization: `Bearer ${token}` },
       });
 

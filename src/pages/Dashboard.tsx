@@ -1,37 +1,49 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
+import { AlertTriangle, CalendarClock, CalendarDays } from "lucide-react";
 import { useAuth } from "@/authContext";
 import { Interaction } from "@/types";
-import { addDays, isBefore, isToday, isWithinInterval, parseISO, formatDistanceToNow } from "date-fns";
+import { addDays, format, isBefore, isToday, isWithinInterval, parseISO, formatDistanceToNow } from "date-fns";
 import InteractionModal from "@/components/ui/InteractionModal";
 import CompleteInteractionModal from "@/components/ui/CompleteInteractionModal";
+import { MetricCard } from "@/components/ui/MetricCard";
 import { apiFetchJson } from "@/lib/api";
 import { useCRMConfig } from "@/config/crmConfig";
+
+interface ActivityEntry {
+  entity_type: string;
+  entity_id: number;
+  name: string;
+  last_touched: string;
+  profile_link: string;
+}
+
+type FollowUp = Interaction & { parsedFollowUp: Date };
 
 export default function Dashboard() {
   const { token } = useAuth();
   const config = useCRMConfig();
   const [interactions, setInteractions] = useState<Interaction[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
   const [selectedInteraction, setSelectedInteraction] = useState<Interaction | null>(null);
   const [completingInteraction, setCompletingInteraction] = useState<Interaction | null>(null);
-
-  interface ActivityEntry {
-    entity_type: string;
-    entity_id: number;
-    name: string;
-    last_touched: string;
-    profile_link: string;
-  }
-
   const [recentActivity, setRecentActivity] = useState<ActivityEntry[]>([]);
 
   useEffect(() => {
-    apiFetchJson("/interactions/", {
+    // Open follow-ups first (soonest first), so they aren't cut off by the page size.
+    apiFetchJson("/interactions/?sort=pending&per_page=200", {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then((data) => {
         setInteractions(data.interactions || data); // Handle both paginated and direct array responses
+        setLoadError(false);
       })
-      .catch(() => setInteractions([]));
+      .catch(() => {
+        setInteractions([]);
+        setLoadError(true);
+      })
+      .finally(() => setLoading(false));
   }, [token]);
 
   useEffect(() => {
@@ -44,210 +56,173 @@ export default function Dashboard() {
 
   const now = new Date();
 
-  const parsedFollowUps = interactions
+  const parsedFollowUps: FollowUp[] = interactions
     .filter((i) => i.follow_up && i.followup_status !== "completed")
     .map((i) => ({
       ...i,
       parsedFollowUp: parseISO(i.follow_up!),
     }));
 
-  const followUpsToday = parsedFollowUps
-    .filter((i) => isToday(i.parsedFollowUp))
-    .sort((a, b) => a.parsedFollowUp.getTime() - b.parsedFollowUp.getTime());
+  const byDate = (a: FollowUp, b: FollowUp) => a.parsedFollowUp.getTime() - b.parsedFollowUp.getTime();
+
+  const followUpsToday = parsedFollowUps.filter((i) => isToday(i.parsedFollowUp)).sort(byDate);
 
   const overdueFollowUps = parsedFollowUps
-    .filter(
-      (i) => isBefore(i.parsedFollowUp, now) && !isToday(i.parsedFollowUp)
-    )
-    .sort((a, b) => a.parsedFollowUp.getTime() - b.parsedFollowUp.getTime());
+    .filter((i) => isBefore(i.parsedFollowUp, now) && !isToday(i.parsedFollowUp))
+    .sort(byDate);
 
   const upcomingFollowUps = parsedFollowUps
-    .filter(
-      (i) =>
-        isWithinInterval(i.parsedFollowUp, {
-          start: new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1),
-          end: addDays(now, 7),
-        })
+    .filter((i) =>
+      isWithinInterval(i.parsedFollowUp, {
+        start: new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1),
+        end: addDays(now, 7),
+      })
     )
-    .sort((a, b) => a.parsedFollowUp.getTime() - b.parsedFollowUp.getTime());
+    .sort(byDate);
 
-  // Helper function to get entity name and type for display
+  const hasFollowUps = overdueFollowUps.length + followUpsToday.length + upcomingFollowUps.length > 0;
+
+  // Record name and type for display
   const getEntityDisplay = (interaction: Interaction) => {
-    if (interaction.client_name) {
-      return {
-        name: interaction.client_name,
-        type: config.labels.client,
-        icon: "🏢"
-      };
-    } else if (interaction.lead_name) {
-      return {
-        name: interaction.lead_name,
-        type: "Lead",
-        icon: "🎯"
-      };
-    } else if (interaction.project_name) {
-      return {
-        name: interaction.project_name,
-        type: "Project",
-        icon: "🚧"
-      };
-    } else {
-      return {
-        name: "Unknown Entity",
-        type: "Unknown",
-        icon: "❓"
-      };
+    if (interaction.client_name) return { name: interaction.client_name, type: config.labels.client };
+    if (interaction.lead_name) return { name: interaction.lead_name, type: "Lead" };
+    if (interaction.project_name) return { name: interaction.project_name, type: "Project" };
+    return { name: "Unknown record", type: "" };
+  };
+
+  const getEntityLabel = (entityType: string) => {
+    switch (entityType) {
+      case "client": return config.labels.client;
+      case "lead": return "Lead";
+      case "project": return "Project";
+      case "account": return "Account";
+      default: return "Item";
     }
   };
 
-  const renderFollowUpItem = (i: any) => {
-    const entityDisplay = getEntityDisplay(i);
-    
+  const renderGroup = (title: string, items: FollowUp[], dateFormat: string, dateClass = "text-muted-foreground") => {
+    if (items.length === 0) return null;
     return (
-      <li
-        key={i.id}
-        className="text-gray-700 hover:bg-gray-100 px-2 py-1 rounded cursor-pointer transition-colors"
-        onClick={() => {
-          setSelectedInteraction(i);
-        }}
-      >
-        <div className="flex items-center gap-2">
-          <span className="text-xs">{entityDisplay.icon}</span>
-          <div className="flex-1">
-            <span className="font-medium text-gray-800">
-              {entityDisplay.name}
-            </span>
-            <span className="text-xs text-gray-500 ml-1">({entityDisplay.type})</span>
-          </div>
-        </div>
-        <div className="text-sm">
-          <strong>{i.summary}</strong> – {new Date(i.follow_up!).toLocaleTimeString()}
-        </div>
-      </li>
-    );
-  };
-
-  const renderFollowUpItemWithDate = (i: any) => {
-    const entityDisplay = getEntityDisplay(i);
-    
-    return (
-      <li
-        key={i.id}
-        className="text-gray-700 hover:bg-gray-100 px-2 py-1 rounded cursor-pointer transition-colors"
-        onClick={() => setSelectedInteraction(i)}
-      >
-        <div className="flex items-center gap-2">
-          <span className="text-xs">{entityDisplay.icon}</span>
-          <div className="flex-1">
-            <span className="font-medium text-gray-800">
-              {entityDisplay.name}
-            </span>
-            <span className="text-xs text-gray-500 ml-1">({entityDisplay.type})</span>
-          </div>
-        </div>
-        <div className="text-sm">
-          <strong>{i.summary}</strong> – {new Date(i.follow_up!).toLocaleDateString()}
-        </div>
-      </li>
+      <div>
+        <h3 className="bg-muted/60 px-4 py-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+          {title} <span className="font-normal">({items.length})</span>
+        </h3>
+        <ul className="divide-y">
+          {items.map((i) => {
+            const entity = getEntityDisplay(i);
+            return (
+              <li key={i.id}>
+                <button
+                  type="button"
+                  className="flex w-full items-start gap-3 px-4 py-3 text-left hover:bg-muted/50 transition-colors"
+                  onClick={() => setSelectedInteraction(i)}
+                >
+                  <div className="min-w-0 flex-1">
+                    <div className="truncate text-sm font-medium">
+                      {entity.name}
+                      {entity.type && <span className="ml-2 text-xs font-normal text-muted-foreground">{entity.type}</span>}
+                    </div>
+                    <div className="truncate text-sm text-muted-foreground">{i.summary}</div>
+                  </div>
+                  <span className={`shrink-0 text-xs font-medium ${dateClass}`}>
+                    {format(i.parsedFollowUp, dateFormat)}
+                  </span>
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+      </div>
     );
   };
 
   return (
-    <div className="p-6 space-y-8">
-      <h1 className="text-2xl font-bold">Dashboard</h1>
-
-      <div className="text-sm text-gray-500 bg-gray-50 border border-gray-200 rounded px-4 py-2">
-        Found a bug or have a suggestion? Email{" "}
-        <a href="mailto:support@pathsixsolutions.com" className="text-blue-600 hover:underline">
-          support@pathsixsolutions.com
-        </a>
+    <div className="p-4 lg:p-6 space-y-4">
+      <div>
+        <h1 className="text-2xl font-bold">Dashboard</h1>
+        <p className="text-sm text-muted-foreground">{format(now, "EEEE, MMMM d")}</p>
       </div>
 
-      {overdueFollowUps.length > 0 && (
-        <section className="bg-red-50 border-l-4 border-red-500 p-4 rounded">
-          <h2 className="font-semibold text-red-800 mb-2">⚠️ Overdue Follow-ups</h2>
-          <ul className="space-y-1 text-sm">
-            {overdueFollowUps.map(renderFollowUpItemWithDate)}
-          </ul>
-        </section>
+      {loading ? (
+        <div className="space-y-4 animate-pulse motion-reduce:animate-none" role="status" aria-label="Loading dashboard">
+          <div className="grid grid-cols-3 gap-2 sm:gap-4">
+            {[0, 1, 2].map((n) => <div key={n} className="h-[74px] sm:h-[86px] rounded-lg border bg-white" />)}
+          </div>
+          <div className="rounded-lg border bg-white p-4 space-y-4">
+            {[0, 1, 2, 3].map((n) => <div key={n} className="h-4 rounded bg-muted" style={{ width: `${70 - n * 10}%` }} />)}
+          </div>
+        </div>
+      ) : (
+        <>
+          {!loadError && (
+            <div className="grid grid-cols-3 gap-2 sm:gap-4">
+              <MetricCard
+                title="Overdue"
+                value={overdueFollowUps.length}
+                icon={AlertTriangle}
+                valueClassName={overdueFollowUps.length > 0 ? "text-red-600" : ""}
+              />
+              <MetricCard title="Due today" value={followUpsToday.length} icon={CalendarClock} />
+              <MetricCard title="Next 7 days" value={upcomingFollowUps.length} icon={CalendarDays} />
+            </div>
+          )}
+
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+            <section className="rounded-lg border bg-white overflow-hidden lg:col-span-2" aria-label="My follow-ups">
+              <h2 className="border-b px-4 py-3 text-sm font-semibold">My follow-ups</h2>
+              {loadError ? (
+                <p className="px-4 py-6 text-sm text-red-700" role="alert">
+                  Couldn't load follow-ups. Please refresh the page to try again.
+                </p>
+              ) : hasFollowUps ? (
+                <>
+                  {renderGroup("Overdue", overdueFollowUps, "MMM d", "text-red-600")}
+                  {renderGroup("Today", followUpsToday, "h:mm a")}
+                  {renderGroup("Next 7 days", upcomingFollowUps, "EEE, MMM d")}
+                </>
+              ) : (
+                <div className="px-4 py-8 text-center">
+                  <p className="text-sm font-medium">You're all caught up</p>
+                  <p className="text-sm text-muted-foreground">No follow-ups are overdue or due in the next 7 days.</p>
+                </div>
+              )}
+            </section>
+
+            <section className="rounded-lg border bg-white overflow-hidden self-start" aria-label="Recently touched">
+              <h2 className="border-b px-4 py-3 text-sm font-semibold">Recently touched</h2>
+              {recentActivity.length === 0 ? (
+                <p className="px-4 py-6 text-sm text-muted-foreground">Nothing yet.</p>
+              ) : (
+                <ul className="divide-y">
+                  {recentActivity.map((entry) => (
+                    <li key={`${entry.entity_type}-${entry.entity_id}`}>
+                      <Link
+                        to={entry.profile_link}
+                        className="flex items-center gap-3 px-4 py-3 hover:bg-muted/50 transition-colors"
+                      >
+                        <div className="min-w-0 flex-1">
+                          <div className="truncate text-sm font-medium text-primary">{entry.name}</div>
+                          <div className="text-xs text-muted-foreground">{getEntityLabel(entry.entity_type)}</div>
+                        </div>
+                        <span className="shrink-0 text-xs text-muted-foreground">
+                          {formatDistanceToNow(parseISO(entry.last_touched), { addSuffix: true })}
+                        </span>
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </section>
+          </div>
+        </>
       )}
 
-      {followUpsToday.length > 0 && (
-        <section className="bg-yellow-50 border-l-4 border-yellow-500 p-4 rounded">
-          <h2 className="font-semibold text-yellow-800 mb-2">📅 Follow-ups for Today</h2>
-          <ul className="space-y-1 text-sm">
-            {followUpsToday.map(renderFollowUpItem)}
-          </ul>
-        </section>
-      )}
-
-      {upcomingFollowUps.length > 0 && (
-        <section className="bg-green-50 border-l-4 border-green-500 p-4 rounded">
-          <h2 className="font-semibold text-green-800 mb-2">🗓️ Upcoming in Next 7 Days</h2>
-          <ul className="space-y-1 text-sm">
-            {upcomingFollowUps.map(renderFollowUpItemWithDate)}
-          </ul>
-        </section>
-      )}
-
-      {/* Show message when no follow-ups */}
-      {overdueFollowUps.length === 0 && followUpsToday.length === 0 && upcomingFollowUps.length === 0 && (
-        <section className="bg-blue-50 border-l-4 border-blue-500 p-4 rounded">
-          <h2 className="font-semibold text-blue-800 mb-2">✅ All Caught Up!</h2>
-          <p className="text-sm text-blue-700">
-            You have no pending follow-ups. Great job staying on top of your interactions!
-          </p>
-        </section>
-      )}
-
-
-      {recentActivity.length > 0 && (
-        <section className="bg-white border border-gray-300 p-4 rounded shadow-sm">
-          <h2 className="text-lg font-semibold mb-2 text-blue-700">🕓 Recently Touched</h2>
-          <ul className="space-y-2 text-sm text-gray-800">
-            {recentActivity.map((entry) => {
-              // Get appropriate icon and label for entity type
-              const getEntityIcon = (entityType: string) => {
-                switch (entityType) {
-                  case 'client': return '🏢';
-                  case 'lead': return '🎯';
-                  case 'project': return '🚧';
-                  case 'account': return '💼';
-                  default: return '📄';
-                }
-              };
-
-              const getEntityLabel = (entityType: string) => {
-                switch (entityType) {
-                  case 'client': return config.labels.client;
-                  case 'lead': return 'Lead';
-                  case 'project': return 'Project';
-                  case 'account': return 'Account';
-                  default: return 'Item';
-                }
-              };
-
-              return (
-                <li key={`${entry.entity_type}-${entry.entity_id}`} className="flex items-center gap-2">
-                  <span className="text-xs">{getEntityIcon(entry.entity_type)}</span>
-                  <div className="flex-1">
-                    <a
-                      href={entry.profile_link}
-                      className="text-blue-600 hover:underline font-medium"
-                    >
-                      {entry.name}
-                    </a>
-                    <span className="text-xs text-gray-500 ml-1">({getEntityLabel(entry.entity_type)})</span>
-                  </div>
-                  <span className="text-gray-500 text-xs">
-                    {formatDistanceToNow(parseISO(entry.last_touched), { addSuffix: true })}
-                  </span>
-                </li>
-              );
-            })}
-          </ul>
-        </section>
-      )}
+      <p className="text-xs text-muted-foreground">
+        Found a bug or have a suggestion? Email{" "}
+        <a href="mailto:support@pathsixsolutions.com" className="text-primary hover:underline">
+          support@pathsixsolutions.com
+        </a>
+      </p>
 
       {completingInteraction && (
         <CompleteInteractionModal
