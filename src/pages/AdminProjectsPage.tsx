@@ -5,8 +5,11 @@ import { Link, useSearchParams } from "react-router-dom";
 import ProjectForm from "@/components/ui/ProjectForm";
 import PaginationControls from "@/components/ui/PaginationControls";
 import { usePagination } from "@/hooks/usePreferences";
-import { Wrench } from "lucide-react";
-import { PROJECT_STATUSES } from "@/schemas/projectSchemas";
+import { Edit } from "lucide-react";
+import { PROJECT_STATUS_COLORS, PROJECT_STATUS_LABELS, formatProjectValue } from "@/lib/projectStatus";
+import StatusBadge from "@/components/ui/StatusBadge";
+import { useCRMConfig } from "@/config/crmConfig";
+import toast from "react-hot-toast";
 
 
 interface AdminProject {
@@ -18,6 +21,7 @@ interface AdminProject {
   project_start?: string;
   project_end?: string;
   project_worth?: number;
+  value_type?: "one_time" | "monthly" | "yearly";
   client_name?: string;
   lead_name?: string;
   assigned_to_email?: string;
@@ -32,26 +36,10 @@ interface User {
   is_active: boolean;
 }
 
-const PROJECT_STATUS_CONFIG = {
-  statuses: PROJECT_STATUSES,
-  colors: {
-    active: 'bg-blue-100 text-blue-800',
-    pending: 'bg-yellow-100 text-yellow-800',
-    completed: 'bg-green-100 text-green-800',
-    cancelled: 'bg-red-100 text-red-800',
-    lost: 'bg-red-100 text-red-800'
-  },
-  labels: {
-    active: 'Active',
-    pending: 'Pending',
-    completed: 'Completed',
-    cancelled: 'Cancelled',
-    lost: 'Lost'
-  }
-};
 
 export default function AdminProjectsPage() {
   const { token } = useAuth();
+  const config = useCRMConfig();
   const [projects, setProjects] = useState<AdminProject[]>([]);
   const [total, setTotal] = useState(0);
   const [users, setUsers] = useState<User[]>([]);
@@ -148,19 +136,19 @@ export default function AdminProjectsPage() {
   };
 
   return (
-    <div className="p-6 space-y-6">
-      <h1 className="text-2xl font-bold text-blue-800">Admin: Projects Overview</h1>
-      {error && <p className="text-red-500">{error}</p>}
+    <div className="p-4 lg:p-6 space-y-6">
+      <h1 className="text-2xl font-bold">Admin: Projects Overview</h1>
+      {error && <p role="alert" className="text-sm text-red-700">{error}</p>}
 
       <div className="max-w-sm">
-        <label htmlFor="user-select" className="block font-medium mb-2">
+        <label htmlFor="user-select" className="block text-sm font-medium mb-1">
           Filter by user:
         </label>
         <select
           id="user-select"
           value={selectedEmail}
           onChange={(e) => handleUserChange(e.target.value)}
-          className="w-full border border-gray-300 rounded px-3 py-2"
+          className="w-full rounded-md border border-input bg-white px-3 py-2 text-sm"
         >
           <option value="">— Select a user —</option>
           {users.map((u) => (
@@ -173,70 +161,52 @@ export default function AdminProjectsPage() {
 
       {selectedEmail && (
         <>
-          {/* Pagination Controls at top */}
-          <PaginationControls
-            currentPage={currentPage}
-            perPage={perPage}
-            total={total}
-            sortOrder={sortOrder}
-            onPageChange={setCurrentPage}
-            onPerPageChange={updatePerPage}
-            onSortOrderChange={updateSortOrder}
-            entityName="projects"
-            className="border-b pb-4"
-          />
 
           {/* Content */}
           {loading ? (
             <div className="text-gray-500 text-center py-10">Loading...</div>
           ) : (
-            <div className="overflow-auto border rounded shadow-sm">
+            <div className="overflow-x-auto bg-white rounded-lg border">
               <table className="min-w-full table-auto">
-                <thead className="bg-gray-100">
+                <thead className="bg-gray-50">
                   <tr>
-                    <th className="px-4 py-2 text-left">Project Name</th>
-                    <th className="px-4 py-2 text-left">Status</th>
-                    <th className="px-4 py-2 text-left">Type</th>
-                    <th className="px-4 py-2 text-left">Associated With</th>
-                    <th className="px-4 py-2 text-left">Worth</th>
-                    <th className="px-4 py-2 text-left">Start Date</th>
-                    <th className="px-4 py-2 text-left">End Date</th>
-                    <th className="px-4 py-2 text-left">Assigned To</th>
-                    <th className="px-4 py-2 text-left">Created</th>
-                    <th className="px-4 py-2 text-left">Edit</th>
+                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-500">Project Name</th>
+                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-500">Status</th>
+                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-500">Type</th>
+                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-500">Associated With</th>
+                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-500">Worth</th>
+                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-500">Start Date</th>
+                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-500">End Date</th>
+                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-500">Assigned To</th>
+                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-500">Created</th>
+                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-500">Edit</th>
                   </tr>
                 </thead>
                 <tbody>
                   {projects.map((project) => (
                     <tr key={project.id} className="border-t hover:bg-gray-50 transition">
-                      <td className="px-4 py-2">
-                        <div className="font-medium">{project.project_name}</div>
+                      <td className="px-4 py-3 text-sm">
+                        <Link to={`/projects/${project.id}`} className="font-medium text-blue-600 hover:underline">{project.project_name}</Link>
                         {project.project_description && (
                           <div className="text-xs text-gray-500 mt-1 max-w-xs truncate">
                             {project.project_description}
                           </div>
                         )}
                       </td>
-                      <td className="px-4 py-2">
+                      <td className="px-4 py-3 text-sm">
                         {project.project_status ? (
-                          <span
-                            className={`inline-block px-2 py-1 text-xs rounded ${
-                              PROJECT_STATUS_CONFIG.colors[project.project_status as keyof typeof PROJECT_STATUS_CONFIG.colors] ||
-                              'bg-gray-100 text-gray-800'
-                            }`}
-                          >
-                            {PROJECT_STATUS_CONFIG.labels[project.project_status as keyof typeof PROJECT_STATUS_CONFIG.labels] ||
-                              project.project_status}
-                          </span>
-                        ) : (
-                          <span className="inline-block px-2 py-1 text-xs rounded bg-gray-100 text-gray-800">—</span>
-                        )}
+                          <StatusBadge
+                            status={project.project_status}
+                            colorClass={PROJECT_STATUS_COLORS[project.project_status]}
+                            label={PROJECT_STATUS_LABELS[project.project_status]}
+                          />
+                        ) : "—"}
                       </td>
-                      <td className="px-4 py-2">{project.type ?? "—"}</td>
-                      <td className="px-4 py-2">
+                      <td className="px-4 py-3 text-sm">{project.type ?? "—"}</td>
+                      <td className="px-4 py-3 text-sm">
                         {project.client_name && (
                           <div className="text-sm">
-                            <span className="text-blue-600">Account:</span>{" "}
+                            <span className="text-gray-500">{config.labels.client}:</span>{" "}
                             <Link 
                               to={`/clients/${project.client_id}`} 
                               className="text-blue-600 hover:underline"
@@ -247,7 +217,7 @@ export default function AdminProjectsPage() {
                         )}
                         {project.lead_name && (
                           <div className="text-sm">
-                            <span className="text-green-600">Lead:</span>{" "}
+                            <span className="text-gray-500">Lead:</span>{" "}
                             <Link 
                               to={`/leads/${project.lead_id}`} 
                               className="text-green-600 hover:underline"
@@ -257,52 +227,49 @@ export default function AdminProjectsPage() {
                           </div>
                         )}
                         {!project.client_name && !project.lead_name && (
-                          <span className="text-yellow-600 text-xs">⚠️ Unassigned</span>
+                          <span className="text-gray-500 text-xs">Standalone</span>
                         )}
                       </td>
-                      <td className="px-4 py-2">
-                        {project.project_worth !== undefined && project.project_worth !== null
-                          ? `$${project.project_worth.toLocaleString()}`
-                          : "—"
-                        }
+                      <td className="px-4 py-3 text-sm">
+                        {formatProjectValue(project.project_worth, project.value_type) ?? "—"}
                       </td>
-                      <td className="px-4 py-2">
+                      <td className="px-4 py-3 text-sm">
                         {project.project_start 
                           ? new Date(project.project_start).toLocaleDateString()
                           : "—"
                         }
                       </td>
-                      <td className="px-4 py-2">
+                      <td className="px-4 py-3 text-sm">
                         {project.project_end 
                           ? new Date(project.project_end).toLocaleDateString()
                           : "—"
                         }
                       </td>
-                      <td className="px-4 py-2">{project.assigned_to_email ?? "—"}</td>
-                      <td className="px-4 py-2">
+                      <td className="px-4 py-3 text-sm">{project.assigned_to_email ?? "—"}</td>
+                      <td className="px-4 py-3 text-sm">
                         {project.created_at 
                           ? new Date(project.created_at).toLocaleDateString()
                           : "—"
                         }
                       </td>
-                        <td className="px-4 py-2">
+                        <td className="px-4 py-3 text-sm">
                           <button
                             onClick={() => {
                               setEditingProjectId(project.id);
                               setForm(project);
                               setShowEditModal(true);
                             }}
-                            className="text-blue-600 hover:text-blue-800"
+                            className="text-blue-600 hover:text-blue-800 p-1 rounded hover:bg-blue-50"
                             title="Edit Project"
                           >
-                            <Wrench size={16} />
+                            <Edit size={14} />
                           </button>
                         </td>
                     </tr>
                   ))}
                   {projects.length === 0 && !loading && (
                     <tr>
-                      <td colSpan={9} className="px-4 py-4 text-center text-gray-500">
+                      <td colSpan={10} className="px-4 py-4 text-center text-gray-500">
                         No projects found for this user.
                       </td>
                     </tr>
@@ -374,11 +341,12 @@ export default function AdminProjectsPage() {
                       setShowEditModal(false);
                       setEditingProjectId(null);
                       setForm({});
+                      toast.success("Project updated");
                     } else {
-                      alert("Failed to update project");
+                      toast.error("Couldn't update the project. Please try again.");
                     }
                   } catch {
-                    alert("Failed to update project");
+                    toast.error("Couldn't update the project. Please try again.");
                   }
                 }}
                 onCancel={() => {

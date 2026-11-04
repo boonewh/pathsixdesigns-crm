@@ -7,7 +7,8 @@ import CompanyForm from "@/components/ui/CompanyForm";
 import PaginationControls from "@/components/ui/PaginationControls";
 import { usePagination } from "@/hooks/usePreferences";
 import { formatPhoneNumber } from "@/lib/phoneUtils";
-import { Wrench } from "lucide-react";
+import { Edit } from "lucide-react";
+import toast from "react-hot-toast";
 
 interface AdminClient {
   id: number;
@@ -116,19 +117,19 @@ export default function AdminClientsPage() {
   };
 
   return (
-    <div className="p-6 space-y-6">
-      <h1 className="text-2xl font-bold text-blue-800">Admin: {config.labels.client}s Overview</h1>
-      {error && <p className="text-red-500">{error}</p>}
+    <div className="p-4 lg:p-6 space-y-6">
+      <h1 className="text-2xl font-bold">Admin: {config.labels.client}s Overview</h1>
+      {error && <p role="alert" className="text-sm text-red-700">{error}</p>}
 
       <div className="max-w-sm">
-        <label htmlFor="user-select" className="block font-medium mb-2">
+        <label htmlFor="user-select" className="block text-sm font-medium mb-1">
           Filter by user:
         </label>
         <select
           id="user-select"
           value={selectedEmail}
           onChange={(e) => handleUserChange(e.target.value)}
-          className="w-full border border-gray-300 rounded px-3 py-2"
+          className="w-full rounded-md border border-input bg-white px-3 py-2 text-sm"
         >
           <option value="">— Select a user —</option>
           {users.map((u) => (
@@ -141,41 +142,29 @@ export default function AdminClientsPage() {
 
       {selectedEmail && (
         <>
-          {/* Pagination Controls at top */}
-          <PaginationControls
-            currentPage={currentPage}
-            perPage={perPage}
-            total={total}
-            sortOrder={sortOrder}
-            onPageChange={setCurrentPage}
-            onPerPageChange={updatePerPage}
-            onSortOrderChange={updateSortOrder}
-            entityName={`${config.labels.client.toLowerCase()}s`}
-            className="border-b pb-4"
-          />
 
           {/* Content */}
           {loading ? (
             <div className="text-gray-500 text-center py-10">Loading...</div>
           ) : (
-            <div className="overflow-auto border rounded shadow-sm">
+            <div className="overflow-x-auto bg-white rounded-lg border">
               <table className="min-w-full table-auto">
-                <thead className="bg-gray-100">
+                <thead className="bg-gray-50">
                   <tr>
-                    <th className="px-4 py-2 text-left">Name</th>
-                    <th className="px-4 py-2 text-left">Contact</th>
-                    <th className="px-4 py-2 text-left">Email</th>
-                    <th className="px-4 py-2 text-left">Phone</th>
-                    <th className="px-4 py-2 text-left">Type</th>
-                    <th className="px-4 py-2 text-left">Assigned To</th>
-                    <th className="px-4 py-2 text-left">Created</th>
-                    <th className="px-4 py-2 text-left">Edit</th>
+                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-500">Name</th>
+                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-500">Contact</th>
+                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-500">Email</th>
+                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-500">Phone</th>
+                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-500">Type</th>
+                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-500">Assigned To</th>
+                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-500">Created</th>
+                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-500">Edit</th>
                   </tr>
                 </thead>
                 <tbody>
                   {clients.map((client) => (
                     <tr key={client.id} className="border-t hover:bg-gray-50 transition">
-                      <td className="px-4 py-2">
+                      <td className="px-4 py-3 text-sm">
                         <Link
                           to={`/clients/${client.id}`}
                           className="text-blue-600 hover:underline"
@@ -183,7 +172,7 @@ export default function AdminClientsPage() {
                           {client.name}
                         </Link>
                       </td>
-                      <td className="px-4 py-2">
+                      <td className="px-4 py-3 text-sm">
                         <div>
                           {client.contact_person ?? "—"}
                           {client.contact_title && (
@@ -191,34 +180,34 @@ export default function AdminClientsPage() {
                           )}
                         </div>
                       </td>
-                      <td className="px-4 py-2">{client.email ?? "—"}</td>
-                      <td className="px-4 py-2">{client.phone ? formatPhoneNumber(client.phone) : "—"}</td>
-                      <td className="px-4 py-2">{client.type ?? "—"}</td>
-                      <td className="px-4 py-2">{client.assigned_to_name ?? "—"}</td>
-                      <td className="px-4 py-2">
+                      <td className="px-4 py-3 text-sm">{client.email ?? "—"}</td>
+                      <td className="px-4 py-3 text-sm">{client.phone ? formatPhoneNumber(client.phone) : "—"}</td>
+                      <td className="px-4 py-3 text-sm">{client.type ?? "—"}</td>
+                      <td className="px-4 py-3 text-sm">{client.assigned_to_name ?? "—"}</td>
+                      <td className="px-4 py-3 text-sm">
                         {client.created_at 
                           ? new Date(client.created_at).toLocaleDateString()
                           : "—"
                         }
                       </td>
-                      <td className="px-4 py-2">
+                      <td className="px-4 py-3 text-sm">
                         <button
                           onClick={() => {
                             setEditingClientId(client.id);
                             setForm(client);
                             setShowEditModal(true);
                           }}
-                          className="text-blue-600 hover:underline"
+                          className="text-blue-600 hover:text-blue-800 p-1 rounded hover:bg-blue-50"
                           title={`Edit ${config.labels.client}`}
                         >
-                          <Wrench size={16} />
+                          <Edit size={14} />
                         </button>
                       </td>
                     </tr>
                   ))}
                   {clients.length === 0 && !loading && (
                     <tr>
-                      <td colSpan={7} className="px-4 py-4 text-center text-gray-500">
+                      <td colSpan={8} className="px-4 py-4 text-center text-gray-500">
                         No {config.labels.client.toLowerCase()}s found for this user.
                       </td>
                     </tr>
@@ -291,10 +280,10 @@ export default function AdminClientsPage() {
                       const updated = await clientRes.json();
                       setClients(updated.clients);
                     } else {
-                      alert(`Failed to update ${config.labels.client.toLowerCase()}`);
+                      toast.error(`Couldn't update the ${config.labels.client.toLowerCase()}. Please try again.`);
                     }
                   } catch {
-                    alert(`Failed to update ${config.labels.client.toLowerCase()}`);
+                    toast.error(`Couldn't update the ${config.labels.client.toLowerCase()}. Please try again.`);
                   }
                 }}
                 onCancel={() => {
