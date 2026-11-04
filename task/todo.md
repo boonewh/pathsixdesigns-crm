@@ -1,3 +1,55 @@
+# Phase 10 — Admin pages (staging) — plan, waiting for approval
+
+Target: `staging` only. Same ideas as the earlier phases. Nothing to `main`.
+
+Found while reading the code:
+- **Bug (Admin Leads): bulk delete can delete leads you can't see.** Checked
+  leads stay selected when you change page, page size, sort or user, so
+  "Delete Selected (3)" can delete leads from another page or another user's
+  list. The delete button is also duplicated (top and bottom), and a network
+  error during delete is not handled.
+- **Bug (Admin Interactions): project interactions show "—" as the name.**
+  The backend sends `project_name`, the page only looks at client/lead names.
+- **Bug (Admin Interactions): wrong groups.** Interactions with no follow-up
+  at all are listed under "Upcoming", and "today" is worked out in UTC, so in
+  the US evening tomorrow's follow-ups show as "Today" (the Dashboard uses
+  local time).
+- **Bug (Admin Leads/Accounts/Projects): the "No … found" row is one column
+  short** (colSpan 8/7/9 for 10/8/10 columns).
+- Admin Projects: "Account:" label is hard-coded (wrong for a tenant that
+  calls them Customers); project names aren't links (Leads/Accounts are).
+- `alert()` popups for failed saves/deletes on Admin Leads, Accounts,
+  Projects and Users; Users role/email changes don't handle network errors.
+- Old look: emoji + lowercase status badges ("🟡 proposal"), blue titles,
+  plain gray tables with shadows, wrench icon for Edit, pagination shown twice.
+
+## Todo
+- [ ] Admin Leads: clear the selection whenever the list reloads (page, page
+      size, sort, user); one bulk-delete button in a toolbar above the table;
+      try/catch with toasts; single confirm stays.
+- [ ] Admin Interactions: show project names (and link); put interactions
+      without a follow-up in their own "No follow-up" group; use local dates
+      (same rules as the Dashboard).
+- [ ] Fix the colSpan of the empty rows (Leads, Accounts, Projects).
+- [ ] Admin Projects: use the configured label (Account/Customer…), link
+      project names to the project page, status via shared `StatusBadge`.
+- [ ] Admin Leads: status via shared `StatusBadge` (no emoji, proper labels).
+- [ ] Replace `alert()` with toasts (Leads, Accounts, Projects, Users) and add
+      try/catch where missing.
+- [ ] Same look as the rest: page frame `p-4 lg:p-6`, plain titles, "Filter
+      by user" select styled like other inputs, tables in white bordered
+      cards with the muted header, pencil "Edit" button (like Leads table),
+      pagination once (bottom), shared `Button` (Users "New user", Save, etc.).
+- [ ] Backups / Import: page frame and title style only (they already use
+      toasts).
+- [ ] Browser tests: selection clears on page change (no hidden deletes),
+      project interaction name shows, no-follow-up group, empty row spans the
+      table, failed save shows a toast (no alert).
+- [ ] Run all browser tests + lint (compare with before), screenshots, PR into `staging`.
+
+Not included (say if you want it): phone-specific lists for admin tables
+(they scroll sideways inside their card, which is usual for admin screens).
+
 # Phase 9 — Deletes, Reports, Settings, Help (staging) — done
 
 Target: `staging` only. Same ideas as the earlier phases. Nothing to `main`.
