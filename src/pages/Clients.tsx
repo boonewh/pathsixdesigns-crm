@@ -243,6 +243,20 @@ export default function Clients() {
   // Type filter (preserves user's filter choice)
   const { statusFilter: typeFilter, setStatusFilter: setTypeFilter } = useStatusFilter('clients_type');
 
+  // Per-type totals from the API. Null when the backend doesn't send them yet
+  // (older backend); the page then falls back to filtering the loaded page.
+  const [typeCounts, setTypeCounts] = useState<Record<string, number> | null>(null);
+
+  // The type filter is sent to the API so it covers every page, not just this one.
+  const clientsUrl =
+    `/clients/?page=${currentPage}&per_page=${perPage}&sort=${sortOrder}` +
+    (typeFilter !== "all" ? `&type=${encodeURIComponent(typeFilter)}` : "");
+
+  const changeTypeFilter = (type: string) => {
+    setTypeFilter(type);
+    setCurrentPage(1);
+  };
+
   const [editingId, setEditingId] = useState<number | null>(null);
   const [creating, setCreating] = useState(false);
   const [form, setForm] = useState<Partial<Client>>({
@@ -273,11 +287,12 @@ export default function Clients() {
     const fetchClients = async () => {
       setLoading(true);
       try {
-        const data = await apiFetchJson(`/clients/?page=${currentPage}&per_page=${perPage}&sort=${sortOrder}`, {
+        const data = await apiFetchJson(clientsUrl, {
           headers: { Authorization: `Bearer ${token}` },
         });
         setClients(data.clients);
         setTotal(data.total);
+        setTypeCounts(data.type_counts ?? null);
         setError(""); // Reset error on successful fetch
       } catch (err) {
         setError(`Failed to load ${clientLabel.toLowerCase()}s`);
@@ -299,7 +314,7 @@ export default function Clients() {
         })
         .catch(() => setAvailableUsers([]));
     }
-  }, [token, user, currentPage, perPage, sortOrder, clientLabel]);
+  }, [token, user, clientsUrl, clientLabel]);
 
   // Filter logic - only type filter now
   const filteredClients = clients.filter(client => {
@@ -350,7 +365,7 @@ export default function Clients() {
 
       if (!res.ok) throw new Error(`Failed to save ${clientLabel.toLowerCase()}`);
 
-      const updatedRes = await apiFetch(`/clients/?page=${currentPage}&per_page=${perPage}&sort=${sortOrder}`, {
+      const updatedRes = await apiFetch(clientsUrl, {
         headers: { Authorization: `Bearer ${token}` },
       });
       const fullData = await updatedRes.json();
@@ -464,13 +479,15 @@ export default function Clients() {
               <label className="text-sm font-medium text-gray-700 whitespace-nowrap">Type:</label>
               <select 
                 value={typeFilter} 
-                onChange={(e) => setTypeFilter(e.target.value)}
+                onChange={(e) => changeTypeFilter(e.target.value)}
                 className="border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white shadow-sm min-w-40"
               >
-                <option value="all">All types</option>
+                <option value="all">
+                  All types{typeCounts ? ` (${Object.values(typeCounts).reduce((sum, n) => sum + n, 0)})` : ""}
+                </option>
                 {ACCOUNT_TYPE_OPTIONS.map(type => (
                   <option key={type} value={type}>
-                    {type}
+                    {type}{typeCounts ? ` (${typeCounts[type] ?? 0})` : ""}
                   </option>
                 ))}
               </select>
@@ -532,9 +549,13 @@ export default function Clients() {
           </div>
       </div>
 
-      {/* Results Summary (hidden while loading). The Type filter applies to the loaded page only. */}
+      {/* Results Summary (hidden while loading). Without counts from the API the Type filter applies to the loaded page only. */}
       <div className={`mb-4 text-sm text-gray-600 ${loading ? "invisible" : ""}`}>
-        {typeFilter !== 'all' ? (
+        {typeFilter !== 'all' && typeCounts ? (
+          <span>
+            Showing <span className="font-medium">{sortedClients.length}</span> of {total} {typeFilter} {clientLabel.toLowerCase()}s
+          </span>
+        ) : typeFilter !== 'all' ? (
           <span>
             Showing <span className="font-medium">{sortedClients.length}</span> {typeFilter} {clientLabel.toLowerCase()}s on this page{" "}
             <span className="text-gray-400">({total} in total)</span>
@@ -826,7 +847,7 @@ export default function Clients() {
                     setShowAssignModal(false);
                     setSelectedUserId(null);
                     setSelectedClientId(null);
-                    const updatedRes = await apiFetch(`/clients/?page=${currentPage}&per_page=${perPage}&sort=${sortOrder}`, {
+                    const updatedRes = await apiFetch(clientsUrl, {
                       headers: { Authorization: `Bearer ${token}` },
                     });
                     const fullData = await updatedRes.json();
