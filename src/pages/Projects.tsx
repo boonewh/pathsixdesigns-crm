@@ -66,6 +66,20 @@ export default function Projects() {
   // Status filter (preserves user's filter choice)
   const { statusFilter, setStatusFilter } = useStatusFilter('projects');
 
+  // Per-status totals from the API. Null when the backend doesn't send them yet
+  // (older backend); the page then falls back to filtering the loaded page.
+  const [statusCounts, setStatusCounts] = useState<Record<string, number> | null>(null);
+
+  // The status filter is sent to the API so it covers every page, not just this one.
+  const projectsUrl =
+    `/projects/?page=${currentPage}&per_page=${perPage}&sort=${sortOrder}` +
+    (statusFilter !== "all" ? `&status=${encodeURIComponent(statusFilter)}` : "");
+
+  const changeStatusFilter = (status: string) => {
+    setStatusFilter(status);
+    setCurrentPage(1);
+  };
+
   const [form, setForm] = useState<Partial<Project>>({});
   const [creating, setCreating] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
@@ -82,7 +96,7 @@ export default function Projects() {
       setLoadError("");
       try {
         const results = await Promise.allSettled([
-          apiFetch(`/projects/?page=${currentPage}&per_page=${perPage}&sort=${sortOrder}`, { 
+          apiFetch(projectsUrl, { 
             signal: controller.signal,
             headers: { Authorization: `Bearer ${token}` } 
           }),
@@ -108,6 +122,7 @@ export default function Projects() {
 
         setProjects(projectsData.projects);
         setTotal(projectsData.total);
+        setStatusCounts(projectsData.status_counts ?? null);
         setClients(clientsArray.map((c: any) => ({ id: c.id, name: c.name })));
         setLeads(leadsArray.map((l: any) => ({ id: l.id, name: l.name })));
       } catch (err: any) {
@@ -119,7 +134,7 @@ export default function Projects() {
 
     fetchAll();
     return () => controller.abort();
-  }, [token, currentPage, perPage, sortOrder, reload]);
+  }, [token, projectsUrl, reload]);
 
   // Filter projects by status
   const filteredProjects = projects.filter(project => {
@@ -159,7 +174,7 @@ export default function Projects() {
 
       if (!res.ok) throw new Error("Failed to save project");
 
-      const updated = await apiFetch(`/projects/?page=${currentPage}&per_page=${perPage}&sort=${sortOrder}`, {
+      const updated = await apiFetch(projectsUrl, {
         headers: { Authorization: `Bearer ${token}` },
       });
       const refreshed = await updated.json();
@@ -278,13 +293,15 @@ export default function Projects() {
               <label className="text-sm font-medium text-gray-700 whitespace-nowrap">Status:</label>
               <select 
                 value={statusFilter} 
-                onChange={(e) => setStatusFilter(e.target.value)}
+                onChange={(e) => changeStatusFilter(e.target.value)}
                 className="border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white shadow-sm min-w-32"
               >
-                <option value="all">All statuses</option>
+                <option value="all">
+                  All statuses{statusCounts ? ` (${Object.values(statusCounts).reduce((sum, n) => sum + n, 0)})` : ""}
+                </option>
                 {PROJECT_STATUS_OPTIONS.map(status => (
                   <option key={status} value={status}>
-                    {PROJECT_STATUS_LABELS[status] || status}
+                    {PROJECT_STATUS_LABELS[status] || status}{statusCounts ? ` (${statusCounts[status] ?? 0})` : ""}
                   </option>
                 ))}
               </select>
@@ -346,10 +363,15 @@ export default function Projects() {
           </div>
       </div>
 
-      {/* Results Summary. The Status filter applies to the loaded page only. */}
+      {/* Results Summary. Without counts from the API the Status filter applies to the loaded page only. */}
       {!loading && !loadError && (
       <div className="mb-4 text-sm text-gray-600">
-        {statusFilter !== 'all' ? (
+        {statusFilter !== 'all' && statusCounts ? (
+          <span>
+            Showing <span className="font-medium">{sortedProjects.length}</span> of {total}{" "}
+            {(PROJECT_STATUS_LABELS[statusFilter] || statusFilter).toLowerCase()} projects
+          </span>
+        ) : statusFilter !== 'all' ? (
           <span>
             Showing <span className="font-medium">{sortedProjects.length}</span>{" "}
             {(PROJECT_STATUS_LABELS[statusFilter] || statusFilter).toLowerCase()} projects on this page{" "}

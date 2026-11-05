@@ -1,4 +1,4 @@
-# Phase 11 — Backend filters for Accounts (type) and Projects (status) — plan, waiting for approval
+# Phase 11 — Backend filters for Accounts (type) and Projects (status) — done
 
 Target: backend `pathsix-backend` → `staging` branch (you deploy to Fly
 staging); frontend → `staging`. Nothing to production. Same approach as the
@@ -11,38 +11,58 @@ The backend list endpoints (`GET /api/clients/`, `GET /api/projects/`) accept
 page/sort only — no type or status.
 
 ## Backend (`pathsix-backend`, branch `ccr-5934bc6a-eapcnw` → PR into `staging`)
-- [ ] `ClientService.list_mine(..., type=None)`: count per type over the
+- [x] `ClientService.list_mine(..., type=None)`: count per type over the
       user's visible accounts (before the type filter and paging) →
       `type_counts`; then optional `Client.type == type` filter. Admin
       `list_all` untouched.
-- [ ] `ProjectService.list_mine(..., status=None)`: same with
+- [x] `ProjectService.list_mine(..., status=None)`: same with
       `project_status` → `status_counts`, then optional status filter.
       (Counts use a plain query without the eager-load options.)
-- [ ] Routes pass `type=request.args.get("type")` /
+- [x] Routes pass `type=request.args.get("type")` /
       `status=request.args.get("status")`. Empty or missing = no filter, so
       old frontends behave exactly as before.
-- [ ] Tests (like `tests/test_lead_status_filter.py`): filter returns only
+- [x] Tests (like `tests/test_lead_status_filter.py`): filter returns only
       matching rows across pages, total is the filtered total, counts ignore
       the filter, other users' records are not counted, missing param =
       unchanged behaviour.
-- [ ] Run the full backend test suite.
+- [x] Run the full backend test suite.
 
 ## Frontend (`staging`)
-- [ ] Accounts: send `&type=` with the list request (and the refreshes after
+- [x] Accounts: send `&type=` with the list request (and the refreshes after
       edit/assign), reset to page 1 on change, show counts in the dropdown
       ("Healthcare (30)") when the backend sends `type_counts`; remove the
       "on this page" wording in that case.
-- [ ] Projects: same with `&status=` and `status_counts`.
-- [ ] Fallback: if the backend doesn't send counts yet (old backend), keep
+- [x] Projects: same with `&status=` and `status_counts`.
+- [x] Fallback: if the backend doesn't send counts yet (old backend), keep
       today's page-only filtering and wording — so deploy order doesn't
       matter.
-- [ ] Browser tests: filter param sent, page resets to 1, counts shown,
+- [x] Browser tests: filter param sent, page resets to 1, counts shown,
       fallback without counts still works.
-- [ ] Run all browser tests + lint, PR into `staging`.
+- [x] Run all browser tests + lint, PR into `staging`.
 
 ## Order
 1. Backend PR → you merge it into backend `staging` and deploy to Fly staging.
 2. Frontend PR → merge into `staging` (works before or after step 1).
+
+## Review
+- Backend PR boonewh/pathsix-backend#32 (`staging`): `ClientService.list_mine`
+  takes `client_type` (route arg `type`), `ProjectService.list_mine` takes
+  `status`; both filter in the database and return `type_counts` /
+  `status_counts` over the user's visible records, ignoring the filter.
+  No/blank param = old behaviour. Admin lists untouched. Note: clients saved
+  without a type have the model default, the text "None", which shows up in
+  `type_counts`. New `tests/test_client_project_filters.py` (5 tests); full
+  backend suite 782 passed.
+- Frontend `Clients.tsx` / `Projects.tsx`: list URL includes `&type=` /
+  `&status=` (also for the refresh after save/assign), changing the filter
+  resets to page 1, dropdown options show counts when the API sends them,
+  summary reads "Showing 1 of 30 Healthcare accounts". Without counts (old
+  backend) the old page-only filtering and "on this page" text stay.
+- `tests/list-filters.spec.ts`: 3 tests. 77/77 browser tests, `tsc` clean,
+  lint unchanged on touched files.
+- Deploy: merge backend #32 into backend `staging` and deploy to Fly staging;
+  the frontend PR works before or after that.
+
 
 # Phase 10 — Admin pages (staging) — done
 
