@@ -1,3 +1,54 @@
+# Phase 12 — "Connect your AI" guide in the CRM (staging) — plan, waiting for approval
+
+Target: frontend `staging` (+ one small backend change on backend `staging`).
+Nothing to production.
+
+Why: the step-by-step guide for connecting an AI app to PathSix
+(`pathsix-backend/app/templates/connect_ai.html`, served at the backend's
+`/connect`) lives on the backend, and customers are never given backend links.
+They still paste the backend MCP URL into their AI app, but they must first
+find the instructions in the CRM.
+
+## Frontend (`staging`)
+- [ ] New public page **"Connect your AI"** at `/connect-ai` (no sign-in
+      needed, like `/login`), in the app's look:
+      - short intro;
+      - one section per app — Claude, ChatGPT, Gemini, Claude Code, VS Code —
+        with the same numbered steps and notes as the backend page;
+      - the MCP URL shown in every step where it is pasted, with a **Copy**
+        button (Claude Code / VS Code show the full command/JSON to copy);
+      - "What happens next" (sign in, Allow access, sees only your records,
+        each new lead needs your approval, stays on while used: 90 days idle /
+        365 days after approval);
+      - signed-out visitors get a "Sign in" link; signed-in users see it inside
+        the normal layout.
+- [ ] MCP URL comes from a new setting `VITE_MCP_URL` (set per Vercel project:
+      staging → staging backend MCP URL, production → production). If it isn't
+      set, the page says the connection address isn't available yet instead of
+      showing a wrong link.
+- [ ] **Settings → "AI connections"** card for signed-in users: the URL with
+      Copy and a "Step-by-step guide" link to `/connect-ai`.
+- [ ] **Account menu**: "Connect your AI" next to "Reports guide".
+- [ ] Browser tests: page opens signed out; every app section shows the URL;
+      Copy puts the URL on the clipboard; missing setting shows the fallback;
+      Settings card links to the page; phone has no sideways scroll.
+- [ ] All browser tests + lint, screenshots, PR into `staging`.
+
+## Backend (`pathsix-backend`, PR into `staging`)
+- [ ] `GET /connect` redirects to `FRONTEND_URL + "/connect-ai"` (setting
+      already used for password-reset links), so any link already shared still
+      lands on the guide and there is one copy of the steps. Template removed.
+      Test for the redirect; full test suite.
+
+## You
+- [ ] Add `VITE_MCP_URL` in Vercel (staging project now; production later)
+      with the MCP URL you give customers. I'll tell you the exact value from
+      the backend config when building.
+- [ ] Deploy backend staging after merging (like before).
+
+Note: the per-app steps are still "not yet verified live". They are copied
+as-is and get corrected as each app is checked during the MCP connection tests.
+
 # Phase 11 — Backend filters for Accounts (type) and Projects (status) — done
 
 Target: backend `pathsix-backend` → `staging` branch (you deploy to Fly
