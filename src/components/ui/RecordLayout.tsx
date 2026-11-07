@@ -27,15 +27,16 @@ export function RecordHeader({
           </div>
           <div className="min-w-0 flex-1">
             <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{eyebrow}</div>
-            <h1 className="text-2xl font-semibold break-words">{title}</h1>
+            <h1 className="text-xl sm:text-2xl font-semibold break-words">{title}</h1>
           </div>
-          {actions && <div className="flex flex-wrap gap-2">{actions}</div>}
+          {/* On phones the buttons get their own line so the title keeps the full width. */}
+          {actions && <div className="flex w-full flex-wrap gap-2 sm:w-auto">{actions}</div>}
         </div>
         <dl className="grid grid-cols-2 gap-x-4 gap-y-3 border-t pt-4 sm:grid-cols-3 lg:grid-cols-5">
           {fields.map((f) => (
             <div key={f.label} className="min-w-0">
               <dt className="text-xs text-muted-foreground">{f.label}</dt>
-              <dd className="mt-0.5 truncate text-sm font-medium">{f.value}</dd>
+              <dd className="mt-0.5 break-words text-sm font-medium sm:truncate">{f.value}</dd>
             </div>
           ))}
         </dl>
