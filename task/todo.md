@@ -1,3 +1,25 @@
+# Fix — record page titles squeezed on phones (staging) — done
+
+Reported with screenshots: on phones the Account and Project page titles broke
+mid-word ("Alderl / ine Studi / o"), and the Project dates were cut off
+("10/11/2026 – 11/30...").
+
+Root cause (`src/components/ui/RecordLayout.tsx`, shared by Lead, Account and
+Project pages): avatar, title and buttons share one row. The title column may
+shrink (`min-w-0`) and may break words (`break-words`), so a single button
+stayed beside it and squeezed it to a narrow column. The Lead page only looked
+fine because its two buttons were too wide to fit and wrapped by chance.
+Header fields use `truncate`, which cut long values like date ranges.
+
+- [x] Buttons take their own full-width line on phones (`w-full sm:w-auto`);
+      desktop unchanged. Title `text-xl` on phones, `text-2xl` from `sm`.
+- [x] Header field values wrap on phones, truncate from `sm` up as before.
+- [x] Browser test: Account, Project and Lead pages at phone width — title not
+      squeezed, buttons below it, full date range visible, no sideways scroll.
+
+## Review
+- One file changed (`RecordLayout.tsx`, 3 class changes) + `tests/record-header-mobile.spec.ts`.
+
 # Phase 12 — "Connect your AI" guide in the CRM (staging) — plan, waiting for approval
 
 Target: frontend `staging` (+ one small backend change on backend `staging`).
