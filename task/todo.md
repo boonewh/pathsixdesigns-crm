@@ -1,3 +1,21 @@
+# Add — "Connect your AI" links in Settings (staging) — done
+
+Requested: new employees need a way to find the instructions for connecting their AI.
+The instructions and connection-management pages live on the backend (`/connect`,
+`/oauth/connections`) and nothing in the app linked to them. User approved the change.
+
+- [x] Add an "AI connections" card under Account in `src/pages/Settings.tsx`.
+- [x] Two buttons opening in a new tab: "Connect your AI" (`/connect`) and
+      "Manage AI connections" (`/oauth/connections`), built from the existing
+      `API_BASE` setting so staging and production each link to their own backend.
+- [x] Typecheck and build; check the page in the browser.
+**Review:** Settings now has an "AI connections" card under Account with "Connect your AI"
+and "Manage AI connections" buttons (new tab). Links are built from `VITE_API_BASE_URL` with
+its `/api` suffix removed, so each environment points at its own backend. One file changed
+(`src/pages/Settings.tsx`). Typecheck clean and build passes after `npm ci` from the staging
+lockfile (local modules were from main). Both backend pages return 200 on staging.
+
+
 # Fix — record page titles squeezed on phones (staging) — done
 
 Reported with screenshots: on phones the Account and Project page titles broke

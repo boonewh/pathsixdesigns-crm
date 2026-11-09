@@ -2,6 +2,10 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/authContext";
 import * as Sentry from "@sentry/react";
+import { API_BASE } from "@/lib/api";
+
+// The AI connection pages are served by the backend, beside its /api routes.
+const BACKEND = API_BASE.replace(/\/api\/?$/, "");
 
 export default function Settings() {
   const { user } = useAuth();
@@ -24,6 +28,24 @@ export default function Settings() {
         <Button asChild variant="outline" size="sm">
           <Link to="/change-password">Change password</Link>
         </Button>
+        </div>
+      </div>
+
+      <div className="bg-white rounded-lg border">
+        <h2 className="border-b px-4 py-3 text-base font-semibold">AI connections</h2>
+        <div className="p-4 space-y-3">
+          <p className="text-sm text-gray-600">
+            Use your own AI app, like ChatGPT, Claude or Gemini, with your PathSix records.
+            Each new record or change needs your approval before it is saved.
+          </p>
+          <div className="flex flex-wrap gap-2">
+            <Button asChild size="sm">
+              <a href={`${BACKEND}/connect`} target="_blank" rel="noopener noreferrer">Connect your AI</a>
+            </Button>
+            <Button asChild variant="outline" size="sm">
+              <a href={`${BACKEND}/oauth/connections`} target="_blank" rel="noopener noreferrer">Manage AI connections</a>
+            </Button>
+          </div>
         </div>
       </div>
 
