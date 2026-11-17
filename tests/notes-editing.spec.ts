@@ -22,10 +22,7 @@ async function setup(page: Page) {
   return saved;
 }
 
-const notesBox = (page: Page) => page.locator('details').filter({ has: page.getByText('Notes', { exact: true }) });
-
-async function openNotesAndSave(page: Page, saved: Record<string, unknown>[]) {
-  await page.getByText('Notes', { exact: true }).click();
+async function typeAndSaveNote(page: Page, saved: Record<string, unknown>[]) {
   await page.getByRole('button', { name: 'Add Note' }).click();
   const box = page.getByPlaceholder('Enter notes here');
   await box.pressSequentially(NOTE);
@@ -39,21 +36,24 @@ async function openNotesAndSave(page: Page, saved: Record<string, unknown>[]) {
 test('lead notes keep every typed letter and save the whole note', async ({ page }) => {
   const saved = await setup(page);
   await page.goto('/leads/5');
-  await openNotesAndSave(page, saved);
+  await page.getByRole('tab', { name: /Notes/ }).click();
+  await typeAndSaveNote(page, saved);
 });
 
 test('project notes keep every typed letter and save the whole note', async ({ page }) => {
   const saved = await setup(page);
   await page.goto('/projects/7');
-  await openNotesAndSave(page, saved);
+  await page.getByText('Notes', { exact: true }).click();
+  await typeAndSaveNote(page, saved);
 });
 
 test('cancelling an edit puts the saved note back', async ({ page }) => {
   const saved = await setup(page);
   await page.goto('/leads/5');
-  await openNotesAndSave(page, saved);
+  await page.getByRole('tab', { name: /Notes/ }).click();
+  await typeAndSaveNote(page, saved);
 
-  await notesBox(page).getByRole('button').first().click(); // the ⋮ menu on the note
+  await page.getByRole('tabpanel').getByRole('button').first().click(); // the ⋮ menu on the note
   await page.getByRole('button', { name: 'Edit', exact: true }).click();
   const box = page.getByPlaceholder('Enter notes here');
   await expect(box).toHaveValue(NOTE);

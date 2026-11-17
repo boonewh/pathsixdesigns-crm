@@ -1,5 +1,6 @@
 import { useState, useRef } from "react";
 import { MoreVertical, StickyNote } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 type Props = {
   notes: string;
@@ -14,6 +15,7 @@ type Props = {
   showMenu?: boolean;
   setShowMenu?: React.Dispatch<React.SetStateAction<boolean>>;
   menuRef?: React.RefObject<HTMLDivElement | null>;
+  embedded?: boolean;
 };
 
 export default function CompanyNotes({
@@ -27,6 +29,7 @@ export default function CompanyNotes({
   showMenu,
   setShowMenu,
   menuRef,
+  embedded = false,
 }: Props) {
   // Internal fallback state if none provided
   const [internalEditing, setInternalEditing] = useState(false);
@@ -42,20 +45,18 @@ export default function CompanyNotes({
   const updateMenuOpen = setShowMenu ?? setInternalMenuOpen;
   const ref = menuRef ?? internalMenuRef;
 
-  return (
-    <details className="bg-white rounded shadow-sm border">
-      <summary className="cursor-pointer px-4 py-2 font-semibold text-blue-700 bg-blue-50 hover:bg-blue-100 rounded-t flex items-center gap-2">
-        <StickyNote size={16} /> Notes
-      </summary>
+  // embedded: render open, without the collapsible box (used inside record tabs)
+  const content = (
+    <>
 
       <div className="p-4">
         {!notes && !editing ? (
-          <button
+          <Button
             onClick={() => updateEditing(true)}
-            className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+            size="sm"
           >
             Add Note
-          </button>
+          </Button>
         ) : editing ? (
           <div className="space-y-2">
             <textarea
@@ -66,24 +67,24 @@ export default function CompanyNotes({
               placeholder="Enter notes here"
             />
             <div className="flex gap-2">
-              <button
+              <Button
                 onClick={async () => {
                   await onSave(draft);
                   updateEditing(false);
                 }}
-                className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+                size="sm"
               >
                 Save
-              </button>
-              <button
+              </Button>
+              <Button
                 onClick={() => {
                   updateEditing(false);
                   updateDraft(notes || "");
                 }}
-                className="bg-gray-300 px-4 py-2 rounded hover:bg-gray-400"
+                size="sm" variant="outline"
               >
                 Cancel
-              </button>
+              </Button>
             </div>
           </div>
         ) : (
@@ -121,6 +122,17 @@ export default function CompanyNotes({
           </div>
         )}
       </div>
+    </>
+  );
+
+  if (embedded) return content;
+
+  return (
+    <details className="bg-white rounded shadow-sm border">
+      <summary className="cursor-pointer px-4 py-2 font-semibold text-blue-700 bg-blue-50 hover:bg-blue-100 rounded-t flex items-center gap-2">
+        <StickyNote size={16} /> Notes
+      </summary>
+      {content}
     </details>
   );
 }

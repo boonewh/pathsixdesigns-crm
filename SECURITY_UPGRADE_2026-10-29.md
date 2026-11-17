@@ -1,7 +1,7 @@
 # Frontend security maintenance — October 29, 2026
 
-This reviewed maintenance branch starts from production source `6c7434777a5a0ae16dfa2d5e172b7b222a689360`.
-Release requires review of the tested result; merging to `main` triggers its existing Vercel production deployment.
+This reviewed maintenance branch starts from staging source `b6612de24be3470420f3f862b964e0a1616ea88c`.
+Release requires review of the tested result; merging to `staging` triggers its existing Vercel production deployment.
 No database, hosted environment or customer-record change is included.
 
 ## Changes and impact
@@ -31,11 +31,11 @@ No database, hosted environment or customer-record change is included.
 ## Local verification
 
 - Typecheck and production build pass; five security unit groups pass.
-- **38 browser tests pass**, including login/expiry, telemetry/reset privacy,
+- **43 browser tests pass**, including login/expiry, telemetry/reset privacy,
   lead editing, tenant terminology, archive, retry/read cancellation, reports,
   Trash safeguards and unauthorized logout.
-- Staging changes are maintained separately; this branch does not merge unfinished staging features into production.
-- Lint remains visible: **93 existing errors /19 warnings**. Production's exact
+- Staging also retains its admin password reset, forgot-password progress and protected calendar-download checks.
+- Lint remains visible: **92 existing errors /19 warnings**. Production's exact
   rule/message multiset matches its baseline; no historical rules were disabled.
   Lint is not represented as passing or added as a failing CI gate.
 - Existing large-bundle and Node module-detection warnings remain visible.

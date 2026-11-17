@@ -38,7 +38,7 @@ export function LeadSourceReport({ startDate, endDate }: Props) {
   if (error) return <div className="p-6 text-center text-red-600">{error}</div>;
   if (!data || data.length === 0) {
     return (
-      <div className="bg-white rounded-lg shadow p-6">
+      <div className="bg-white rounded-lg border p-6">
         <div className="flex items-center gap-2 mb-4">
           <Target className="h-5 w-5 text-purple-600" />
           <h2 className="text-lg font-semibold">Lead Sources</h2>
@@ -55,7 +55,7 @@ export function LeadSourceReport({ startDate, endDate }: Props) {
   const totalLeads = data.reduce((total, item) => total + item.total_leads, 0);
 
   return (
-    <div className="bg-white rounded-lg shadow p-6">
+    <div className="bg-white rounded-lg border p-6">
       <div className="flex items-center gap-2 mb-4">
         <Target className="h-5 w-5 text-purple-600" />
         <h2 className="text-lg font-semibold">Lead Sources</h2>

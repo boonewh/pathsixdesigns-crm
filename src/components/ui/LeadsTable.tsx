@@ -2,6 +2,7 @@ import { Edit, Trash2 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Lead } from "@/types";
 import { formatPhoneNumber } from "@/lib/phoneUtils";
+import StatusBadge from "@/components/ui/StatusBadge";
 
 interface LeadsTableProps {
   leads: Lead[];
@@ -12,7 +13,7 @@ interface LeadsTableProps {
   onSort: (field: string) => void;
   statusConfig: {
     colors: Record<string, string>;
-    icons: Record<string, string>;
+    labels?: Record<string, string>;
   };
 }
 
@@ -120,11 +121,11 @@ export default function LeadsTable({
                 </div>
               </td>
               <td className="px-4 py-3">
-                <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
-                  statusConfig.colors[lead.lead_status || 'open'] || 'bg-gray-100 text-gray-800'
-                }`}>
-                  {statusConfig.icons[lead.lead_status || 'open']} {(lead.lead_status || 'open').toUpperCase()}
-                </span>
+                <StatusBadge
+                  status={lead.lead_status || 'open'}
+                  colorClass={statusConfig.colors[lead.lead_status || 'open']}
+                  label={statusConfig.labels?.[lead.lead_status || 'open']}
+                />
               </td>
               <td className="px-4 py-3 text-sm text-gray-600">
                 {lead.type || '—'}

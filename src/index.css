@@ -5,32 +5,37 @@
 @layer base {
   :root {
     --background: 0 0% 100%;
-    --foreground: 240 10% 3.9%;
+    --foreground: 224 45% 16%;
     --card: 0 0% 100%;
-    --card-foreground: 240 10% 3.9%;
+    --card-foreground: 224 45% 16%;
     --popover: 0 0% 100%;
-    --popover-foreground: 240 10% 3.9%;
-    --primary: 221 86% 38%;
+    --popover-foreground: 224 45% 16%;
+    --primary: 224 76% 48%;
     --primary-foreground: 0 0% 100%;
     --secondary: 240 5% 3%;
     --secondary-foreground: 0 0% 100%;
-    --muted: 240 4.8% 95.9%;
-    --muted-foreground: 240 3.8% 46.1%;
+    --muted: 220 23% 96%;
+    --muted-foreground: 223 13% 46%;
     --accent: 217 44% 65%;
     --accent-foreground: 0 0% 10%;
     --neutral: 210 26% 90%;
     --neutral-foreground: 222 47% 11%;
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
-    --border: 240 5.9% 90%;
-    --input: 240 5.9% 90%;
-    --ring: 240 10% 3.9%;
+    --border: 222 20% 90%;
+    --input: 222 18% 84%;
+    --ring: 224 76% 48%;
     --chart-1: 12 76% 61%;
     --chart-2: 173 58% 39%;
     --chart-3: 197 37% 24%;
     --chart-4: 43 74% 66%;
     --chart-5: 27 87% 67%;
     --radius: 0.5rem;
+    /* Navy app chrome (sidebar + top bar), matches the logo */
+    --chrome: 224 66% 13%;
+    --chrome-hover: 224 50% 20%;
+    --chrome-foreground: 222 45% 86%;
+    --chrome-muted: 224 18% 60%;
   }
 
   .dark {
@@ -95,6 +100,88 @@
 .fc-timegrid-event .fc-event-main {
   background-color: transparent !important;
   box-shadow: none !important;
+}
+
+/* === FullCalendar theme (matches the app's colors) === */
+.fc {
+  --fc-border-color: hsl(var(--border));
+  --fc-page-bg-color: #fff;
+  --fc-neutral-bg-color: hsl(var(--muted));
+  --fc-today-bg-color: hsl(var(--primary) / 0.05);
+  --fc-list-event-hover-bg-color: hsl(var(--muted));
+  --fc-button-text-color: hsl(var(--foreground));
+  --fc-button-bg-color: #fff;
+  --fc-button-border-color: hsl(var(--border));
+  --fc-button-hover-bg-color: hsl(var(--muted));
+  --fc-button-hover-border-color: hsl(var(--border));
+  --fc-button-active-bg-color: hsl(var(--primary));
+  --fc-button-active-border-color: hsl(var(--primary));
+}
+
+.fc .fc-button {
+  font-size: 0.875rem;
+  font-weight: 500;
+  text-transform: none;
+  box-shadow: none !important;
+}
+
+.fc .fc-button-primary:not(:disabled).fc-button-active,
+.fc .fc-button-primary:not(:disabled):active {
+  color: hsl(var(--primary-foreground));
+}
+
+.fc .fc-toolbar-title {
+  font-size: 1.125rem;
+  font-weight: 600;
+}
+
+.fc .fc-col-header-cell {
+  background: hsl(var(--muted));
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: hsl(var(--muted-foreground));
+}
+
+.fc a.fc-col-header-cell-cushion,
+.fc a.fc-daygrid-day-number,
+.fc a.fc-list-day-text,
+.fc a.fc-list-day-side-text {
+  color: inherit;
+  text-decoration: none;
+}
+
+.fc .fc-daygrid-day-number {
+  font-size: 0.8125rem;
+  font-weight: 500;
+}
+
+.fc .fc-day-today .fc-daygrid-day-number {
+  margin: 2px;
+  min-width: 1.5rem;
+  border-radius: 9999px;
+  background: hsl(var(--primary));
+  color: hsl(var(--primary-foreground));
+  text-align: center;
+}
+
+.fc .fc-daygrid-event {
+  padding: 1px 4px;
+}
+
+.fc .fc-event {
+  cursor: pointer;
+}
+
+.fc .fc-list-day-cushion {
+  padding: 6px 14px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+
+.fc .fc-list-event td {
+  font-size: 0.875rem;
 }
 
 .scrollbar-hide::-webkit-scrollbar {

@@ -1,6 +1,8 @@
 import { Edit, Trash2 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Project } from "@/types";
+import StatusBadge from "@/components/ui/StatusBadge";
+import { PROJECT_STATUS_COLORS, PROJECT_STATUS_LABELS } from "@/lib/projectStatus";
 
 interface ProjectsTableProps {
   projects: Project[];
@@ -63,7 +65,7 @@ export default function ProjectsTable({
               className="px-4 py-3 text-left text-sm font-medium text-gray-500 cursor-pointer hover:bg-gray-100 select-none"
               onClick={() => onSort('entity')}
             >
-              Entity <span className="ml-1">{getSortIcon('entity')}</span>
+              Linked to <span className="ml-1">{getSortIcon('entity')}</span>
             </th>
             <th 
               className="px-4 py-3 text-left text-sm font-medium text-gray-500 cursor-pointer hover:bg-gray-100 select-none"
@@ -95,15 +97,11 @@ export default function ProjectsTable({
                 )}
               </td>
               <td className="px-4 py-3">
-                <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
-                  project.project_status === 'active' ? 'bg-blue-100 text-blue-800' :
-                  project.project_status === 'completed' ? 'bg-green-100 text-green-800' :
-                  project.project_status === 'cancelled' ? 'bg-red-100 text-red-800' :
-                  project.project_status === 'lost' ? 'bg-red-100 text-red-800' :
-                  'bg-yellow-100 text-yellow-800'
-                }`}>
-                  {project.project_status?.toUpperCase() || 'PENDING'}
-                </span>
+                <StatusBadge
+                  status={project.project_status || 'pending'}
+                  colorClass={PROJECT_STATUS_COLORS[project.project_status || 'pending']}
+                  label={PROJECT_STATUS_LABELS[project.project_status || 'pending']}
+                />
               </td>
               <td className="px-4 py-3 text-sm text-gray-600">
                 {project.type || '—'}
@@ -119,9 +117,8 @@ export default function ProjectsTable({
                   {project.client_name && project.client_id && (
                     <Link 
                       to={`/clients/${project.client_id}`} 
-                      className="text-blue-600 hover:underline flex items-center gap-1"
+                      className="text-blue-600 hover:underline"
                     >
-                      <span className="text-xs">🏢</span>
                       {project.client_name}
                     </Link>
                   )}
@@ -129,10 +126,9 @@ export default function ProjectsTable({
                   {project.lead_name && project.lead_id && (
                     <Link 
                       to={`/leads/${project.lead_id}`} 
-                      className="text-green-600 hover:underline flex items-center gap-1"
+                      className="text-blue-600 hover:underline"
                     >
-                      <span className="text-xs">🎯</span>
-                      {project.lead_name}
+                      {project.lead_name} <span className="text-xs text-muted-foreground">(lead)</span>
                     </Link>
                   )}
 
@@ -148,9 +144,7 @@ export default function ProjectsTable({
 
                   {/* Truly unassigned */}
                   {!project.client_name && !project.lead_name && !project.primary_contact_name && (
-                    <span className="text-yellow-600 text-xs flex items-center gap-1">
-                      ⚠️ Unassigned
-                    </span>
+                    <span className="text-amber-700 text-xs">Not linked</span>
                   )}
                 </div>
               </td>

@@ -9,7 +9,7 @@ test('401 from global search triggers toast and logout', async ({ page }) => {
     json: {projects: [], clients: [], leads: [], total: 0, pagination: {}, display: {}},
   }));
   // Intercept the /search request and force a 401 response
-  await page.route('**/search/?q=test', route => {
+  await page.route('**/api/search/?q=test', route => {
     route.fulfill({
       status: 401,
       contentType: 'application/json',

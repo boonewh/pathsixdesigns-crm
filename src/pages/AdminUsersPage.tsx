@@ -2,6 +2,7 @@ import { useEffect, useState, useRef } from "react";
 import { useAuth } from "@/authContext";
 import { MoreVertical } from "lucide-react";
 import { apiFetch } from "@/lib/api";
+import toast from "react-hot-toast";
 
 interface User {
   id: number;
@@ -23,6 +24,7 @@ export default function AdminUsersPage() {
   const menuRefs = useRef<{ [key: number]: HTMLDivElement | null }>({});
   const [editingUserId, setEditingUserId] = useState<number | null>(null);
   const [editedEmail, setEditedEmail] = useState<string>("");
+  const [sendingResetFor, setSendingResetFor] = useState<number | null>(null);
 
   useEffect(() => {
     apiFetch("/users/", {
@@ -87,47 +89,55 @@ export default function AdminUsersPage() {
 
   // Existing promote/demote behavior (replace with a single role)
   const handleChangeRole = async (id: number, newRole: string) => {
-    const res = await apiFetch(`/users/${id}/roles`, {
-      method: "PUT",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ roles: [newRole] }),
-    });
+    try {
+      const res = await apiFetch(`/users/${id}/roles`, {
+        method: "PUT",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ roles: [newRole] }),
+      });
 
-    if (res.ok) {
-      const updated = await res.json();
-      setUsers((prev) =>
-        prev.map((u) => (u.id === id ? { ...u, roles: updated.roles } : u))
-      );
-      setOpenMenuId(null);
-    } else {
-      const { error } = await res.json();
-      alert(error || "Failed to update role");
+      if (res.ok) {
+        const updated = await res.json();
+        setUsers((prev) =>
+          prev.map((u) => (u.id === id ? { ...u, roles: updated.roles } : u))
+        );
+        setOpenMenuId(null);
+      } else {
+        const { error } = await res.json().catch(() => ({}));
+        toast.error(error || "Failed to update role");
+      }
+    } catch {
+      // apiFetch already reports network failures to the user.
     }
   };
 
   // New: update roles with a full array (used for file_uploads grant/revoke)
   const handleUpdateRoles = async (id: number, roles: string[]) => {
-    const res = await apiFetch(`/users/${id}/roles`, {
-      method: "PUT",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ roles }),
-    });
+    try {
+      const res = await apiFetch(`/users/${id}/roles`, {
+        method: "PUT",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ roles }),
+      });
 
-    if (res.ok) {
-      const updated = await res.json();
-      setUsers((prev) =>
-        prev.map((u) => (u.id === id ? { ...u, roles: updated.roles } : u))
-      );
-      setOpenMenuId(null);
-    } else {
-      const { error } = await res.json();
-      alert(error || "Failed to update roles");
+      if (res.ok) {
+        const updated = await res.json();
+        setUsers((prev) =>
+          prev.map((u) => (u.id === id ? { ...u, roles: updated.roles } : u))
+        );
+        setOpenMenuId(null);
+      } else {
+        const { error } = await res.json().catch(() => ({}));
+        toast.error(error || "Failed to update roles");
+      }
+    } catch {
+      // apiFetch already reports network failures to the user.
     }
   };
 
@@ -148,33 +158,57 @@ export default function AdminUsersPage() {
   };
 
   const handleSaveEmail = async (id: number) => {
-    const res = await apiFetch(`/users/${id}`, {
-      method: "PUT",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ email: editedEmail }),
-    });
+    try {
+      const res = await apiFetch(`/users/${id}`, {
+        method: "PUT",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email: editedEmail }),
+      });
 
-    if (res.ok) {
-      const updated = await res.json();
+      if (res.ok) {
+        const updated = await res.json();
 
-      setUsers((prev) =>
-        prev.map((u) =>
-          u.id === id
-            ? {
-                ...u,
-                email: updated.email || editedEmail, // fallback if backend response is empty
-              }
-            : u
-        )
-      );
-      setEditingUserId(null);
-      setEditedEmail("");
-    } else {
-      const { error } = await res.json();
-      alert(error || "Failed to update email");
+        setUsers((prev) =>
+          prev.map((u) =>
+            u.id === id
+              ? {
+                  ...u,
+                  email: updated.email || editedEmail, // fallback if backend response is empty
+                }
+              : u
+          )
+        );
+        setEditingUserId(null);
+        setEditedEmail("");
+      } else {
+        const { error } = await res.json().catch(() => ({}));
+        toast.error(error || "Failed to update email");
+      }
+    } catch {
+      // apiFetch already reports network failures to the user.
+    }
+  };
+
+  const handleSendPasswordReset = async (user: User) => {
+    setSendingResetFor(user.id);
+
+    try {
+      const res = await apiFetch(`/users/${user.id}/send-password-reset`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (res.ok) {
+        toast.success(`Password reset email sent to ${user.email}`);
+        setOpenMenuId(null);
+      }
+    } catch {
+      // apiFetch already reports network failures to the user.
+    } finally {
+      setSendingResetFor(null);
     }
   };
 
@@ -182,7 +216,7 @@ export default function AdminUsersPage() {
   const inactiveUsers = users.filter((u) => !u.is_active);
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-4 lg:p-6 space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold">User Management</h1>
         <button
@@ -193,7 +227,7 @@ export default function AdminUsersPage() {
             setRole("user");
             setError("");
           }}
-          className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+          className="inline-flex h-10 items-center rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground hover:bg-primary/90"
         >
           {showForm ? "Cancel" : "+ New User"}
         </button>
@@ -226,7 +260,7 @@ export default function AdminUsersPage() {
           </select>
           <button
             onClick={handleCreate}
-            className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
+            className="inline-flex h-10 items-center rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground hover:bg-primary/90"
           >
             Save User
           </button>
@@ -279,6 +313,7 @@ export default function AdminUsersPage() {
               }}
             >
               <button
+                aria-label={`Actions for ${user.email}`}
                 onClick={() =>
                   setOpenMenuId((prev) => (prev === user.id ? null : user.id))
                 }
@@ -321,6 +356,14 @@ export default function AdminUsersPage() {
                       Revoke File Uploads
                     </button>
                   )}
+
+                  <button
+                    onClick={() => handleSendPasswordReset(user)}
+                    className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100 text-indigo-600 disabled:cursor-wait disabled:opacity-60"
+                    disabled={sendingResetFor === user.id}
+                  >
+                    {sendingResetFor === user.id ? "Sending..." : "Send Password Reset"}
+                  </button>
 
                   <button
                     onClick={() => handleToggleActive(user.id)}
@@ -390,6 +433,7 @@ export default function AdminUsersPage() {
                   }}
                 >
                   <button
+                    aria-label={`Actions for ${user.email}`}
                     onClick={() =>
                       setOpenMenuId((prev) => (prev === user.id ? null : user.id))
                     }
@@ -398,7 +442,14 @@ export default function AdminUsersPage() {
                     <MoreVertical size={20} />
                   </button>
                   {openMenuId === user.id && (
-                    <div className="absolute right-0 mt-2 w-32 bg-white border rounded shadow-md z-10">
+                    <div className="absolute right-0 mt-2 w-48 bg-white border rounded shadow-md z-10">
+                      <button
+                        onClick={() => handleSendPasswordReset(user)}
+                        className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100 text-indigo-600 disabled:cursor-wait disabled:opacity-60"
+                        disabled={sendingResetFor === user.id}
+                      >
+                        {sendingResetFor === user.id ? "Sending..." : "Send Password Reset"}
+                      </button>
                       <button
                         onClick={() => handleToggleActive(user.id)}
                         className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100 text-green-600"

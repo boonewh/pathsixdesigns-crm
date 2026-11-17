@@ -4,6 +4,7 @@ import { apiFetch } from "@/lib/api";
 import { useAuth } from "@/authContext";
 import { formatDistanceToNow } from "date-fns";
 import { Button } from "@/components/ui/button";
+import toast from "react-hot-toast";
 import PurgeDialog, { type PurgeResource, type PurgeItem } from "@/components/PurgeDialog";
 
 interface TrashItem {
@@ -100,7 +101,7 @@ export default function TrashPage() {
       setSelectedLeadIds(selected => selected.filter(id => rows[1].some((item: TrashItem) => item.id === id)));
       setSelectedProjectIds(selected => selected.filter(id => rows[2].some((item: TrashItem) => item.id === id)));
     } catch (cause) {
-      setError("Trash couldn’t be refreshed. The displayed records may be out of date.");
+      setError("Trash couldn't be refreshed. The displayed records may be out of date.");
       throw cause;
     } finally {
       setLoading(false);
@@ -109,14 +110,23 @@ export default function TrashPage() {
 
   // --- item actions ---
   const handleRestore = async (type: "client" | "lead" | "project", id: number) => {
-    const res = await apiFetch(`/${type}s/${id}/restore`, {
-      method: "PUT",
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    if (!res.ok) return alert("Failed to restore.");
+    const rows = type === "client" ? clients : type === "lead" ? leads : projects;
+    const name = rows.find(row => row.id === id)?.name || "Record";
+    try {
+      const res = await apiFetch(`/${type}s/${id}/restore`, {
+        method: "PUT",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) throw new Error(`Status ${res.status}`);
+    } catch (err) {
+      console.error(err);
+      toast.error(`Couldn't restore ${name}. Please try again.`);
+      return;
+    }
     if (type === "client") setClients(prev => prev.filter(c => c.id !== id));
     else if (type === "lead") setLeads(prev => prev.filter(l => l.id !== id));
     else setProjects(prev => prev.filter(p => p.id !== id));
+    toast.success(`${name} restored`);
   };
 
   const handlePurge = (type: "client" | "lead" | "project", id: number) => {
@@ -149,14 +159,14 @@ export default function TrashPage() {
     onToggleAll: () => void;
     aria: string;
   }) => (
-    <thead className="bg-gray-100 text-left">
+    <thead className="bg-muted/60 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">
       <tr>
-        <th className="p-2 w-11">
+        <th className="px-4 py-2 w-11">
           <input type="checkbox" aria-label={aria} checked={allChecked} onChange={onToggleAll} />
         </th>
-        <th className="p-2">Name</th>
-        <th className="p-2">Deleted</th>
-        <th className="p-2">Actions</th>
+        <th className="px-2 py-2">Name</th>
+        <th className="px-2 py-2">Deleted</th>
+        <th className="px-2 py-2">Actions</th>
       </tr>
     </thead>
   );
@@ -178,7 +188,7 @@ export default function TrashPage() {
     ariaPrefix: string;
   }) {
     return (
-      <li className="rounded-xl border p-3 flex flex-col gap-3">
+      <li className="rounded-lg border p-3 flex flex-col gap-3">
         <div className="flex items-start gap-3">
           <input
             type="checkbox"
@@ -189,15 +199,15 @@ export default function TrashPage() {
           />
           <div className="min-w-0">
             <div className="font-medium truncate">{item.name}</div>
-            <div className="text-xs text-gray-500">
+            <div className="text-xs text-muted-foreground">
               Deleted {formatDistanceToNow(new Date(item.deleted_at), { addSuffix: true })}
             </div>
           </div>
         </div>
-        <div className="flex flex-col sm:flex-row gap-2">
-          <Button size="sm" onClick={onRestore} className="w-full sm:w-auto">Restore</Button>
-          <Button size="sm" variant="destructive" onClick={onPurge} className="w-full sm:w-auto">
-            Delete Permanently
+        <div className="flex gap-2">
+          <Button size="sm" variant="outline" onClick={onRestore} className="flex-1 sm:flex-none">Restore</Button>
+          <Button size="sm" variant="ghost" onClick={onPurge} className="flex-1 sm:flex-none text-red-600 hover:bg-red-50 hover:text-red-700">
+            Delete permanently
           </Button>
         </div>
       </li>
@@ -205,8 +215,8 @@ export default function TrashPage() {
   }
 
   return (
-    <div className="p-6">
-      <h1 className="text-2xl font-bold mb-4">Trash</h1>
+    <div className="p-4 lg:p-6">
+      <h1 className="text-2xl font-bold mb-4">Deletes</h1>
 
       {notice && <p role="status" className="mb-4 text-green-700">{notice}</p>}
       {error && <div role="alert" className="mb-4 text-red-700">{error}
@@ -217,13 +227,13 @@ export default function TrashPage() {
       {loading ? (
         <p>Loading deleted items...</p>
       ) : (
-        <div className="space-y-10">
+        <div className="space-y-6">
           {/* Clients */}
-          <section>
-            <h2 className="text-xl font-semibold mb-2">Deleted {config.labels.client}s</h2>
+          <section className="rounded-lg border bg-white overflow-hidden">
+            <h2 className="border-b px-4 py-3 text-base font-semibold">Deleted {config.labels.client}s <span className="ml-1 font-normal text-muted-foreground">({clients.length})</span></h2>
 
             {selectedClientIds.size > 0 && (
-              <div className="mb-2 flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3">
+              <div className="border-b bg-muted/30 px-4 py-2 flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3">
                 <Button size="sm" variant="destructive" onClick={bulkPurgeClients}>
                   Delete Selected ({selectedClientIds.size})
                 </Button>
@@ -240,11 +250,11 @@ export default function TrashPage() {
             )}
 
             {clients.length === 0 ? (
-              <p className="text-gray-500">No deleted {config.labels.client.toLowerCase()}s.</p>
+              <p className="px-4 py-6 text-sm text-muted-foreground">No deleted {config.labels.client.toLowerCase()}s.</p>
             ) : (
               <>
                 {/* Mobile list */}
-                <ul className="md:hidden grid gap-3">
+                <ul className="md:hidden grid gap-3 p-3">
                   {clients.map(client => (
                     <MobileRow
                       key={client.id}
@@ -259,7 +269,7 @@ export default function TrashPage() {
                 </ul>
 
                 {/* Desktop table (unchanged layout) */}
-                <table className="hidden md:table w-full text-sm border table-fixed">
+                <table className="hidden md:table w-full text-sm table-fixed">
                   <ColGroup />
                   <TableHeader
                     allChecked={clients.length > 0 && selectedClientIds.size === clients.length}
@@ -269,7 +279,7 @@ export default function TrashPage() {
                   <tbody>
                     {clients.map(client => (
                       <tr key={client.id} className="border-t">
-                        <td className="p-2 w-11">
+                        <td className="px-4 py-2 w-11">
                           <input
                             type="checkbox"
                             checked={selectedClientIds.has(client.id)}
@@ -280,14 +290,14 @@ export default function TrashPage() {
                         <td className="p-2 min-w-0">
                           <span className="block truncate">{client.name}</span>
                         </td>
-                        <td className="p-2 text-gray-500 whitespace-nowrap">
+                        <td className="p-2 text-muted-foreground whitespace-nowrap">
                           {formatDistanceToNow(new Date(client.deleted_at), { addSuffix: true })}
                         </td>
                         <td className="p-2">
                           <div className="flex flex-wrap gap-2 whitespace-nowrap">
-                            <Button size="sm" onClick={() => handleRestore("client", client.id)}>Restore</Button>
-                            <Button size="sm" variant="destructive" onClick={() => handlePurge("client", client.id)}>
-                              Delete Permanently
+                            <Button size="sm" variant="outline" onClick={() => handleRestore("client", client.id)}>Restore</Button>
+                            <Button size="sm" variant="ghost" className="text-red-600 hover:bg-red-50 hover:text-red-700" onClick={() => handlePurge("client", client.id)}>
+                              Delete permanently
                             </Button>
                           </div>
                         </td>
@@ -300,11 +310,11 @@ export default function TrashPage() {
           </section>
 
           {/* Leads */}
-          <section>
-            <h2 className="text-xl font-semibold mb-2">Deleted Leads</h2>
+          <section className="rounded-lg border bg-white overflow-hidden">
+            <h2 className="border-b px-4 py-3 text-base font-semibold">Deleted Leads <span className="ml-1 font-normal text-muted-foreground">({leads.length})</span></h2>
 
             {selectedLeadIds.length > 0 && (
-              <div className="mb-2 flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3">
+              <div className="border-b bg-muted/30 px-4 py-2 flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3">
                 <Button size="sm" variant="destructive" onClick={handleBulkPurgeLeads}>
                   Delete Selected ({selectedLeadIds.length})
                 </Button>
@@ -325,11 +335,11 @@ export default function TrashPage() {
             )}
 
             {leads.length === 0 ? (
-              <p className="text-gray-500">No deleted leads.</p>
+              <p className="px-4 py-6 text-sm text-muted-foreground">No deleted leads.</p>
             ) : (
               <>
                 {/* Mobile list */}
-                <ul className="md:hidden grid gap-3">
+                <ul className="md:hidden grid gap-3 p-3">
                   {leads.map(lead => (
                     <MobileRow
                       key={lead.id}
@@ -344,7 +354,7 @@ export default function TrashPage() {
                 </ul>
 
                 {/* Desktop table */}
-                <table className="hidden md:table w-full text-sm border table-fixed">
+                <table className="hidden md:table w-full text-sm table-fixed">
                   <ColGroup />
                   <TableHeader
                     allChecked={leads.length > 0 && selectedLeadIds.length === leads.length}
@@ -354,7 +364,7 @@ export default function TrashPage() {
                   <tbody>
                     {leads.map(lead => (
                       <tr key={lead.id} className="border-t">
-                        <td className="p-2 w-11">
+                        <td className="px-4 py-2 w-11">
                           <input
                             type="checkbox"
                             aria-label={`Select ${lead.name}`}
@@ -365,14 +375,14 @@ export default function TrashPage() {
                         <td className="p-2 min-w-0">
                           <span className="block truncate">{lead.name}</span>
                         </td>
-                        <td className="p-2 text-gray-500 whitespace-nowrap">
+                        <td className="p-2 text-muted-foreground whitespace-nowrap">
                           {formatDistanceToNow(new Date(lead.deleted_at), { addSuffix: true })}
                         </td>
                         <td className="p-2">
                           <div className="flex flex-wrap gap-2 whitespace-nowrap">
-                            <Button size="sm" onClick={() => handleRestore("lead", lead.id)}>Restore</Button>
-                            <Button size="sm" variant="destructive" onClick={() => handlePurge("lead", lead.id)}>
-                              Delete Permanently
+                            <Button size="sm" variant="outline" onClick={() => handleRestore("lead", lead.id)}>Restore</Button>
+                            <Button size="sm" variant="ghost" className="text-red-600 hover:bg-red-50 hover:text-red-700" onClick={() => handlePurge("lead", lead.id)}>
+                              Delete permanently
                             </Button>
                           </div>
                         </td>
@@ -385,11 +395,11 @@ export default function TrashPage() {
           </section>
 
           {/* Projects */}
-          <section>
-            <h2 className="text-xl font-semibold mb-2">Deleted Projects</h2>
+          <section className="rounded-lg border bg-white overflow-hidden">
+            <h2 className="border-b px-4 py-3 text-base font-semibold">Deleted Projects <span className="ml-1 font-normal text-muted-foreground">({projects.length})</span></h2>
 
             {selectedProjectIds.length > 0 && (
-              <div className="mb-2 flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3">
+              <div className="border-b bg-muted/30 px-4 py-2 flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3">
                 <Button size="sm" variant="destructive" onClick={handleBulkPurgeProjects}>
                   Delete Selected ({selectedProjectIds.length})
                 </Button>
@@ -405,11 +415,11 @@ export default function TrashPage() {
             )}
 
             {projects.length === 0 ? (
-              <p className="text-gray-500">No deleted projects.</p>
+              <p className="px-4 py-6 text-sm text-muted-foreground">No deleted projects.</p>
             ) : (
               <>
                 {/* Mobile list */}
-                <ul className="md:hidden grid gap-3">
+                <ul className="md:hidden grid gap-3 p-3">
                   {projects.map(project => (
                     <MobileRow
                       key={project.id}
@@ -424,7 +434,7 @@ export default function TrashPage() {
                 </ul>
 
                 {/* Desktop table */}
-                <table className="hidden md:table w-full text-sm border table-fixed">
+                <table className="hidden md:table w-full text-sm table-fixed">
                   <ColGroup />
                   <TableHeader
                     allChecked={projects.length > 0 && selectedProjectIds.length === projects.length}
@@ -434,7 +444,7 @@ export default function TrashPage() {
                   <tbody>
                     {projects.map(project => (
                       <tr key={project.id} className="border-t">
-                        <td className="p-2 w-11">
+                        <td className="px-4 py-2 w-11">
                           <input
                             type="checkbox"
                             aria-label={`Select ${project.name}`}
@@ -445,14 +455,14 @@ export default function TrashPage() {
                         <td className="p-2 min-w-0">
                           <span className="block truncate">{project.name}</span>
                         </td>
-                        <td className="p-2 text-gray-500 whitespace-nowrap">
+                        <td className="p-2 text-muted-foreground whitespace-nowrap">
                           {formatDistanceToNow(new Date(project.deleted_at), { addSuffix: true })}
                         </td>
                         <td className="p-2">
                           <div className="flex flex-wrap gap-2 whitespace-nowrap">
-                            <Button size="sm" onClick={() => handleRestore("project", project.id)}>Restore</Button>
-                            <Button size="sm" variant="destructive" onClick={() => handlePurge("project", project.id)}>
-                              Delete Permanently
+                            <Button size="sm" variant="outline" onClick={() => handleRestore("project", project.id)}>Restore</Button>
+                            <Button size="sm" variant="ghost" className="text-red-600 hover:bg-red-50 hover:text-red-700" onClick={() => handlePurge("project", project.id)}>
+                              Delete permanently
                             </Button>
                           </div>
                         </td>

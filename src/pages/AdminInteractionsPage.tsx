@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useAuth } from "@/authContext";
 import { apiFetch } from "@/lib/api";
 import { Link, useSearchParams } from "react-router-dom";
+import { isBefore, isToday, parseISO } from "date-fns";
 import PaginationControls from "@/components/ui/PaginationControls";
 import { usePagination } from "@/hooks/usePreferences";
 
@@ -16,6 +17,7 @@ interface AdminInteraction {
   phone?: string;
   client_name?: string;
   lead_name?: string;
+  project_name?: string;
   followup_status?: string;
   profile_link?: string;
   assigned_to_name?: string;
@@ -32,7 +34,7 @@ function InteractionTable({ title, interactions, loading }: { title: string; int
   if (loading) {
     return (
       <div className="space-y-2">
-        <h2 className="text-xl font-semibold text-blue-700">{title}</h2>
+        <h2 className="text-base font-semibold">{title}</h2>
         <div className="text-center py-8 text-gray-500">Loading...</div>
       </div>
     );
@@ -41,42 +43,42 @@ function InteractionTable({ title, interactions, loading }: { title: string; int
   if (interactions.length === 0) {
     return (
       <div className="space-y-2">
-        <h2 className="text-xl font-semibold text-blue-700">{title}</h2>
-        <div className="text-center py-8 text-gray-500">No {title.toLowerCase()} interactions found.</div>
+        <h2 className="text-base font-semibold">{title}</h2>
+        <div className="rounded-lg border bg-white px-4 py-6 text-sm text-gray-500">No interactions in this group.</div>
       </div>
     );
   }
 
   return (
     <div className="space-y-2">
-      <h2 className="text-xl font-semibold text-blue-700">{title}</h2>
-      <div className="overflow-auto border rounded shadow-sm">
+      <h2 className="text-base font-semibold">{title}</h2>
+      <div className="overflow-x-auto bg-white rounded-lg border">
         <table className="min-w-full table-auto">
-          <thead className="bg-gray-100">
+          <thead className="bg-gray-50">
             <tr>
-              <th className="px-4 py-2 text-left">Assigned To</th>
-              <th className="px-4 py-2 text-left">Date</th>
-              <th className="px-4 py-2 text-left">Name</th>
-              <th className="px-4 py-2 text-left">Contact</th>
-              <th className="px-4 py-2 text-left">Summary</th>
-              <th className="px-4 py-2 text-left">Next Step</th>
-              <th className="px-4 py-2 text-left">Follow-up</th>
+              <th className="px-4 py-3 text-left text-sm font-medium text-gray-500">Assigned To</th>
+              <th className="px-4 py-3 text-left text-sm font-medium text-gray-500">Date</th>
+              <th className="px-4 py-3 text-left text-sm font-medium text-gray-500">Name</th>
+              <th className="px-4 py-3 text-left text-sm font-medium text-gray-500">Contact</th>
+              <th className="px-4 py-3 text-left text-sm font-medium text-gray-500">Summary</th>
+              <th className="px-4 py-3 text-left text-sm font-medium text-gray-500">Next Step</th>
+              <th className="px-4 py-3 text-left text-sm font-medium text-gray-500">Follow-up</th>
             </tr>
           </thead>
           <tbody>
             {interactions.map((i) => (
               <tr key={i.id} className="border-t hover:bg-gray-50 transition">
-                <td className="px-4 py-2">{i.assigned_to_name || "—"}</td>
-                <td className="px-4 py-2">{new Date(i.contact_date).toLocaleDateString()}</td>
-                <td className="px-4 py-2">
+                <td className="px-4 py-3 text-sm">{i.assigned_to_name || "—"}</td>
+                <td className="px-4 py-3 text-sm">{new Date(i.contact_date).toLocaleDateString()}</td>
+                <td className="px-4 py-3 text-sm">
                   <Link to={i.profile_link || "#"} className="text-blue-600 hover:underline">
-                    {i.client_name || i.lead_name || "—"}
+                    {i.client_name || i.lead_name || i.project_name || "—"}
                   </Link>
                 </td>
-                <td className="px-4 py-2">{i.contact_person?.trim() || "—"}</td>
-                <td className="px-4 py-2">{i.summary}</td>
-                <td className="px-4 py-2">{i.outcome || "—"}</td>
-                <td className="px-4 py-2">
+                <td className="px-4 py-3 text-sm">{i.contact_person?.trim() || "—"}</td>
+                <td className="px-4 py-3 text-sm">{i.summary}</td>
+                <td className="px-4 py-3 text-sm">{i.outcome || "—"}</td>
+                <td className="px-4 py-3 text-sm">
                   {i.follow_up ? new Date(i.follow_up).toLocaleDateString() : "—"}
                 </td>
               </tr>
@@ -171,43 +173,41 @@ export default function AdminInteractionsPage() {
     setCurrentPage(1);
   };
 
-  // Categorize interactions
-  const today = new Date().toISOString().slice(0, 10);
-
+  // Categorize interactions (local dates, same rules as the Dashboard)
+  const now = new Date();
   const overdue: AdminInteraction[] = [];
   const todayDue: AdminInteraction[] = [];
   const upcoming: AdminInteraction[] = [];
+  const noFollowUp: AdminInteraction[] = [];
   const completed: AdminInteraction[] = [];
 
   interactions.forEach((i) => {
-    const isCompleted = i.followup_status === "completed";
-    const followUp = i.follow_up ? i.follow_up.slice(0, 10) : null;
-
-    if (isCompleted) {
+    if (i.followup_status === "completed") {
       completed.push(i);
-    } else if (followUp && followUp < today) {
-      overdue.push(i);
-    } else if (followUp === today) {
-      todayDue.push(i);
+    } else if (!i.follow_up) {
+      noFollowUp.push(i);
     } else {
-      upcoming.push(i);
+      const followUp = parseISO(i.follow_up);
+      if (isToday(followUp)) todayDue.push(i);
+      else if (isBefore(followUp, now)) overdue.push(i);
+      else upcoming.push(i);
     }
   });
 
   return (
-    <div className="p-6 space-y-6">
-      <h1 className="text-2xl font-bold text-blue-800">Admin: All Interactions</h1>
-      {error && <p className="text-red-500">{error}</p>}
+    <div className="p-4 lg:p-6 space-y-6">
+      <h1 className="text-2xl font-bold">Admin: All Interactions</h1>
+      {error && <p role="alert" className="text-sm text-red-700">{error}</p>}
 
       <div className="max-w-sm">
-        <label htmlFor="user-select" className="block font-medium mb-2">
+        <label htmlFor="user-select" className="block text-sm font-medium mb-1">
           Filter by user:
         </label>
         <select
           id="user-select"
           value={selectedEmail}
           onChange={(e) => handleUserChange(e.target.value)}
-          className="w-full border border-gray-300 rounded px-3 py-2"
+          className="w-full rounded-md border border-input bg-white px-3 py-2 text-sm"
         >
           <option value="">— Select a user —</option>
           {users.map((u) => (
@@ -220,24 +220,13 @@ export default function AdminInteractionsPage() {
 
       {selectedEmail && (
         <>
-          {/* Pagination Controls at top */}
-          <PaginationControls
-            currentPage={currentPage}
-            perPage={perPage}
-            total={total}
-            sortOrder={sortOrder}
-            onPageChange={setCurrentPage}
-            onPerPageChange={updatePerPage}
-            onSortOrderChange={updateSortOrder}
-            entityName="interactions"
-            className="border-b pb-4"
-          />
 
           {/* Categorized Interactions */}
           <div className="space-y-8">
             <InteractionTable title="Overdue" interactions={overdue} loading={loading} />
             <InteractionTable title="Today" interactions={todayDue} loading={loading} />
             <InteractionTable title="Upcoming" interactions={upcoming} loading={loading} />
+            <InteractionTable title="No follow-up" interactions={noFollowUp} loading={loading} />
             <InteractionTable title="Completed" interactions={completed} loading={loading} />
           </div>
 

@@ -105,7 +105,7 @@ export function RevenueReports({ startDate, endDate }: Props) {
 
       {/* Subscription MRR/ARR — feature-gated */}
       {enableSubscriptions && subIncome && (
-        <div className="bg-white rounded-lg shadow p-6">
+        <div className="bg-white rounded-lg border p-6">
           <div className="flex items-center gap-2 mb-5">
             <CreditCard className="h-5 w-5 text-blue-600" />
             <h2 className="text-lg font-semibold">Subscription Revenue</h2>
@@ -170,7 +170,7 @@ export function RevenueReports({ startDate, endDate }: Props) {
 
       {/* Upcoming Renewals — feature-gated */}
       {enableSubscriptions && renewals && renewals.upcoming_renewals.length > 0 && (
-        <div className="bg-white rounded-lg shadow p-6">
+        <div className="bg-white rounded-lg border p-6">
           <div className="flex items-center gap-2 mb-4">
             <RefreshCw className="h-5 w-5 text-orange-500" />
             <h2 className="text-lg font-semibold">Upcoming Renewals</h2>
@@ -214,7 +214,7 @@ export function RevenueReports({ startDate, endDate }: Props) {
 
       {/* Revenue by Client */}
       {revenueData.length > 0 && (
-        <div className="bg-white rounded-lg shadow p-6">
+        <div className="bg-white rounded-lg border p-6">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
               <DollarSign className="h-5 w-5 text-blue-600" />
@@ -299,7 +299,7 @@ export function RevenueReports({ startDate, endDate }: Props) {
 
       {/* Revenue Forecast */}
       {forecastData && forecastData.projects.length > 0 && (
-        <div className="bg-white rounded-lg shadow p-6">
+        <div className="bg-white rounded-lg border p-6">
           <div className="flex items-center gap-2 mb-5">
             <TrendingUp className="h-5 w-5 text-green-600" />
             <h2 className="text-lg font-semibold">Revenue Forecast</h2>
@@ -388,7 +388,7 @@ export function RevenueReports({ startDate, endDate }: Props) {
       )}
 
       {revenueData.length === 0 && (!forecastData || forecastData.projects.length === 0) && (
-        <div className="bg-white rounded-lg shadow p-6">
+        <div className="bg-white rounded-lg border p-6">
           <p className="text-center text-gray-500 py-8">No revenue data available</p>
         </div>
       )}

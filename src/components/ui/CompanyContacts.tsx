@@ -8,15 +8,21 @@ import { useForm, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { contactCreateSchema, contactUpdateSchema, type ContactCreateInput } from "@/schemas/contactSchemas";
 import { Contact } from "@/types";
+import { Button } from "@/components/ui/button";
 
 type Props = {
   token: string;
   entityType: "client" | "lead";
   entityId: number;
+  embedded?: boolean;
+  onCount?: (count: number) => void;
 };
 
-export default function CompanyContacts({ token, entityType, entityId }: Props) {
+export default function CompanyContacts({ token, entityType, entityId, embedded = false, onCount }: Props) {
   const [contacts, setContacts] = useState<Contact[]>([]);
+  useEffect(() => {
+    onCount?.(contacts.length);
+  }, [contacts.length, onCount]);
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [openMenuId, setOpenMenuId] = useState<number | null>(null);
@@ -108,11 +114,9 @@ export default function CompanyContacts({ token, entityType, entityId }: Props) 
     }
   };
 
-  return (
-    <details className="bg-white rounded shadow-sm border">
-      <summary className="cursor-pointer px-4 py-2 font-semibold text-blue-700 bg-blue-50 hover:bg-blue-100 rounded-t flex items-center gap-2">
-        <UserPlus size={16} /> Additional Contacts ({contacts.length})
-      </summary>
+  // embedded: render open, without the collapsible box (used inside record tabs)
+  const content = (
+    <>
 
       <div className="p-4 space-y-4">
         {showForm && (
@@ -219,30 +223,30 @@ export default function CompanyContacts({ token, entityType, entityId }: Props) 
             </div>
 
             <div className="flex gap-2 mt-3">
-              <button
+              <Button
                 type="submit"
-                className="px-3 py-1 bg-green-500 text-white rounded text-sm"
+                size="sm"
               >
                 Save
-              </button>
-              <button
+              </Button>
+              <Button
                 type="button"
                 onClick={resetForm}
-                className="px-3 py-1 bg-gray-500 text-white rounded text-sm"
+                size="sm" variant="outline"
               >
                 Cancel
-              </button>
+              </Button>
             </div>
           </form>
         )}
 
         {!showForm && (
-          <button
+          <Button
             onClick={() => setShowForm(true)}
-            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+            size="sm"
           >
             Add Contact
-          </button>
+          </Button>
         )}
 
         <ul className="space-y-4">
@@ -330,6 +334,17 @@ export default function CompanyContacts({ token, entityType, entityId }: Props) 
           ))}
         </ul>
       </div>
+    </>
+  );
+
+  if (embedded) return content;
+
+  return (
+    <details className="bg-white rounded shadow-sm border">
+      <summary className="cursor-pointer px-4 py-2 font-semibold text-blue-700 bg-blue-50 hover:bg-blue-100 rounded-t flex items-center gap-2">
+        <UserPlus size={16} /> Additional Contacts ({contacts.length})
+      </summary>
+      {content}
     </details>
   );
 }

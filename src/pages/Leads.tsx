@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import EntityCard from "@/components/ui/EntityCard";
-import { Mail, Phone, MapPin, Flag, User, UserCheck, StickyNote, LayoutGrid, List, Plus, Filter, ChevronDown, ChevronUp, Radio } from "lucide-react";
+import { Mail, Phone, MapPin, Flag, User, UserCheck, StickyNote, LayoutGrid, List, Plus, Radio, ChevronRight } from "lucide-react";
 import { useAuth, userHasRole } from "@/authContext";
 import toast from "react-hot-toast";
 import { Link } from "react-router-dom";
@@ -14,27 +14,8 @@ import LeadsTable from "@/components/ui/LeadsTable";
 import PaginationControls from "@/components/ui/PaginationControls";
 import { formatPhoneNumber } from "@/lib/phoneUtils";
 import { useCRMConfig } from "@/config/crmConfig";
-
-// Map icon string names from config to actual emoji characters
-const ICON_MAP: Record<string, string> = {
-  'circle-yellow': '🟡',
-  'circle-blue': '🔵',
-  'circle-orange': '🟠',
-  'circle-red': '🔴',
-  'circle-green': '🟢',
-  'phone': '📞',
-  'fire': '🔥',
-  'sun': '☀️',
-  'snowflake': '❄️',
-};
-const resolveIcons = (icons: Record<string, string>) =>
-  Object.fromEntries(Object.entries(icons).map(([k, v]) => [k, ICON_MAP[v] || v]));
-
-// Smart default for filter visibility based on screen size
-const getDefaultFilterVisibility = () => {
-  if (typeof window === 'undefined') return true; // SSR fallback
-  return window.innerWidth >= 1024; // lg breakpoint
-};
+import StatusBadge from "@/components/ui/StatusBadge";
+import { Button } from "@/components/ui/button";
 
 export default function Leads() {
   const config = useCRMConfig();
@@ -44,7 +25,7 @@ export default function Leads() {
   const LEAD_STATUS_CONFIG = {
     statuses: LEAD_STATUS_OPTIONS,
     colors: config.leads.statusConfig.colors,
-    icons: resolveIcons(config.leads.statusConfig.icons)
+    labels: config.leads.statusConfig.labels
   };
 
   const [leads, setLeads] = useState<Lead[]>([]);
@@ -88,9 +69,6 @@ export default function Leads() {
   // Status and type filters (preserves user's filter choice)
   const { statusFilter, setStatusFilter } = useStatusFilter('leads');
 
-  // Smart filter visibility - default open on desktop, closed on mobile
-  const [showFilters, setShowFilters] = useState<boolean>(getDefaultFilterVisibility());
-
   const [editingId, setEditingId] = useState<number | null>(null);
   const [creating, setCreating] = useState(false);
   const [form, setForm] = useState<Partial<Lead>>({
@@ -118,33 +96,35 @@ export default function Leads() {
   const [selectedUserId, setSelectedUserId] = useState<number | null>(null);
   const [availableUsers, setAvailableUsers] = useState<{ id: number; email: string }[]>([]);
   const [isAssigning, setIsAssigning] = useState(false);
+  // Per-status totals from the API. Null when the backend doesn't send them
+  // (older backend); the page then falls back to filtering the loaded page.
+  const [statusCounts, setStatusCounts] = useState<Record<string, number> | null>(null);
 
-  // Update filter visibility on window resize
-  useEffect(() => {
-    const handleResize = () => {
-      // Only auto-adjust if user hasn't manually toggled filters
-      const isLargeScreen = window.innerWidth >= 1024;
-      if (isLargeScreen && !showFilters) {
-        // Don't auto-open if user explicitly closed them
-      } else if (!isLargeScreen && showFilters) {
-        // Don't auto-close if user explicitly opened them
-      }
-    };
+  // The status filter is sent to the API so it covers every page, not just this one.
+  const leadsUrl =
+    `/leads/?page=${currentPage}&per_page=${perPage}&sort=${sortOrder}` +
+    (statusFilter !== "all" ? `&status=${encodeURIComponent(statusFilter)}` : "");
 
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, [showFilters]);
+  const applyLeadList = (data: { leads: Lead[]; total: number; status_counts?: Record<string, number> }) => {
+    setLeads(data.leads);
+    setTotal(data.total);
+    setStatusCounts(data.status_counts ?? null);
+  };
+
+  const changeStatusFilter = (status: string) => {
+    setStatusFilter(status);
+    setCurrentPage(1);
+  };
 
   useEffect(() => {
     const fetchLeads = async () => {
       setLoading(true);
       try {
-        const res = await apiFetch(`/leads/?page=${currentPage}&per_page=${perPage}&sort=${sortOrder}`, {
+        const res = await apiFetch(leadsUrl, {
           headers: { Authorization: `Bearer ${token}` },
         });
         const data = await res.json();
-        setLeads(data.leads);
-        setTotal(data.total);
+        applyLeadList(data);
         setError("");
       } catch (err) {
         setError("Failed to load leads");
@@ -163,7 +143,7 @@ export default function Leads() {
           setAvailableUsers([]);
         });
     }
-  }, [token, user, currentPage, perPage, sortOrder]);
+  }, [token, user, leadsUrl]);
 
 
   // Advanced filtering logic
@@ -187,9 +167,8 @@ export default function Leads() {
     setShowEditModal(true);
   };
 
+  // The card menu and the table each confirm before calling this, so it doesn't ask again.
   const handleDelete = async (id: number) => {
-    if (!confirm("Are you sure you want to delete this lead?")) return;
-
     const res = await apiFetch(`/leads/${id}`, {
       method: "DELETE",
       headers: { Authorization: `Bearer ${token}` },
@@ -198,8 +177,9 @@ export default function Leads() {
     if (res.ok) {
       setLeads((prev) => prev.filter((l) => l.id !== id));
       setTotal((prev) => prev - 1);
+      toast.success("Lead deleted. You can restore it from Deletes.");
     } else {
-      alert("Failed to delete lead");
+      toast.error("Couldn't delete this lead. Please try again.");
     }
   };
 
@@ -216,12 +196,11 @@ export default function Leads() {
 
       if (!res.ok) throw new Error("Failed to save lead");
 
-      const updatedRes = await apiFetch(`/leads/?page=${currentPage}&per_page=${perPage}&sort=${sortOrder}`, {
+      const updatedRes = await apiFetch(leadsUrl, {
         headers: { Authorization: `Bearer ${token}` },
       });
       const fullData = await updatedRes.json();
-      setLeads(fullData.leads);
-      setTotal(fullData.total);
+      applyLeadList(fullData);
       handleCancel();
     } catch (err: any) {
       setError(err.message || "Failed to save lead");
@@ -252,7 +231,7 @@ export default function Leads() {
 
   // Clear all filters
   const clearAllFilters = () => {
-    setStatusFilter('all');
+    changeStatusFilter('all');
   };
 
   const activeFiltersCount = [statusFilter].filter(f => f !== 'all').length;
@@ -260,30 +239,11 @@ export default function Leads() {
   return (
     <div className="p-4 lg:p-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+      <div className="flex justify-between items-center gap-4 mb-4">
         <h1 className="text-2xl font-bold">Leads</h1>
-        <div className="flex gap-2 w-full sm:w-auto">
-          {/* Filters Toggle Button */}
-          <button
-            onClick={() => setShowFilters(!showFilters)}
-            className={`flex items-center gap-2 px-3 py-2 rounded-lg border transition-colors flex-1 sm:flex-none justify-center ${
-              activeFiltersCount > 0 
-                ? 'bg-blue-50 text-blue-700 border-blue-200' 
-                : 'bg-white border-gray-300 hover:bg-gray-50'
-            }`}
-          >
-            <Filter size={16} />
-            <span className="hidden sm:inline">Filters</span>
-            {showFilters ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-            {activeFiltersCount > 0 && (
-              <span className="bg-blue-600 text-white rounded-full px-1.5 py-0.5 text-xs min-w-[20px] text-center">
-                {activeFiltersCount}
-              </span>
-            )}
-          </button>
-
+        <div className="flex gap-2">
           {/* New Lead Button */}
-          <button
+          <Button
             onClick={() => {
               setCreating(true);
               setEditingId(null);
@@ -305,24 +265,64 @@ export default function Leads() {
                 lead_source: undefined,
               });
             }}
-            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 whitespace-nowrap"
           >
             <Plus size={16} />
             <span className="hidden sm:inline">New Lead</span>
             <span className="sm:hidden">New</span>
-          </button>
+          </Button>
         </div>
       </div>
 
       {error && <p className="text-red-500 mb-4">{error}</p>}
 
-      {/* Collapsible Filters Panel */}
-      {showFilters && (
-        <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-6">
-          {/* Single Row: All Controls */}
+      {/* Status strip: click a status to filter the list (replaces the Status dropdown) */}
+      <div className="flex gap-1 overflow-x-auto rounded-lg border bg-white p-1 mb-3" role="group" aria-label="Filter by status">
+        {["all", ...LEAD_STATUS_OPTIONS].map((status) => {
+          const isActive = statusFilter === status;
+          const name = status === "all"
+            ? "All leads"
+            : LEAD_STATUS_CONFIG.labels?.[status] || status.charAt(0).toUpperCase() + status.slice(1);
+          // Real counts when the API provides them; otherwise only "All" shows a number.
+          // No numbers while loading, so the page never flashes "0 leads".
+          const count = loading
+            ? null
+            : statusCounts
+            ? status === "all"
+              ? Object.values(statusCounts).reduce((sum, n) => sum + n, 0)
+              : statusCounts[status] ?? 0
+            : status === "all" && statusFilter === "all"
+              ? total
+              : null;
+          return (
+            <button
+              key={status}
+              type="button"
+              aria-pressed={isActive}
+              onClick={() => changeStatusFilter(status)}
+              className={`flex items-center gap-2 whitespace-nowrap rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
+                isActive ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted hover:text-foreground"
+              }`}
+            >
+              {status !== "all" && (
+                <span
+                  aria-hidden="true"
+                  className={`h-2 w-2 rounded-full bg-current ${isActive ? "" : (LEAD_STATUS_CONFIG.colors[status] || "").split(" ").find((c) => c.startsWith("text-")) || "text-gray-400"}`}
+                />
+              )}
+              {name}
+              {count !== null && (
+                <span className={`tabular-nums ${isActive ? "opacity-80" : "text-muted-foreground/80"}`}>{count}</span>
+              )}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Toolbar */}
+      <div className="mb-4">
           <div className="flex flex-wrap items-center gap-4">
-            {/* View Toggle */}
-            <div className="flex bg-white rounded-lg p-1 border shadow-sm">
+            {/* View Toggle (phones always get the compact list, so it's hidden there) */}
+            <div className="hidden sm:flex bg-white rounded-lg p-1 border shadow-sm">
               <button 
                 className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-all ${
                   viewMode === 'cards' 
@@ -347,52 +347,39 @@ export default function Leads() {
               </button>
             </div>
 
-            {/* Status Filter */}
-            <div className="flex items-center gap-2">
-              <label className="text-sm font-medium text-gray-700 whitespace-nowrap">Status:</label>
-              <select 
-                value={statusFilter} 
-                onChange={(e) => setStatusFilter(e.target.value)}
-                className="border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white shadow-sm min-w-32"
-              >
-                <option value="all">All ({total})</option>
-                {LEAD_STATUS_OPTIONS.map(status => {
-                  const count = leads.filter(l => l.lead_status === status).length;
-                  return (
-                    <option key={status} value={status}>
-                      {status.charAt(0).toUpperCase() + status.slice(1)} ({count})
-                    </option>
-                  );
-                })}
-              </select>
-            </div>
-
             {/* Sort Control */}
             <div className="flex items-center gap-2">
               <label className="text-sm font-medium text-gray-700 whitespace-nowrap">Sort:</label>
-              {viewMode === 'cards' ? (
-                <select 
-                  value={currentCardValue} 
-                  onChange={(e) => setCardSort(e.target.value)}
-                  className="border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white min-w-32"
-                >
-                  {cardSortOptions.map(option => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
-              ) : (
-                <span className="text-sm text-gray-600 px-3 py-2 border border-gray-300 rounded-lg bg-gray-50">
-                  Click headers
-                </span>
-              )}
+              {(() => {
+                const sortSelect = (className: string) => (
+                  <select
+                    value={currentCardValue}
+                    onChange={(e) => setCardSort(e.target.value)}
+                    className={`border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white min-w-32 ${className}`}
+                  >
+                    {cardSortOptions.map(option => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                );
+                return viewMode === 'cards' ? sortSelect("") : (
+                  <>
+                    {/* Phones show a list without column headers, so offer the dropdown there. */}
+                    {sortSelect("sm:hidden")}
+                    <span className="hidden sm:inline text-sm text-gray-600 px-3 py-2 border border-gray-300 rounded-lg bg-gray-50">
+                      Click headers
+                    </span>
+                  </>
+                );
+              })()}
             </div>
 
             {/* Per Page Control */}
             <div className="flex items-center gap-2">
               <label className="text-sm font-medium text-gray-700 whitespace-nowrap">Show:</label>
-              <select 
+              <select
                 value={perPage} 
                 onChange={(e) => updatePerPage(Number(e.target.value))}
                 className="border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white w-20"
@@ -414,15 +401,20 @@ export default function Leads() {
               </button>
             )}
           </div>
-        </div>
-      )}
+      </div>
 
-      {/* Results Summary */}
-      <div className="mb-4 text-sm text-gray-600">
-        {statusFilter !== 'all' ? (
+      {/* Results Summary (hidden while loading) */}
+      <div className={`mb-4 text-sm text-gray-600 ${loading ? "invisible" : ""}`}>
+        {statusFilter !== 'all' && statusCounts ? (
           <span>
-            Showing <span className="font-medium">{sortedLeads.length}</span> {statusFilter} leads 
-            <span className="text-gray-400">({total} total)</span>
+            Showing <span className="font-medium">{sortedLeads.length}</span> of {total}{" "}
+            {LEAD_STATUS_CONFIG.labels?.[statusFilter] || statusFilter} leads
+          </span>
+        ) : statusFilter !== 'all' ? (
+          <span>
+            Showing <span className="font-medium">{sortedLeads.length}</span>{" "}
+            {LEAD_STATUS_CONFIG.labels?.[statusFilter] || statusFilter} leads on this page{" "}
+            <span className="text-gray-400">({total} leads in total)</span>
           </span>
         ) : (
           <span>
@@ -431,28 +423,19 @@ export default function Leads() {
         )}
       </div>
 
-      {total > perPage && (
-        <PaginationControls
-          currentPage={currentPage}
-          perPage={perPage}
-          total={total}
-          sortOrder={sortOrder}
-          onPageChange={setCurrentPage}
-          onPerPageChange={updatePerPage}
-          onSortOrderChange={updateSortOrder}
-          entityName="leads"
-          className="border-b pb-4 mb-4"
-        />
-      )}
-
-
       {/* Content */}
       {loading ? (
-        <div className="flex items-center justify-center py-12">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-2"></div>
-            <p className="text-gray-500">Loading leads...</p>
-          </div>
+        <div className="rounded-lg border bg-white animate-pulse motion-reduce:animate-none" role="status" aria-label="Loading leads">
+          <div className="h-11 border-b bg-muted/60" />
+          {Array.from({ length: 6 }, (_, i) => (
+            <div key={i} className="flex items-center gap-6 border-b px-4 py-4 last:border-b-0">
+              <div className="h-4 w-48 rounded bg-muted" />
+              <div className="h-4 w-28 rounded bg-muted" />
+              <div className="h-5 w-20 rounded-full bg-muted" />
+              <div className="hidden sm:block h-4 w-24 rounded bg-muted" />
+              <div className="hidden md:block h-4 w-40 rounded bg-muted" />
+            </div>
+          ))}
         </div>
       ) : (
         <div className="space-y-4">
@@ -475,6 +458,34 @@ export default function Leads() {
             </div>
           )}
 
+          {/* Phones: compact list, one tappable row per lead (no sideways scrolling) */}
+          {sortedLeads.length > 0 && (
+            <ul className="sm:hidden divide-y rounded-lg border bg-white" aria-label="Leads">
+              {sortedLeads.map((lead) => (
+                <li key={lead.id}>
+                  <Link to={`/leads/${lead.id}`} className="flex items-center gap-3 px-4 py-3 active:bg-muted">
+                    <div className="min-w-0 flex-1">
+                      <div className="truncate font-medium text-foreground">{lead.name}</div>
+                      <div className="truncate text-sm text-muted-foreground">
+                        {[lead.contact_person, [lead.city, lead.state].filter(Boolean).join(", ")].filter(Boolean).join(" · ") || "No contact yet"}
+                      </div>
+                    </div>
+                    {lead.lead_status && (
+                      <StatusBadge
+                        status={lead.lead_status}
+                        colorClass={LEAD_STATUS_CONFIG.colors[lead.lead_status]}
+                        label={LEAD_STATUS_CONFIG.labels?.[lead.lead_status]}
+                      />
+                    )}
+                    <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
+
+          {/* Tablets and desktop: the saved Table / Cards view */}
+          <div className="hidden sm:block">
           {viewMode === 'cards' ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
               {sortedLeads.map((lead) => (
@@ -497,13 +508,11 @@ export default function Leads() {
                       {lead.lead_status && (
                         <li className="flex items-center gap-2">
                           <Flag size={14} />
-                          <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
-                            LEAD_STATUS_CONFIG.colors[lead.lead_status as keyof typeof LEAD_STATUS_CONFIG.colors] ||
-                            'bg-gray-100 text-gray-800'
-                          }`}>
-                            {LEAD_STATUS_CONFIG.icons[lead.lead_status as keyof typeof LEAD_STATUS_CONFIG.icons]}
-                            {lead.lead_status.toUpperCase()}
-                          </span>
+                          <StatusBadge
+                            status={lead.lead_status}
+                            colorClass={LEAD_STATUS_CONFIG.colors[lead.lead_status]}
+                            label={LEAD_STATUS_CONFIG.labels?.[lead.lead_status]}
+                          />
                         </li>
                       )}
                       {lead.lead_source && (
@@ -613,6 +622,7 @@ export default function Leads() {
               statusConfig={LEAD_STATUS_CONFIG}
             />
           )}
+          </div>
 
           {sortedLeads.length === 0 && (
             <div className="text-center py-12">
@@ -673,17 +683,17 @@ export default function Leads() {
             </select>
 
             <div className="flex flex-col sm:flex-row justify-end gap-2">
-              <button
+              <Button
                 onClick={() => {
                   setShowAssignModal(false);
                   setSelectedUserId(null);
                   setSelectedLeadId(null);
                 }}
-                className="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400 order-2 sm:order-1"
+                variant="outline" className="order-2 sm:order-1"
               >
                 Cancel
-              </button>
-              <button
+              </Button>
+              <Button
                 disabled={!selectedUserId || isAssigning}
                 onClick={async () => {
                   setIsAssigning(true);
@@ -697,25 +707,24 @@ export default function Leads() {
                   });
 
                   if (res.ok) {
-                    toast.success("Lead assigned successfully");
+                    toast.success("Lead assigned");
                     setShowAssignModal(false);
                     setSelectedUserId(null);
                     setSelectedLeadId(null);
-                    const updatedRes = await apiFetch(`/leads/?page=${currentPage}&per_page=${perPage}&sort=${sortOrder}`, {
+                    const updatedRes = await apiFetch(leadsUrl, {
                       headers: { Authorization: `Bearer ${token}` },
                     });
                     const fullData = await updatedRes.json();
-                    setLeads(fullData.leads);
-                    setTotal(fullData.total);
+                    applyLeadList(fullData);
                   } else {
-                    alert("Failed to assign lead.");
+                    toast.error("Couldn't assign this lead. Please try again.");
                   }
                   setIsAssigning(false);
                 }}
-                className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50 order-1 sm:order-2"
+                className="order-1 sm:order-2"
               >
                 {isAssigning ? "Assigning…" : "Assign"}
-              </button>
+              </Button>
             </div>
           </div>
         </div>

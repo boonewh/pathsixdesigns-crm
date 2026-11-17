@@ -279,10 +279,10 @@ export default function AdminBackupsPage() {
   };
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-4 lg:p-6 space-y-6">
       {/* Header */}
       <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold text-blue-800">Database Backups</h1>
+        <h1 className="text-2xl font-bold">Database Backups</h1>
         <button
           onClick={handleCreateBackup}
           disabled={creating}

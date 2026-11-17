@@ -34,7 +34,7 @@ export default function Reports() {
   const filters = { startDate: appliedStart, endDate: appliedEnd };
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-4 lg:p-6 space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <h1 className="text-2xl font-bold">Reports & Analytics</h1>
       </div>
@@ -51,7 +51,7 @@ export default function Reports() {
       />
 
       {/* Tabs */}
-      <div className="border-b border-gray-200">
+      <div className="border-b">
         <nav className="-mb-px flex space-x-8 overflow-x-auto">
           {tabs.map((tab) => (
             <div key={tab.id} className="flex items-center gap-1">
@@ -61,8 +61,8 @@ export default function Reports() {
                   flex items-center gap-2 py-4 px-1 border-b-2 font-medium text-sm whitespace-nowrap
                   ${
                     activeTab === tab.id
-                      ? "border-blue-500 text-blue-600"
-                      : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                      ? "border-primary text-primary"
+                      : "border-transparent text-muted-foreground hover:text-foreground hover:border-border"
                   }
                 `}
               >
@@ -74,7 +74,7 @@ export default function Reports() {
                   e.stopPropagation();
                   setShowHelp(tab.id);
                 }}
-                className="p-1 text-gray-400 hover:text-blue-600 transition-colors"
+                className="p-1 text-muted-foreground hover:text-primary transition-colors"
                 aria-label={`Help for ${tab.label}`}
                 title={`Learn about ${tab.label}`}
               >

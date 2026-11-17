@@ -35,7 +35,7 @@ export function ConversionRateReport({ startDate, endDate }: Props) {
   if (error) return <div className="p-6 text-center text-red-600">{error}</div>;
   if (!data || data.overall.total_leads === 0) {
     return (
-      <div className="bg-white rounded-lg shadow p-6">
+      <div className="bg-white rounded-lg border p-6">
         <div className="flex items-center gap-2 mb-4">
           <Activity className="h-5 w-5 text-green-600" />
           <h2 className="text-lg font-semibold">Conversion Rate</h2>
@@ -48,7 +48,7 @@ export function ConversionRateReport({ startDate, endDate }: Props) {
   const { overall, by_user } = data;
 
   return (
-    <div className="bg-white rounded-lg shadow p-6">
+    <div className="bg-white rounded-lg border p-6">
       <div className="flex items-center gap-2 mb-6">
         <Activity className="h-5 w-5 text-green-600" />
         <h2 className="text-lg font-semibold">Conversion Rate</h2>

@@ -10,6 +10,7 @@ import { usePagination } from "@/hooks/usePreferences";
 import { generateGoogleCalendarUrl, generateOutlookComUrl } from "@/lib/calendarUtils";
 import { type InteractionCreateInput } from "@/schemas/interactionSchemas";
 import { useCRMConfig } from "@/config/crmConfig";
+import { Button } from "@/components/ui/button";
 
 type EntityType = "lead" | "client" | "project"; // NEW: Add project support
 
@@ -18,6 +19,8 @@ type Props = {
   entityType: EntityType; // NEW: Update to use EntityType
   entityId: number;
   initialInteractions: Interaction[];
+  embedded?: boolean;
+  onCount?: (count: number) => void;
 };
 
 export default function EntityInteractions({
@@ -25,6 +28,8 @@ export default function EntityInteractions({
   entityType,
   entityId,
   initialInteractions,
+  embedded = false,
+  onCount,
 }: Props) {
   const config = useCRMConfig();
   const [interactions, setInteractions] = useState<Interaction[]>([]);
@@ -46,6 +51,10 @@ const [openMenuId, setOpenMenuId] = useState<number | null>(null);
     updatePerPage,
     updateSortOrder,
   } = usePagination(`${entityType}_interactions`);
+
+  useEffect(() => {
+    onCount?.(total);
+  }, [total, onCount]);
 
   const resetForm = () => {
     setEditDefaultValues(undefined);
@@ -184,11 +193,9 @@ const [openMenuId, setOpenMenuId] = useState<number | null>(null);
     }
   };
 
-  return (
-    <details className="bg-white rounded shadow-sm border">
-      <summary className="cursor-pointer px-4 py-2 font-semibold text-blue-700 bg-blue-50 hover:bg-blue-100 rounded-t flex items-center gap-2">
-        <CalendarPlus size={16} /> Interactions ({total})
-      </summary>
+  // embedded: render open, without the collapsible box (used inside record tabs)
+  const content = (
+    <>
 
       <div className="p-4 space-y-4">
         {showForm && (
@@ -206,16 +213,16 @@ const [openMenuId, setOpenMenuId] = useState<number | null>(null);
         )}
 
         {!showForm && (
-          <button
+          <Button
             onClick={() => {
               setShowForm(true);
               setEditingId(null);
               resetForm();
             }}
-            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+            size="sm"
           >
             Add Interaction
-          </button>
+          </Button>
         )}
 
         {/* Pagination Controls at top */}
@@ -402,10 +409,22 @@ const [openMenuId, setOpenMenuId] = useState<number | null>(null);
                 : undefined
             }
             outlookLink={selectedInteraction.follow_up ? generateOutlookComUrl(selectedInteraction) : undefined}
-            icsLink={`${import.meta.env.VITE_API_BASE_URL}/interactions/${selectedInteraction.id}/calendar.ics`}
+            icsPath={`/interactions/${selectedInteraction.id}/calendar.ics`}
+            icsFilename={`interaction-${selectedInteraction.id}.ics`}
           />
         )}
       </div>
+    </>
+  );
+
+  if (embedded) return content;
+
+  return (
+    <details className="bg-white rounded shadow-sm border">
+      <summary className="cursor-pointer px-4 py-2 font-semibold text-blue-700 bg-blue-50 hover:bg-blue-100 rounded-t flex items-center gap-2">
+        <CalendarPlus size={16} /> Interactions ({total})
+      </summary>
+      {content}
     </details>
   );
 }

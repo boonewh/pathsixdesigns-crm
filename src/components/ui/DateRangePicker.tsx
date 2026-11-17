@@ -17,7 +17,7 @@ export function DateRangePicker({
 }: DateRangePickerProps) {
   const invalid = Boolean(startDate && endDate && startDate > endDate);
   return (
-    <div className="flex flex-wrap items-end gap-4 p-4 bg-gray-50 rounded-lg">
+    <div className="flex flex-wrap items-end gap-4 p-4 bg-white border rounded-lg">
       <div className="flex items-center gap-2">
         <Calendar className="h-5 w-5 text-gray-600" />
         <span className="text-sm font-medium text-gray-700">Filter by Date Range</span>

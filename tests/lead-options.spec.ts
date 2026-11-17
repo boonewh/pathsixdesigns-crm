@@ -35,8 +35,8 @@ async function setup(page: Page, type: string | null, status: string | null, cus
 for (const [type, status] of [[' oil & gas ', 'prospecting'], ['Legacy category', 'Legacy status'], [null, null], ['', '']] as const) {
   test(`unrelated edits preserve existing options: ${JSON.stringify([type, status])}`, async ({ page }) => {
     const writes = await setup(page, type, status, true);
-    await page.getByRole('button', { name: '', exact: true }).filter({ has: page.locator('svg.lucide-ellipsis-vertical') }).click();
-    await page.getByRole('menuitem', { name: 'Edit', exact: true }).click();
+    // Leads open in table view by default; its Edit button opens the same edit form as the card menu.
+    await page.getByTitle('Edit lead').click();
     await expect(page.locator('#lead_status')).toHaveCount(1);
     await expect(page.locator('#type')).toHaveValue(type === ' oil & gas ' ? 'Oil & Gas' : type ?? '');
     await page.getByLabel('Notes', { exact: true }).fill('Updated notes');
@@ -61,8 +61,7 @@ test('new leads use tenant status and allow no business type or source', async (
 
 test('explicit edits send configured choices', async ({ page }) => {
   const writes = await setup(page, 'Legacy', null, true);
-  await page.getByRole('button', { name: '', exact: true }).filter({ has: page.locator('svg.lucide-ellipsis-vertical') }).click();
-  await page.getByRole('menuitem', { name: 'Edit', exact: true }).click();
+  await page.getByTitle('Edit lead').click();
   await page.getByLabel('Type', { exact: true }).selectOption('Oil & Gas');
   await page.getByLabel('Lead Status', { exact: true }).selectOption('won');
   await page.getByRole('button', { name: 'Save', exact: true }).click();

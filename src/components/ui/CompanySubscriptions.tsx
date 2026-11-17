@@ -12,10 +12,13 @@ import {
   type SubscriptionCreateInput,
   type Subscription,
 } from "@/schemas/subscriptionSchemas";
+import { Button } from "@/components/ui/button";
 
 type Props = {
   token: string;
   clientId: number;
+  embedded?: boolean;
+  onCount?: (count: number) => void;
 };
 
 function statusBadge(status: string) {
@@ -43,9 +46,12 @@ function formatDate(dateStr: string | null): string {
   return new Date(dateStr).toLocaleDateString();
 }
 
-export default function CompanySubscriptions({ token, clientId }: Props) {
+export default function CompanySubscriptions({ token, clientId, embedded = false, onCount }: Props) {
   const config = useCRMConfig();
   const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
+  useEffect(() => {
+    onCount?.(subscriptions.length);
+  }, [subscriptions.length, onCount]);
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [openMenuId, setOpenMenuId] = useState<number | null>(null);
@@ -167,12 +173,9 @@ export default function CompanySubscriptions({ token, clientId }: Props) {
 
   const activeCount = subscriptions.filter((s) => s.status === "active").length;
 
-  return (
-    <details className="bg-white rounded shadow-sm border">
-      <summary className="cursor-pointer px-4 py-2 font-semibold text-blue-700 bg-blue-50 hover:bg-blue-100 rounded-t flex items-center gap-2">
-        <CreditCard size={16} /> Subscriptions ({activeCount} active
-        {subscriptions.length !== activeCount ? `, ${subscriptions.length} total` : ""})
-      </summary>
+  // embedded: render open, without the collapsible box (used inside record tabs)
+  const content = (
+    <>
 
       <div className="p-4 space-y-4">
         {showForm && (
@@ -270,31 +273,31 @@ export default function CompanySubscriptions({ token, clientId }: Props) {
             {saveError && <p className="text-sm text-red-600">{saveError}</p>}
 
             <div className="flex gap-2">
-              <button
+              <Button
                 type="submit"
                 disabled={isSubmitting}
-                className="px-3 py-1 bg-green-600 text-white rounded text-sm hover:bg-green-700 disabled:opacity-50"
+                size="sm"
               >
                 {isSubmitting ? "Saving…" : editingId ? "Update" : "Add Subscription"}
-              </button>
-              <button
+              </Button>
+              <Button
                 type="button"
                 onClick={resetForm}
-                className="px-3 py-1 bg-gray-500 text-white rounded text-sm hover:bg-gray-600"
+                size="sm" variant="outline"
               >
                 Cancel
-              </button>
+              </Button>
             </div>
           </form>
         )}
 
         {!showForm && (
-          <button
+          <Button
             onClick={() => setShowForm(true)}
-            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm"
+            size="sm"
           >
             Add Subscription
-          </button>
+          </Button>
         )}
 
         {subscriptions.length === 0 && !showForm && (
@@ -425,6 +428,18 @@ export default function CompanySubscriptions({ token, clientId }: Props) {
           })}
         </ul>
       </div>
+    </>
+  );
+
+  if (embedded) return content;
+
+  return (
+    <details className="bg-white rounded shadow-sm border">
+      <summary className="cursor-pointer px-4 py-2 font-semibold text-blue-700 bg-blue-50 hover:bg-blue-100 rounded-t flex items-center gap-2">
+        <CreditCard size={16} /> Subscriptions ({activeCount} active
+        {subscriptions.length !== activeCount ? `, ${subscriptions.length} total` : ""})
+      </summary>
+      {content}
     </details>
   );
 }

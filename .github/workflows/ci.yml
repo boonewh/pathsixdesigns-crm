@@ -4,9 +4,9 @@ name: CI
 # (main auto-deploys to production via Vercel).
 on:
   pull_request:
-    branches: [main]
+    branches: [main, staging]
   push:
-    branches: [main]
+    branches: [main, staging]
 
 permissions:
   contents: read
