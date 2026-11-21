@@ -7,6 +7,7 @@ import {
   Users,
   UserPlus,
   Briefcase,
+  Contact as ContactIcon,
   FolderKanban,
   FileText,
   Settings,
@@ -58,6 +59,7 @@ function SidebarContent({
           ? [{ label: "Accounts", path: "/accounts", icon: Briefcase }]
           : []),
         { label: "Projects", path: "/projects", icon: FolderKanban },
+        { label: "Contacts", path: "/contacts", icon: ContactIcon },
         { label: "Calendar", path: "/calendar", icon: CalendarIcon },
       ],
     },
