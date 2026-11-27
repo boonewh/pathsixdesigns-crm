@@ -191,47 +191,18 @@ export default function LeadDetailPage() {
 
     if (!confirmed) return;
 
-    // Mark lead as won first so it's tracked in reports even after soft-delete
-    await apiFetch(`/leads/${lead.id}`, {
-      method: "PUT",
-      headers: { Authorization: `Bearer ${token}` },
-      body: JSON.stringify({ lead_status: "won" }),
-    });
-
+    // One request: the server converts the lead in a single transaction. It
+    // copies every lead detail, keeps the lead's owner, moves its contacts,
+    // projects and interactions, marks it won and removes it from Leads.
+    // Nothing is left half-converted if it fails.
     const res = await apiFetch("/clients/", {
       method: "POST",
       headers: { Authorization: `Bearer ${token}` },
-      body: JSON.stringify({
-        name: lead.name,
-        email: lead.email,
-        phone: lead.phone,
-        address: lead.address,
-        contact_person: lead.contact_person,
-        city: lead.city,
-        state: lead.state,
-        zip: lead.zip,
-        notes: lead.notes,
-        source_lead_id: lead.id,
-      }),
+      body: JSON.stringify({ name: lead.name, source_lead_id: lead.id }),
     });
 
     if (res.ok) {
       const newClient = await res.json();
-
-      await apiFetch("/interactions/transfer", {
-        method: "POST",
-        headers: { Authorization: `Bearer ${token}` },
-        body: JSON.stringify({
-          from_lead_id: lead.id,
-          to_client_id: newClient.id,
-        }),
-      });
-
-      await apiFetch(`/leads/${lead.id}`, {
-        method: "DELETE",
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
       window.location.href = `/clients/${newClient.id}`;
     } else {
       toast.error(`Couldn't convert this lead to ${config.labels.client.toLowerCase()}. Please try again.`);
